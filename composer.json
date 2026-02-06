@@ -1,0 +1,41 @@
+{
+  "name": "sigb/api-cresta",
+  "description": "Sistema de Gestión Bibliotecaria - API",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "ext-pdo": "*",
+    "ext-mysqli": "*",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "pestphp/pest": "^2.34",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "pest",
+    "test:unit": "pest --filter=Unit",
+    "test:integration": "pest --filter=Integration",
+    "test:coverage": "pest --coverage"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    },
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigb-api-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    depends_on:
+      - db
+    networks:
+      - sigb-network
+
+  db:
+    image: mysql:8.0
+    container_name: sigb-api-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_DATABASE:-sigb_db}
+      MYSQL_USER: ${DB_USERNAME:-sigb_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sigb_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - sigb-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: sigb-api-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+    depends_on:
+      - db
+    networks:
+      - sigb-network
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  sigb-network:
+    driver: bridge
