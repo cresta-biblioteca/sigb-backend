@@ -1,0 +1,43 @@
+name: CI - PHP Quality Assurance
+
+# ¿Cuándo se ejecuta?
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Bajar el código del repo
+    - uses: actions/checkout@v4
+
+    # 2. Instalar PHP en el entorno de GitHub
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3.6' # O la versión que usen
+        extensions: mbstring, intl, pdo, pdo_mysql
+        coverage: none
+
+    # 3. Instalar dependencias (PHPUnit, CodeSniffer, etc)
+    - name: Install Dependencies
+      run: composer install --prefer-dist --no-progress
+
+    # 4. Validar sintaxis básica (Linting)
+    # Esto busca errores graves (fatares) en todos los archivos .php
+    - name: Check PHP Syntax (Lint)
+      run: find . -name "*.php" ! -path "./vendor/*" -exec php -l {} \;
+
+    # 5. Validar Estándares de Código (PSR-12)
+    # Esto fallará si alguien escribe código desordenado
+    - name: Check Code Style (PSR-12)
+      run: ./vendor/bin/phpcs --standard=PSR12 src/
+
+    # 6. Correr Tests (Aunque no haya, preparamos el terreno)
+    # Si no tienes tests aun, puedes comentar esta linea o dejarla fallar
+    # - name: Run Test Suite
+    #   run: ./vendor/bin/phpunit

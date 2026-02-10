@@ -1,38 +1,49 @@
 version: '3.8'
 
 services:
+  # SERVICIO DE APLICACIÓN (PHP + APACHE)
   web:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: sigb-api-web
     ports:
-      - "8080:80"
+      - "${APP_PORT:-8080}:80" # Usa puerto del .env o 8080 por defecto
     volumes:
+      # Sincronizamos tu carpeta local con el contenedor para desarrollo
       - ./:/var/www/html
+    env_file:
+      - .env
     environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html
+      # ¡CRUCIAL! Apuntar a la carpeta pública, no a la raíz
+      - APACHE_DOCUMENT_ROOT=/var/www/html/public
     depends_on:
       - db
     networks:
       - sigb-network
 
+  # SERVICIO DE BASE DE DATOS
   db:
     image: mysql:8.0
     container_name: sigb-api-db
     restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${DB_DATABASE:-sigb_db}
-      MYSQL_USER: ${DB_USERNAME:-sigb_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-sigb_password}
+      # Mapeamos las variables de tu .env a las de MySQL
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - sigb-network
 
+  # GESTOR DE BASE DE DATOS (PHPMYADMIN)
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: sigb-api-phpmyadmin
@@ -42,7 +53,8 @@ services:
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      # Usa la misma contraseña del .env
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - db
     networks:
