@@ -34,7 +34,7 @@ Todos los textos visibles al usuario final deben estar en español.
 
 Formato: camelCase  
 Nombres descriptivos y semánticos.  
-Evitar abreviaturas, siglas ambiguas o nombres genéricos.
+Evitar abreviaturas, siglas ambiguas o nombres genéricos."
 
 Ejemplos:
 

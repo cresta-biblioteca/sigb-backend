@@ -13,9 +13,10 @@
     "robmorgan/phinx": "^0.16"
   },
   "require-dev": {
+    "fakerphp/faker": "^1.23",
     "pestphp/pest": "^2.34",
     "phpunit/phpunit": "^10.5",
-    "fakerphp/faker": "^1.23"
+    "squizlabs/php_codesniffer": "^4.0"
   },
   "autoload": {
     "psr-4": {
