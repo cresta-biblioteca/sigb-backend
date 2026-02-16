@@ -1,0 +1,246 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Circulacion\Models;
+
+use App\Catalogo\Ejemplares\Models\Ejemplar;
+use App\Lectores\Models\Lector;
+use App\Shared\Entity;
+use DateTimeImmutable;
+
+class Prestamo extends Entity
+{
+    public const ESTADO_ACTIVO = 'ACTIVO';
+    public const ESTADO_DEVUELTO = 'DEVUELTO';
+    public const ESTADO_VENCIDO = 'VENCIDO';
+    public const ESTADO_RENOVADO = 'RENOVADO';
+
+    private const ESTADOS_VALIDOS = [
+        self::ESTADO_ACTIVO,
+        self::ESTADO_DEVUELTO,
+        self::ESTADO_VENCIDO,
+        self::ESTADO_RENOVADO,
+    ];
+
+    private DateTimeImmutable $fechaPrestamo;
+    private DateTimeImmutable $fechaDevolucion;
+    private string $estado;
+    private int $tipoPrestamoId;
+    private int $ejemplarId;
+    private int $lectorId;
+
+    private ?TipoPrestamo $tipoPrestamo = null;
+    private ?Ejemplar $ejemplar = null;
+    private ?Lector $lector = null;
+
+    private function __construct()
+    {
+    }
+
+    /**
+     * Crea un nuevo Prestamo (valida datos)
+     */
+    public static function create(
+        DateTimeImmutable $fechaPrestamo,
+        DateTimeImmutable $fechaDevolucion,
+        int $tipoPrestamoId,
+        int $ejemplarId,
+        int $lectorId,
+        string $estado = self::ESTADO_ACTIVO
+    ): self {
+        $prestamo = new self();
+        $prestamo->setFechaPrestamo($fechaPrestamo);
+        $prestamo->setFechaDevolucion($fechaDevolucion);
+        $prestamo->setTipoPrestamoId($tipoPrestamoId);
+        $prestamo->setEjemplarId($ejemplarId);
+        $prestamo->setLectorId($lectorId);
+        $prestamo->setEstado($estado);
+
+        return $prestamo;
+    }
+
+    /**
+     * Reconstruye desde base de datos (sin validar)
+     *
+     * @param array<string, mixed> $row
+     */
+    public static function fromDatabase(array $row): self
+    {
+        $prestamo = new self();
+        $prestamo->id = (int) $row['id'];
+        $prestamo->fechaPrestamo = new DateTimeImmutable($row['fecha_prestamo']);
+        $prestamo->fechaDevolucion = new DateTimeImmutable($row['fecha_devolucion']);
+        $prestamo->estado = $row['estado'];
+        $prestamo->tipoPrestamoId = (int) $row['tipo_prestamo_id'];
+        $prestamo->ejemplarId = (int) $row['ejemplar_id'];
+        $prestamo->lectorId = (int) $row['lector_id'];
+        $prestamo->setTimestamps(
+            $row['created_at'] ?? null,
+            $row['updated_at'] ?? null
+        );
+
+        return $prestamo;
+    }
+
+    public function getFechaPrestamo(): DateTimeImmutable
+    {
+        return $this->fechaPrestamo;
+    }
+
+    public function setFechaPrestamo(DateTimeImmutable $fechaPrestamo): void
+    {
+        $this->fechaPrestamo = $fechaPrestamo;
+    }
+
+    public function getFechaDevolucion(): DateTimeImmutable
+    {
+        return $this->fechaDevolucion;
+    }
+
+    public function setFechaDevolucion(DateTimeImmutable $fechaDevolucion): void
+    {
+        $this->fechaDevolucion = $fechaDevolucion;
+    }
+
+    public function getEstado(): string
+    {
+        return $this->estado;
+    }
+
+    public function setEstado(string $estado): void
+    {
+        $this->assertInArray($estado, self::ESTADOS_VALIDOS, 'estado');
+        $this->estado = $estado;
+    }
+
+    public function getTipoPrestamoId(): int
+    {
+        return $this->tipoPrestamoId;
+    }
+
+    public function setTipoPrestamoId(int $tipoPrestamoId): void
+    {
+        $this->assertPositive($tipoPrestamoId, 'tipo_prestamo_id');
+        $this->tipoPrestamoId = $tipoPrestamoId;
+    }
+
+    public function getEjemplarId(): int
+    {
+        return $this->ejemplarId;
+    }
+
+    public function setEjemplarId(int $ejemplarId): void
+    {
+        $this->assertPositive($ejemplarId, 'ejemplar_id');
+        $this->ejemplarId = $ejemplarId;
+    }
+
+    public function getLectorId(): int
+    {
+        return $this->lectorId;
+    }
+
+    public function setLectorId(int $lectorId): void
+    {
+        $this->assertPositive($lectorId, 'lector_id');
+        $this->lectorId = $lectorId;
+    }
+
+    public function getTipoPrestamo(): ?TipoPrestamo
+    {
+        return $this->tipoPrestamo;
+    }
+
+    public function setTipoPrestamo(TipoPrestamo $tipoPrestamo): void
+    {
+        $this->tipoPrestamo = $tipoPrestamo;
+        $this->tipoPrestamoId = $tipoPrestamo->getId();
+    }
+
+    public function getEjemplar(): ?Ejemplar
+    {
+        return $this->ejemplar;
+    }
+
+    public function setEjemplar(Ejemplar $ejemplar): void
+    {
+        $this->ejemplar = $ejemplar;
+        $this->ejemplarId = $ejemplar->getId();
+    }
+
+    public function getLector(): ?Lector
+    {
+        return $this->lector;
+    }
+
+    public function setLector(Lector $lector): void
+    {
+        $this->lector = $lector;
+        $this->lectorId = $lector->getId();
+    }
+
+    public function isActivo(): bool
+    {
+        return $this->estado === self::ESTADO_ACTIVO;
+    }
+
+    public function isDevuelto(): bool
+    {
+        return $this->estado === self::ESTADO_DEVUELTO;
+    }
+
+    public function isVencido(): bool
+    {
+        return $this->estado === self::ESTADO_VENCIDO
+            || ($this->isActivo() && $this->fechaDevolucion < new DateTimeImmutable());
+    }
+
+    public function devolver(): void
+    {
+        $this->estado = self::ESTADO_DEVUELTO;
+    }
+
+    public function marcarVencido(): void
+    {
+        $this->estado = self::ESTADO_VENCIDO;
+    }
+
+    public function renovar(DateTimeImmutable $nuevaFechaDevolucion): void
+    {
+        $this->estado = self::ESTADO_RENOVADO;
+        $this->fechaDevolucion = $nuevaFechaDevolucion;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        $data = [
+            'id' => $this->id,
+            'fecha_prestamo' => $this->fechaPrestamo->format('Y-m-d H:i:s'),
+            'fecha_devolucion' => $this->fechaDevolucion->format('Y-m-d H:i:s'),
+            'estado' => $this->estado,
+            'tipo_prestamo_id' => $this->tipoPrestamoId,
+            'ejemplar_id' => $this->ejemplarId,
+            'lector_id' => $this->lectorId,
+            'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
+        ];
+
+        if ($this->tipoPrestamo !== null) {
+            $data['tipo_prestamo'] = $this->tipoPrestamo->toArray();
+        }
+
+        if ($this->ejemplar !== null) {
+            $data['ejemplar'] = $this->ejemplar->toArray();
+        }
+
+        if ($this->lector !== null) {
+            $data['lector'] = $this->lector->toArray();
+        }
+
+        return $data;
+    }
+}
