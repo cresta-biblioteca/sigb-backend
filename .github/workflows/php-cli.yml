@@ -1,0 +1,51 @@
+name: CI - PHP Quality Assurance
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Bajar el código
+    - uses: actions/checkout@v4
+
+    # 2. Instalar PHP (Usamos 8.3 general para recibir parches de seguridad)
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, intl, pdo, pdo_mysql, zip, gd
+        coverage: none
+
+    # 3. Optimización: Cachear dependencias de Composer para ir más rápido
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    # 4. Instalar dependencias
+    - name: Install Dependencies
+      run: composer install --prefer-dist --no-progress
+
+    # 5. Validar sintaxis básica (Lint) en src y public
+    - name: Check PHP Syntax (Lint)
+      run: find src public -name "*.php" -exec php -l {} \;
+
+    # 6. Validar Estándares de Código (PSR-12)
+    # Ahora revisamos src/ Y public/ (donde está tu index.php)
+    - name: Check Code Style (PSR-12)
+      run: ./vendor/bin/phpcs --standard=PSR12 src/ public/
+
+    # 7. Correr Tests con Pest
+    # Usamos el script "test" que definimos en composer.json
+    # - name: Run Test Suite (Pest)
+    #   run: composer test

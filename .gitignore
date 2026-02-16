@@ -26,3 +26,6 @@ coverage/
 
 # Docker
 docker-compose.override.yml
+
+# Agents
+CLAUDE.md

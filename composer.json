@@ -3,14 +3,20 @@
   "description": "Sistema de Gestión Bibliotecaria - API",
   "type": "project",
   "require": {
-    "php": ">=8.2",
+    "php": "^8.3",
     "ext-pdo": "*",
     "ext-mysqli": "*",
-    "ext-json": "*"
+    "ext-json": "*",
+    "vlucas/phpdotenv": "^5.6",
+    "bramus/router": "^1.6",
+    "firebase/php-jwt": "^6.10",
+    "robmorgan/phinx": "^0.16"
   },
   "require-dev": {
+    "fakerphp/faker": "^1.23",
     "pestphp/pest": "^2.34",
-    "phpunit/phpunit": "^10.5"
+    "phpunit/phpunit": "^10.5",
+    "squizlabs/php_codesniffer": "^4.0"
   },
   "autoload": {
     "psr-4": {
@@ -26,7 +32,10 @@
     "test": "pest",
     "test:unit": "pest --filter=Unit",
     "test:integration": "pest --filter=Integration",
-    "test:coverage": "pest --coverage"
+    "test:coverage": "pest --coverage",
+    "migrate": "vendor/bin/phinx migrate",
+    "migrate:rollback": "vendor/bin/phinx rollback",
+    "migrate:create": "vendor/bin/phinx create"
   },
   "config": {
     "allow-plugins": {
