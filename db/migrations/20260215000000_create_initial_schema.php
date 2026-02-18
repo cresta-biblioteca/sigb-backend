@@ -9,7 +9,6 @@ final class CreateInitialSchema extends AbstractMigration
     /**
      * Migrate Up - Crea todas las tablas del esquema inicial.
      *
-     * Similar a V1__create_schema.sql en Flyway
      */
     public function up(): void
     {
@@ -385,9 +384,7 @@ final class CreateInitialSchema extends AbstractMigration
     /**
      * Migrate Down - Elimina todo el esquema.
      *
-     * Esto es lo que NO existe en Flyway por defecto.
-     * En Flyway necesitas crear scripts U1__undo_schema.sql manualmente.
-     */
+    */
     public function down(): void
     {
         // Eliminar en orden inverso por las FK

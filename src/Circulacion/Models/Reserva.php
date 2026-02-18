@@ -11,23 +11,9 @@ use DateTimeImmutable;
 
 class Reserva extends Entity
 {
-    public const ESTADO_PENDIENTE = 'PENDIENTE';
-    public const ESTADO_CONFIRMADA = 'CONFIRMADA';
-    public const ESTADO_CANCELADA = 'CANCELADA';
-    public const ESTADO_VENCIDA = 'VENCIDA';
-    public const ESTADO_COMPLETADA = 'COMPLETADA';
-
-    private const ESTADOS_VALIDOS = [
-        self::ESTADO_PENDIENTE,
-        self::ESTADO_CONFIRMADA,
-        self::ESTADO_CANCELADA,
-        self::ESTADO_VENCIDA,
-        self::ESTADO_COMPLETADA,
-    ];
-
     private DateTimeImmutable $fechaReserva;
     private DateTimeImmutable $fechaVencimiento;
-    private string $estado;
+    private EstadoReserva $estado;
     private int $lectorId;
     private int $ejemplarId;
 
@@ -46,7 +32,7 @@ class Reserva extends Entity
         DateTimeImmutable $fechaVencimiento,
         int $lectorId,
         int $ejemplarId,
-        string $estado = self::ESTADO_PENDIENTE
+        EstadoReserva $estado = EstadoReserva::PENDIENTE
     ): self {
         $reserva = new self();
         $reserva->setFechaReserva($fechaReserva);
@@ -69,7 +55,7 @@ class Reserva extends Entity
         $reserva->id = (int) $row['id'];
         $reserva->fechaReserva = new DateTimeImmutable($row['fecha_reserva']);
         $reserva->fechaVencimiento = new DateTimeImmutable($row['fecha_vencimiento']);
-        $reserva->estado = $row['estado'];
+        $reserva->estado = EstadoReserva::from($row['estado']);
         $reserva->lectorId = (int) $row['lector_id'];
         $reserva->ejemplarId = (int) $row['ejemplar_id'];
         $reserva->setTimestamps(
@@ -100,14 +86,13 @@ class Reserva extends Entity
         $this->fechaVencimiento = $fechaVencimiento;
     }
 
-    public function getEstado(): string
+    public function getEstado(): EstadoReserva
     {
         return $this->estado;
     }
 
-    public function setEstado(string $estado): void
+    public function setEstado(EstadoReserva $estado): void
     {
-        $this->assertInArray($estado, self::ESTADOS_VALIDOS, 'estado');
         $this->estado = $estado;
     }
 
@@ -157,38 +142,33 @@ class Reserva extends Entity
 
     public function isPendiente(): bool
     {
-        return $this->estado === self::ESTADO_PENDIENTE;
+        return $this->estado === EstadoReserva::PENDIENTE;
     }
 
-    public function isConfirmada(): bool
+    public function isCompletada(): bool
     {
-        return $this->estado === self::ESTADO_CONFIRMADA;
+        return $this->estado === EstadoReserva::COMPLETADA;
     }
 
     public function isVencida(): bool
     {
-        return $this->estado === self::ESTADO_VENCIDA
+        return $this->estado === EstadoReserva::VENCIDA
             || ($this->isPendiente() && $this->fechaVencimiento < new DateTimeImmutable());
-    }
-
-    public function confirmar(): void
-    {
-        $this->estado = self::ESTADO_CONFIRMADA;
-    }
-
-    public function cancelar(): void
-    {
-        $this->estado = self::ESTADO_CANCELADA;
-    }
-
-    public function marcarVencida(): void
-    {
-        $this->estado = self::ESTADO_VENCIDA;
     }
 
     public function completar(): void
     {
-        $this->estado = self::ESTADO_COMPLETADA;
+        $this->estado = EstadoReserva::COMPLETADA;
+    }
+
+    public function cancelar(): void
+    {
+        $this->estado = EstadoReserva::CANCELADA;
+    }
+
+    public function marcarVencida(): void
+    {
+        $this->estado = EstadoReserva::VENCIDA;
     }
 
     /**
@@ -200,7 +180,7 @@ class Reserva extends Entity
             'id' => $this->id,
             'fecha_reserva' => $this->fechaReserva->format('Y-m-d H:i:s'),
             'fecha_vencimiento' => $this->fechaVencimiento->format('Y-m-d H:i:s'),
-            'estado' => $this->estado,
+            'estado' => $this->estado->value,
             'lector_id' => $this->lectorId,
             'ejemplar_id' => $this->ejemplarId,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),

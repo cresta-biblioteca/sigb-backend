@@ -11,21 +11,9 @@ use DateTimeImmutable;
 
 class Prestamo extends Entity
 {
-    public const ESTADO_ACTIVO = 'ACTIVO';
-    public const ESTADO_DEVUELTO = 'DEVUELTO';
-    public const ESTADO_VENCIDO = 'VENCIDO';
-    public const ESTADO_RENOVADO = 'RENOVADO';
-
-    private const ESTADOS_VALIDOS = [
-        self::ESTADO_ACTIVO,
-        self::ESTADO_DEVUELTO,
-        self::ESTADO_VENCIDO,
-        self::ESTADO_RENOVADO,
-    ];
-
     private DateTimeImmutable $fechaPrestamo;
     private DateTimeImmutable $fechaDevolucion;
-    private string $estado;
+    private EstadoPrestamo $estado;
     private int $tipoPrestamoId;
     private int $ejemplarId;
     private int $lectorId;
@@ -47,7 +35,7 @@ class Prestamo extends Entity
         int $tipoPrestamoId,
         int $ejemplarId,
         int $lectorId,
-        string $estado = self::ESTADO_ACTIVO
+        EstadoPrestamo $estado = EstadoPrestamo::ACTIVO
     ): self {
         $prestamo = new self();
         $prestamo->setFechaPrestamo($fechaPrestamo);
@@ -71,7 +59,7 @@ class Prestamo extends Entity
         $prestamo->id = (int) $row['id'];
         $prestamo->fechaPrestamo = new DateTimeImmutable($row['fecha_prestamo']);
         $prestamo->fechaDevolucion = new DateTimeImmutable($row['fecha_devolucion']);
-        $prestamo->estado = $row['estado'];
+        $prestamo->estado = EstadoPrestamo::from($row['estado']);
         $prestamo->tipoPrestamoId = (int) $row['tipo_prestamo_id'];
         $prestamo->ejemplarId = (int) $row['ejemplar_id'];
         $prestamo->lectorId = (int) $row['lector_id'];
@@ -103,14 +91,13 @@ class Prestamo extends Entity
         $this->fechaDevolucion = $fechaDevolucion;
     }
 
-    public function getEstado(): string
+    public function getEstado(): EstadoPrestamo
     {
         return $this->estado;
     }
 
-    public function setEstado(string $estado): void
+    public function setEstado(EstadoPrestamo $estado): void
     {
-        $this->assertInArray($estado, self::ESTADOS_VALIDOS, 'estado');
         $this->estado = $estado;
     }
 
@@ -182,33 +169,33 @@ class Prestamo extends Entity
 
     public function isActivo(): bool
     {
-        return $this->estado === self::ESTADO_ACTIVO;
+        return $this->estado === EstadoPrestamo::ACTIVO;
     }
 
     public function isDevuelto(): bool
     {
-        return $this->estado === self::ESTADO_DEVUELTO;
+        return $this->estado === EstadoPrestamo::DEVUELTO;
     }
 
     public function isVencido(): bool
     {
-        return $this->estado === self::ESTADO_VENCIDO
+        return $this->estado === EstadoPrestamo::VENCIDO
             || ($this->isActivo() && $this->fechaDevolucion < new DateTimeImmutable());
     }
 
     public function devolver(): void
     {
-        $this->estado = self::ESTADO_DEVUELTO;
+        $this->estado = EstadoPrestamo::DEVUELTO;
     }
 
     public function marcarVencido(): void
     {
-        $this->estado = self::ESTADO_VENCIDO;
+        $this->estado = EstadoPrestamo::VENCIDO;
     }
 
     public function renovar(DateTimeImmutable $nuevaFechaDevolucion): void
     {
-        $this->estado = self::ESTADO_RENOVADO;
+        $this->estado = EstadoPrestamo::RENOVADO;
         $this->fechaDevolucion = $nuevaFechaDevolucion;
     }
 
@@ -221,7 +208,7 @@ class Prestamo extends Entity
             'id' => $this->id,
             'fecha_prestamo' => $this->fechaPrestamo->format('Y-m-d H:i:s'),
             'fecha_devolucion' => $this->fechaDevolucion->format('Y-m-d H:i:s'),
-            'estado' => $this->estado,
+            'estado' => $this->estado->value,
             'tipo_prestamo_id' => $this->tipoPrestamoId,
             'ejemplar_id' => $this->ejemplarId,
             'lector_id' => $this->lectorId,
