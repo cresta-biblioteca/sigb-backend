@@ -13,15 +13,21 @@ use App\Auth\Repositories\RoleRepository;
 use App\Lectores\Repositories\LectorRepository;
 use App\Auth\Models\User;
 use App\Lectores\Models\Lector;
+use PDO;
 
 class AuthService
 {
+    private PDO $pdo;
     private AuthRepository $authRepository;
     private LectorRepository $lectorRepository;
     private RoleRepository $roleRepository;
 
-    public function __construct(AuthRepository $repository, LectorRepository $lectorRepository)
-    {
+    public function __construct(
+        PDO $pdo,
+        AuthRepository $repository,
+        LectorRepository $lectorRepository
+    ) {
+        $this->pdo = $pdo;
         $this->authRepository = $repository;
         $this->lectorRepository = $lectorRepository;
     }
@@ -36,54 +42,62 @@ class AuthService
             throw new UserAlreadyExistsException("User with email already exists");
         }
 
-        $role = $this->roleRepository->getRoleByName('lector');
+        $this->pdo->beginTransaction();
 
-        $user = User::create(
-            $request->dni,
-            $request->password,
-            $role->getId()
-        );
+        try {
+            $role = $this->roleRepository->getRoleByName('lector');
 
-        $savedUser = $this->authRepository->create(
-            [
-                'dni' => $user->getDni(),
-                'password' => $user->getPassword(),
-                'role_id' => $user->getRoleId(),
-            ]
-        );
+            $user = User::create(
+                $request->dni,
+                $request->password,
+                $role->getId()
+            );
 
-        $savedUser->setRole($role);
+            $savedUser = $this->authRepository->create(
+                [
+                    'dni' => $user->getDni(),
+                    'password' => $user->getPassword(),
+                    'role_id' => $user->getRoleId(),
+                ]
+            );
 
-        // Ahora genero el lector
-        $lector = Lector::create(
-            $this->generarTarjetaId(),
-            $user->getId(),
-            $request->nombre,
-            $request->apellido,
-            $request->fechaNacimiento,
-            $request->telefono,
-            $request->email,
-            $request->legajo,
-            $request->genero,
-            $request->crestaId
-        );
+            $savedUser->setRole($role);
 
-        $savedLector = $this->lectorRepository->create(
-            [
-                'tarjeta_id' => $lector->getTarjetaId(),
-                'user_id' => $lector->getUserId(),
-                'nombre' => $lector->getNombre(),
-                'apellido' => $lector->getApellido(),
-                'fecha_nacimiento' => $lector->getFechaNacimiento()->format('Y-m-d'),
-                'telefono' => $lector->getTelefono(),
-                'email' => $lector->getEmail(),
-                'legajo' => $lector->getLegajo(),
-                'genero' => $lector->getGenero(),
-                'cresta_id' => $lector->getCrestaId()
-            ]
-        );
+            $lector = Lector::create(
+                $this->generarTarjetaId(),
+                $user->getId(),
+                $request->nombre,
+                $request->apellido,
+                $request->fechaNacimiento,
+                $request->telefono,
+                $request->email,
+                $request->legajo,
+                $request->genero,
+                $request->crestaId
+            );
 
-        return UserMapper::toRegisterResponse($savedUser, $savedLector);
+            $savedLector = $this->lectorRepository->create(
+                [
+                    'tarjeta_id' => $lector->getTarjetaId(),
+                    'user_id' => $lector->getUserId(),
+                    'nombre' => $lector->getNombre(),
+                    'apellido' => $lector->getApellido(),
+                    'fecha_nacimiento' => $lector->getFechaNacimiento()->format('Y-m-d'),
+                    'telefono' => $lector->getTelefono(),
+                    'email' => $lector->getEmail(),
+                    'legajo' => $lector->getLegajo(),
+                    'genero' => $lector->getGenero(),
+                    'cresta_id' => $lector->getCrestaId()
+                ]
+            );
+
+            $this->pdo->commit();
+
+            return UserMapper::toRegisterResponse($savedUser, $savedLector);
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     private function generarTarjetaId(): string
