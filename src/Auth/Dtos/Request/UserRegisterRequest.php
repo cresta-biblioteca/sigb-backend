@@ -6,18 +6,18 @@ namespace App\Auth\Dtos\Request;
 
 use DateTimeImmutable;
 
-class UserRegisterRequest {
-    public readonly string $dni;
-    public readonly string $password;
+readonly class UserRegisterRequest {
+    public string $dni;
+    public string $password;
     // datos del lector
-    public readonly string $nombre;
-    public readonly string $apellido;
-    public readonly ?string $legajo;
-    public readonly ?string $genero;
-    public readonly DateTimeImmutable $fechaNacimiento;
-    public readonly string $telefono;
-    public readonly string $email;
-    public readonly ?string $crestaId;
+    public string $nombre;
+    public string $apellido;
+    public ?string $legajo;
+    public ?string $genero;
+    public DateTimeImmutable $fechaNacimiento;
+    public string $telefono;
+    public string $email;
+    public ?string $crestaId;
 
     public function __construct(
         string $dni,
