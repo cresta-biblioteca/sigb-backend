@@ -89,18 +89,6 @@ abstract class Repository
     }
 
     /**
-     * Guarda una entidad (insert o update)
-     */
-    public function save(Entity $entity): void
-    {
-        if ($entity->isNew()) {
-            $this->insert($entity);
-        } else {
-            $this->update($entity);
-        }
-    }
-
-    /**
      * Elimina una entidad por su ID
      */
     public function delete(int $id): bool
@@ -138,16 +126,6 @@ abstract class Repository
 
         return $stmt->fetch() !== false;
     }
-
-    /**
-     * Inserta una nueva entidad
-     */
-    abstract protected function insert(Entity $entity): void;
-
-    /**
-     * Actualiza una entidad existente
-     */
-    abstract protected function update(Entity $entity): void;
 
     /**
      * Ejecuta una consulta con parámetros y retorna las entidades
