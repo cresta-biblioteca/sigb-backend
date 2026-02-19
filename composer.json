@@ -35,7 +35,9 @@
     "test:coverage": "pest --coverage",
     "migrate": "vendor/bin/phinx migrate",
     "migrate:rollback": "vendor/bin/phinx rollback",
-    "migrate:create": "vendor/bin/phinx create"
+    "migrate:create": "vendor/bin/phinx create",
+    "lint": "phpcs --standard=PSR12 src/",
+    "lint:fix": "phpcbf --standard=PSR12 src/"
   },
   "config": {
     "allow-plugins": {

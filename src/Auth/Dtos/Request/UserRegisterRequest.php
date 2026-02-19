@@ -6,7 +6,8 @@ namespace App\Auth\Dtos\Request;
 
 use DateTimeImmutable;
 
-readonly class UserRegisterRequest {
+readonly class UserRegisterRequest
+{
     public string $dni;
     public string $password;
     // datos del lector
