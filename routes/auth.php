@@ -17,7 +17,7 @@ $router->mount('/auth', function () use ($router) {
         $pdo = Connection::getInstance();
         $authRepository = new AuthRepository($pdo);
         $lectorRepository = new LectorRepository($pdo);
-        $authService = new AuthService($authRepository, $lectorRepository);
+        $authService = new AuthService($pdo, $authRepository, $lectorRepository);
         $controller = new AuthController($authService);
         $controller->createUser();
     });
