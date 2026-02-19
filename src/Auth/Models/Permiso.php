@@ -32,7 +32,7 @@ class Permiso extends Entity
      *
      * @param array<string, mixed> $row
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $permiso = new self();
         $permiso->id = (int) $row['id'];

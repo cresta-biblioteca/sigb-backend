@@ -7,20 +7,101 @@ namespace App\Auth\Services;
 use App\Auth\Exception\UserAlreadyExistsException;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserRegisterResponse;
+use App\Auth\Mappers\UserMapper;
 use App\Auth\Repositories\AuthRepository;
+use App\Auth\Repositories\RoleRepository;
+use App\Lectores\Repositories\LectorRepository;
+use App\Auth\Models\User;
+use App\Lectores\Models\Lector;
+use PDO;
 
-class AuthService {
-    private AuthRepository $repository;
+class AuthService
+{
+    private PDO $pdo;
+    private AuthRepository $authRepository;
+    private LectorRepository $lectorRepository;
+    private RoleRepository $roleRepository;
 
-    public function __construct(AuthRepository $repository) {
-        $this->repository = $repository;
+    public function __construct(
+        PDO $pdo,
+        AuthRepository $repository,
+        LectorRepository $lectorRepository
+    ) {
+        $this->pdo = $pdo;
+        $this->authRepository = $repository;
+        $this->lectorRepository = $lectorRepository;
     }
 
-    public function register(UserRegisterRequest $request): UserRegisterResponse {
-        if ($this->repository->findByDni($request->dni) !== null) {
+    public function register(UserRegisterRequest $request): ?UserRegisterResponse
+    {
+        if ($this->authRepository->findByDni($request->dni) !== null) {
             throw new UserAlreadyExistsException("User with DNI already exists");
         }
 
-        return null;
+        if ($this->lectorRepository->existsByEmail($request->email) !== null) {
+            throw new UserAlreadyExistsException("User with email already exists");
+        }
+
+        $this->pdo->beginTransaction();
+
+        try {
+            $role = $this->roleRepository->getRoleByName('lector');
+
+            $user = User::create(
+                $request->dni,
+                $request->password,
+                $role->getId()
+            );
+
+            $savedUser = $this->authRepository->create(
+                [
+                    'dni' => $user->getDni(),
+                    'password' => $user->getPassword(),
+                    'role_id' => $user->getRoleId(),
+                ]
+            );
+
+            $savedUser->setRole($role);
+
+            $lector = Lector::create(
+                $this->generarTarjetaId(),
+                $user->getId(),
+                $request->nombre,
+                $request->apellido,
+                $request->fechaNacimiento,
+                $request->telefono,
+                $request->email,
+                $request->legajo,
+                $request->genero,
+                $request->crestaId
+            );
+
+            $savedLector = $this->lectorRepository->create(
+                [
+                    'tarjeta_id' => $lector->getTarjetaId(),
+                    'user_id' => $lector->getUserId(),
+                    'nombre' => $lector->getNombre(),
+                    'apellido' => $lector->getApellido(),
+                    'fecha_nacimiento' => $lector->getFechaNacimiento()->format('Y-m-d'),
+                    'telefono' => $lector->getTelefono(),
+                    'email' => $lector->getEmail(),
+                    'legajo' => $lector->getLegajo(),
+                    'genero' => $lector->getGenero(),
+                    'cresta_id' => $lector->getCrestaId()
+                ]
+            );
+
+            $this->pdo->commit();
+
+            return UserMapper::toRegisterResponse($savedUser, $savedLector);
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function generarTarjetaId(): string
+    {
+        return "tarjeta identificadora " . uniqid();
     }
 }
