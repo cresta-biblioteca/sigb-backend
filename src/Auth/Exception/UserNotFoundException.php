@@ -11,6 +11,5 @@ class UserNotFoundException extends EntityNotFoundException
     public function __construct(string $dni)
     {
         parent::__construct('User', $dni);
-        
     }
 }

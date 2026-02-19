@@ -19,7 +19,7 @@ class LectorRepository extends Repository
         return Lector::class;
     }
 
-    public function create(array $params) : ?Lector
+    public function create(array $params): ?Lector
     {
         $sql = "INSERT INTO {$this->getTableName()} (nombre, apellido, email) VALUES (:nombre, :apellido, :email)";
 
@@ -28,8 +28,7 @@ class LectorRepository extends Repository
 
         $row = $stmt->fetch();
 
-        if ($row === false)
-        {
+        if ($row === false) {
             return null;
         }
 

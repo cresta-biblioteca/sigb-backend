@@ -11,11 +11,10 @@ readonly class UserRegisterResponse
     public string $fullName;
 
     public function __construct(
-        int    $userId,
-        int    $lectorId,
+        int $userId,
+        int $lectorId,
         string $fullName
-    )
-    {
+    ) {
         $this->userId = $userId;
         $this->lectorId = $lectorId;
         $this->fullName = $fullName;

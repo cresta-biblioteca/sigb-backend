@@ -9,7 +9,6 @@ use App\Auth\Models\Role;
 
 class RoleRepository extends Repository
 {
-
     protected function getTableName(): string
     {
         return 'role';
