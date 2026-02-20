@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Auth\Dtos\Response;
 
-readonly class UserRegisterResponse
-{
-    public int $userId;
-    public int $lectorId;
-    public string $fullName;
+use JsonSerializable;
 
+readonly class UserRegisterResponse implements JsonSerializable
+{
     public function __construct(
-        int $userId,
-        int $lectorId,
-        string $fullName
+        private int $userId,
+        private int $lectorId,
+        private string $fullName
     ) {
-        $this->userId = $userId;
-        $this->lectorId = $lectorId;
-        $this->fullName = $fullName;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'userId' => $this->userId,
+            'lectorId' => $this->lectorId,
+            'fullName' => $this->fullName,
+        ];
     }
 }

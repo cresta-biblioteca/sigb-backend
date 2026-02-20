@@ -19,7 +19,7 @@ class JwtTokenProvider
      */
     public function __construct()
     {
-        $key = getenv('JWT_SECRET');
+        $key = $_ENV['JWT_SECRET'] ?? false;
         if (!$key || strlen($key) < 32) {
             throw new Exception('JWT_SECRET must be set and at least 32 characters long');
         }

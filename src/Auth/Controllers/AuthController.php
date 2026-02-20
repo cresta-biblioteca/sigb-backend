@@ -14,6 +14,7 @@ use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use DateTimeImmutable;
+use Throwable;
 
 readonly class AuthController
 {
@@ -75,7 +76,7 @@ readonly class AuthController
             JsonHelper::jsonResponse($response, 200);
         } catch (UserNotFoundException $e) {
             JsonHelper::jsonResponse(['message' => 'Credenciales inválidas'], 401);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             error_log('[AuthController::login] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
         }

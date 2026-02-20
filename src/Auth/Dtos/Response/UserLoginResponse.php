@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Auth\Dtos\Response;
 
-readonly class UserLoginResponse
+use JsonSerializable;
+
+readonly class UserLoginResponse implements JsonSerializable
 {
     public function __construct(private string $token)
     {
     }
 
-    public function getToken(): string
+    public function jsonSerialize(): array
     {
-        return $this->token;
+        return [
+            'token' => $this->token,
+        ];
     }
 }
