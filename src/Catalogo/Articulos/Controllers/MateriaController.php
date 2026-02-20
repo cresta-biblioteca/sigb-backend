@@ -38,7 +38,7 @@ class MateriaController
     public function createMateria(): void
     {
         try {
-            $input = json_decode(file_get_contents("php://input"), true);
+            $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
             MateriaRequestValidator::validate($input);
 
@@ -93,7 +93,7 @@ class MateriaController
                 return;
             }
 
-            $input = json_decode(file_get_contents("php://input"), true);
+            $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
             MateriaRequestValidator::validate($input);
 
