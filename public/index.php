@@ -24,5 +24,6 @@ $router->set404(function () {
 // $router->before('GET|POST|PUT|DELETE|PATCH', '/.*', function () { JwtMiddleware::handle(); });
 
 require_once __DIR__ . '/../routes/auth.php';
+require_once __DIR__ . '/../routes/materia.php';
 
 $router->run();

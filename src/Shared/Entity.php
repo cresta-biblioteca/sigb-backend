@@ -220,14 +220,6 @@ abstract class Entity
         }
     }
 
-     /**
-     * Crea una entidad desde una fila de base de datos
-     *
-     * @param array<string, mixed> $row
-     */
-    abstract public static function fromDatabase(array $row): self;
-
-
     /**
      * Reconstruye la entidad desde un registro de base de datos
      *

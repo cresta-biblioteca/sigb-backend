@@ -9,6 +9,7 @@ use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Mappers\MateriaMapper;
 use App\Catalogo\Articulos\Services\MateriaService;
 use App\Catalogo\Articulos\Validators\MateriaRequestValidator;
+use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use Exception;
 
@@ -57,6 +58,12 @@ class MateriaController
                 'message' => $e->getMessage(),
                 'errors' => $e->getErrors()
             ]);
+        } catch (BusinessValidationException $e) {
+            http_response_code(400);
+            echo json_encode([
+                "message" => $e->getMessage(),
+                "field" => $e->getField()
+            ]);
         } catch (MateriaAlreadyExistsException $e) {
             http_response_code(409);
             echo json_encode([
@@ -74,10 +81,10 @@ class MateriaController
         }
     }
 
-    public function updateMateria(int $id): void
+    public function updateMateria($id): void
     {
         try {
-            if ($id < 1) {
+            if ((int)$id < 1) {
                 http_response_code(422);
                 echo json_encode([
                     "error" => true,
@@ -92,7 +99,7 @@ class MateriaController
 
             $request = MateriaMapper::fromArray($input);
 
-            $materia = $this->service->updateMateria($id, $request);
+            $materia = $this->service->updateMateria((int)$id, $request);
 
             http_response_code(200);
             echo json_encode([
