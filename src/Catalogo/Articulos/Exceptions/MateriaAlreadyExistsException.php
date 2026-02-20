@@ -4,22 +4,16 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Exceptions;
 
-use Exception;
+use App\Shared\Exceptions\EntityAlreadyExistsException;
 
-class MateriaAlreadyExistsException extends Exception
+class MateriaAlreadyExistsException extends EntityAlreadyExistsException
 {
-    private string $materia;
-
     public function __construct(string $materia)
     {
-        $this->materia = $materia;
         parent::__construct(
-            sprintf("La materia '%s' ya se encuentra registrada", $materia)
+            'Materia',
+            'titulo',
+            $materia
         );
-    }
-
-    public function getMateria(): string
-    {
-        return $this->materia;
     }
 }

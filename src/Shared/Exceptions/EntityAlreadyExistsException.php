@@ -11,7 +11,7 @@ class EntityAlreadyExistsException extends Exception
     public function __construct(string $entityType, string $field, mixed $value)
     {
         parent::__construct(
-            sprintf('%s con %s "%s" ya existe', $entityType, $field, (string)$value)
+            sprintf('%s con %s "%s" ya existe', $entityType, $field, (string) $value)
         );
     }
 }
