@@ -29,9 +29,14 @@ class LectorRepository extends Repository
 
     public function create(array $params): ?Lector
     {
-        $sql = "INSERT INTO {$this->getTableName()}
-            (tarjeta_id, user_id, nombre, apellido, fecha_nacimiento, telefono, email, legajo, genero, cresta_id)
-            VALUES (:tarjeta_id, :user_id, :nombre, :apellido, :fecha_nacimiento, :telefono, :email, :legajo, :genero, :cresta_id)";
+        $sql = "
+            INSERT INTO {$this->getTableName()}
+                (tarjeta_id, user_id, nombre, apellido, fecha_nacimiento,
+                telefono, email, legajo, genero, cresta_id)
+            VALUES
+                (:tarjeta_id, :user_id, :nombre, :apellido, :fecha_nacimiento,
+                :telefono, :email, :legajo, :genero, :cresta_id)
+            ";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);

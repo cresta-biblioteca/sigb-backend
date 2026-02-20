@@ -33,6 +33,9 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html
 
+# Marcar directorio como seguro para git (evita error de dubious ownership)
+RUN git config --global --add safe.directory /var/www/html
+
 WORKDIR /var/www/html
 
 # Exponer puerto 80
