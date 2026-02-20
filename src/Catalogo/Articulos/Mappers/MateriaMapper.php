@@ -9,7 +9,6 @@ use App\Shared\Exceptions\ValidationException;
 
 class MateriaMapper
 {
-
     public static function fromArray(array $input): MateriaRequest
     {
         if (!isset($input["titulo"])) {

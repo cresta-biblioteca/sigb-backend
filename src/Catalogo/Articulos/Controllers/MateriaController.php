@@ -15,7 +15,9 @@ use Exception;
 
 class MateriaController
 {
-    public function __construct(private MateriaService $service) {}
+    public function __construct(private MateriaService $service)
+    {
+    }
 
     public function getAll(): void
     {

@@ -14,7 +14,9 @@ use App\Catalogo\Articulos\Repository\MateriaRepository;
 
 class MateriaService
 {
-    public function __construct(private MateriaRepository $repo) {}
+    public function __construct(private MateriaRepository $repo)
+    {
+    }
 
     public function getAll(): array
     {
