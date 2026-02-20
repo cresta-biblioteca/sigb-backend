@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Controllers;
 
+use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
-use App\Catalogo\Libros\Mappers\LibroMapper;
-use App\Catalogo\Libros\Repositories\LibroRepository;
-use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Dtos\Request\LibroRequest;
-use App\Catalogo\Libros\Dtos\Response\LibroResponse;
+use App\Catalogo\Libros\Services\LibroService;
 
 class LibroController
 {
     public function __construct(
-        private LibroRepository $repository
+        private LibroService $service
     ) {
     }
 
@@ -38,12 +36,10 @@ class LibroController
             $filters['cdu'] = (int) $_GET['cdu'];
         }
 
-        $libros = !empty($filters)
-            ? $this->repository->search($filters)
-            : $this->repository->findAll();
+        $libros = $this->service->listAll($filters);
 
         $response = array_map(
-            fn(Libro $libro) => LibroMapper::toResponse($libro)->toArray(),
+            fn($libroDto) => $libroDto->toArray(),
             $libros
         );
 
@@ -56,10 +52,10 @@ class LibroController
     public function showById(int $id): void
     {
         try {
-            $libro = $this->repository->findByIdOrFail($id);
+            $libro = $this->service->getById($id);
 
             $this->json(
-                LibroMapper::toResponse($libro)->toArray()
+                $libro->toArray()
             );
         } catch (LibroNotFoundException $e) {
             $this->json(['error' => $e->getMessage()], 404);
@@ -82,15 +78,14 @@ class LibroController
 
             $requestDto = LibroRequest::fromArray($data);
 
-            $libro = LibroMapper::requestToEntity($requestDto);
-
-            $this->repository->save($libro);
+            $libro = $this->service->create($requestDto);
 
             $this->json(
-                LibroMapper::toResponse($libro)->toArray(),
+                $libro->toArray(),
                 201
             );
-
+        } catch (LibroAlreadyExistsException $e) {
+            $this->json(['error' => $e->getMessage()], 409);
         } catch (\JsonException) {
             $this->json(['error' => 'JSON inválido'], 400);
         } catch (\Throwable $e) {
@@ -105,8 +100,6 @@ class LibroController
     public function update(int $id): void
     {
         try {
-            $this->repository->findByIdOrFail($id);
-
             $data = json_decode(
                 file_get_contents('php://input'),
                 true,
@@ -116,13 +109,10 @@ class LibroController
 
             $requestDto = LibroRequest::fromArray($data);
 
-            $libro = LibroMapper::requestToEntity($requestDto);
-
-
-            $this->repository->update($libro);
+            $libro = $this->service->update($id, $requestDto);
 
             $this->json(
-                LibroMapper::toResponse($libro)->toArray()
+                $libro->toArray()
             );
 
         } catch (LibroNotFoundException $e) {
@@ -140,9 +130,7 @@ class LibroController
     public function destroy(int $id): void
     {
         try {
-            $this->repository->findByIdOrFail($id);
-
-            $this->repository->delete($id);
+            $this->service->delete($id);
 
             $this->json(['message' => 'Libro eliminado']);
         } catch (LibroNotFoundException $e) {

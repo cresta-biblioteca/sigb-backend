@@ -50,7 +50,8 @@ class LibroMapper
             cdu: $libro->getCdu(),
             exportMarc: $libro->getExportMarc(),
             createdAt: $libro->getCreatedAt() ?? new \DateTimeImmutable(),
-            updatedAt: $libro->getUpdatedAt() ?? new \DateTimeImmutable()
+            updatedAt: $libro->getUpdatedAt() ?? new \DateTimeImmutable(),
+            articulo: $libro->getArticulo()?->toArray()
         );
     }
 }

@@ -18,7 +18,9 @@ class LibroResponse
         public readonly ?int $cdu,
         public readonly string $exportMarc,
         public readonly DateTimeImmutable $createdAt,
-        public readonly DateTimeImmutable $updatedAt
+        public readonly DateTimeImmutable $updatedAt,
+        /** @var array<string, mixed>|null */
+        public readonly ?array $articulo = null
     ) {
     }
 
@@ -39,6 +41,7 @@ class LibroResponse
             'export_marc' => $this->exportMarc,
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt->format('Y-m-d H:i:s'),
+            'articulo' => $this->articulo,
         ];
     }
 }

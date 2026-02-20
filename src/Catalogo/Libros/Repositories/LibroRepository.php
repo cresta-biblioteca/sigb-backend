@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Repositories;
 
+use App\Catalogo\Articulos\Models\Articulo;
 use App\Shared\Repository;
 use App\Catalogo\Libros\Models\Libro;
 use PDO;
@@ -24,7 +25,19 @@ class LibroRepository extends Repository
      **/
     public function findById(int $id): ?Libro
     {
-        $sql = "SELECT * FROM libro WHERE articulo_id = :id LIMIT 1";
+        $sql = "SELECT 
+            l.*,
+            a.id AS a_id,
+            a.titulo AS a_titulo,
+            a.anio_publicacion AS a_anio_publicacion,
+            a.tipo_documento_id AS a_tipo_documento_id,
+            a.idioma AS a_idioma,
+            a.created_at AS a_created_at,
+            a.updated_at AS a_updated_at
+            FROM libro l
+            INNER JOIN articulo a ON a.id = l.articulo_id
+            WHERE l.articulo_id = :id
+            LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
@@ -35,7 +48,34 @@ class LibroRepository extends Repository
             return null;
         }
 
-        return Libro::fromDatabase($row);
+        return $this->hydrateLibroWithArticulo($row);
+    }
+
+    /**
+     * @return Libro[]
+     */
+    public function findAll(): array
+    {
+        $sql = "SELECT 
+                l.*,
+                a.id AS a_id,
+                a.titulo AS a_titulo,
+                a.anio_publicacion AS a_anio_publicacion,
+                a.tipo_documento_id AS a_tipo_documento_id,
+                a.idioma AS a_idioma,
+                a.created_at AS a_created_at,
+                a.updated_at AS a_updated_at
+            FROM libro l
+            INNER JOIN articulo a ON a.id = l.articulo_id";
+
+        $stmt = $this->pdo->query($sql);
+        $libros = [];
+
+        while ($row = $stmt->fetch()) {
+            $libros[] = $this->hydrateLibroWithArticulo($row);
+        }
+
+        return $libros;
     }
 
     public function delete(int $id): bool
@@ -196,26 +236,70 @@ class LibroRepository extends Repository
         $params = [];
 
         if (!empty($filters['autor'])) {
-            $conditions[] = "autor LIKE :autor";
+            $conditions[] = "l.autor LIKE :autor";
             $params['autor'] = '%' . $filters['autor'] . '%';
         }
 
         if (!empty($filters['isbn'])) {
-            $conditions[] = "isbn = :isbn";
+            $conditions[] = "l.isbn = :isbn";
             $params['isbn'] = $filters['isbn'];
         }
 
         if (!empty($filters['cdu'])) {
-            $conditions[] = "cdu = :cdu";
+            $conditions[] = "l.cdu = :cdu";
             $params['cdu'] = $filters['cdu'];
         }
 
-        $sql = "SELECT * FROM libro";
+        $sql = "SELECT 
+                l.*,
+                a.id AS a_id,
+                a.titulo AS a_titulo,
+                a.anio_publicacion AS a_anio_publicacion,
+                a.tipo_documento_id AS a_tipo_documento_id,
+                a.idioma AS a_idioma,
+                a.created_at AS a_created_at,
+                a.updated_at AS a_updated_at
+            FROM libro l
+            INNER JOIN articulo a ON a.id = l.articulo_id";
 
         if ($conditions) {
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        return $this->findByQuery($sql, $params);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $libros = [];
+        while ($row = $stmt->fetch()) {
+            $libros[] = $this->hydrateLibroWithArticulo($row);
+        }
+
+        return $libros;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function hydrateLibroWithArticulo(array $row): Libro
+    {
+        $libro = Libro::fromDatabase($row);
+
+        if (!isset($row['a_id'])) {
+            return $libro;
+        }
+
+        $articulo = Articulo::fromDatabase([
+            'id' => $row['a_id'],
+            'titulo' => $row['a_titulo'],
+            'anio_publicacion' => $row['a_anio_publicacion'],
+            'tipo_documento_id' => $row['a_tipo_documento_id'],
+            'idioma' => $row['a_idioma'],
+            'created_at' => $row['a_created_at'],
+            'updated_at' => $row['a_updated_at'],
+        ]);
+
+        $libro->setArticulo($articulo);
+
+        return $libro;
     }
 }
