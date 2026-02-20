@@ -23,29 +23,42 @@ class MateriaRepository extends Repository
         return Materia::class;
     }
 
-    protected function insert(Entity $entity): void
+    public function insertMateria(Entity $materia): Materia
     {
-        /** @var Materia $entity */
+        /** @var Materia $materia */
         $sql = 'INSERT INTO materia(titulo) VALUES (:titulo)';
-        
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'titulo' => $entity->getTitulo(),
+        $success = $stmt->execute([
+            'titulo' => $materia->getTitulo(),
         ]);
 
-        $entity->setId((int) $this->pdo->lastInsertId());
+        if ($success === false || $stmt->rowCount() == 0) {
+            throw new \Exception("Error al insertar la materia");
+        }
+
+        $materia->setId((int) $this->pdo->lastInsertId());
+        return $materia;
     }
 
-    protected function update(Entity $entity): void
+    public function updateMateria(int $id, Entity $materia): Materia
     {
-        /** @var Materia $entity */
+        /** @var Materia $materia */
         $sql = 'UPDATE materia SET titulo = :titulo WHERE id = :id';
-        
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'titulo' => $entity->getTitulo(),
-            'id' => $entity->getId(),
+        $success = $stmt->execute([
+            'titulo' => $materia->getTitulo(),
+            'id' => $id
         ]);
+
+        if ($success === false) {
+            throw new \Exception("Error al actualizar la materia");
+        }
+
+        $materia->setId($id);
+
+        return $materia;
     }
 
     /**
@@ -56,7 +69,7 @@ class MateriaRepository extends Repository
     public function findByTitulo(string $titulo): array
     {
         $sql = 'SELECT * FROM materia WHERE titulo LIKE :titulo ORDER BY titulo';
-        
+
         return $this->findByQuery($sql, [
             'titulo' => '%' . $titulo . '%',
         ]);

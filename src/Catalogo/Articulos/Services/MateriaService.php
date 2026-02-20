@@ -4,46 +4,59 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Services;
 
+use App\Catalogo\Articulos\Dtos\Request\MateriaRequest;
+use App\Catalogo\Articulos\Dtos\Response\MateriaResponse;
 use App\Catalogo\Articulos\Exceptions\MateriaAlreadyExistsException;
+use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
+use App\Catalogo\Articulos\Mappers\MateriaMapper;
 use App\Catalogo\Articulos\Models\Materia;
 use App\Catalogo\Articulos\Repository\MateriaRepository;
-use App\Shared\Exceptions\ValidationException;
 
 class MateriaService
 {
-    public function __construct(private MateriaRepository $repo)
-    {
-    }
+    public function __construct(private MateriaRepository $repo) {}
 
-    public function getAll(): array {
+    public function getAll(): array
+    {
         $materias = $this->repo->findAll();
-        $materiasDTO = array_map(fn($materia) => $materia->toArray(), $materias);
+        $materiasDTO = array_map(fn($materia) => MateriaMapper::toMateriaResponse($materia), $materias);
         return $materiasDTO;
     }
 
-    public function createMateria(array $input): Materia
+    public function createMateria(MateriaRequest $request): MateriaResponse
     {
-        // Validar que el campo titulo exista
-        if (!isset($input['titulo'])) {
-            throw ValidationException::forField('titulo', 'El campo titulo es requerido');
+        // Ya se valida en el modelo que no este vacio y no supere los 100 caracteres
+        $materia = MateriaMapper::fromMateriaRequest($request);
+
+        // Sugerencia -> cambiar a unique el titulo en la base de datos y se evita este check
+        if ($this->repo->findCoincidence($materia->getTitulo())) {
+            throw new MateriaAlreadyExistsException($materia->getTitulo());
         }
 
-        $titulo = trim($input['titulo']);
+        $materiaCreada = $this->repo->insertMateria($materia);
+        return MateriaMapper::toMateriaResponse($materiaCreada);
+    }
 
-        // Validar que no esté vacío después del trim
-        if (empty($titulo)) {
-            throw ValidationException::forField('titulo', 'El campo titulo no puede estar vacío');
+    public function updateMateria(int $id, MateriaRequest $request): MateriaResponse
+    {
+        $materia = MateriaMapper::fromMateriaRequest($request);
+
+        /** @var Materia $materiaExistente */
+        $materiaExistente = $this->repo->findById($id);
+
+        if (!$materiaExistente) {
+            throw new MateriaNotFoundException($id);
         }
 
-        // Verificar si ya existe una materia con ese título
-        if ($this->repo->findCoincidence($titulo)) {
-            throw new MateriaAlreadyExistsException($titulo);
+        if ($materia->getTitulo() !== $materiaExistente->getTitulo()) {
+            $coincidencia = $this->repo->findCoincidence($materia->getTitulo());
+            if ($coincidencia && $coincidencia->getId() !== $id) {
+                throw new MateriaAlreadyExistsException($materia->getTitulo());
+            }
         }
 
-        // Crear y guardar la materia (las validaciones de longitud están en el modelo)
-        $materia = Materia::create($titulo);
-        $this->repo->save($materia);
+        $materiaActualizada = $this->repo->updateMateria($id, $materia);
 
-        return $materia;
+        return MateriaMapper::toMateriaResponse($materiaActualizada);
     }
 }
