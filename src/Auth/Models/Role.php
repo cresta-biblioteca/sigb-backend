@@ -32,7 +32,7 @@ class Role extends Entity
      *
      * @param array<string, mixed> $row
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $role = new self();
         $role->id = (int) $row['id'];

@@ -101,6 +101,23 @@ Ejecutar tests con cobertura:
 docker-compose exec web composer test:coverage
 ```
 
+## Validación de Estilo de Código (PSR-12)
+
+El proyecto sigue el estándar PSR-12. Antes de hacer push, verificá que tu código cumpla con el estándar:
+
+```bash
+# Verificar errores de estilo
+docker-compose exec web composer lint
+
+# Corregir errores automáticamente
+docker-compose exec web composer lint:fix
+```
+
+- `lint` analiza el código en `src/` y muestra los errores encontrados.
+- `lint:fix` corrige automáticamente los errores que puede resolver (indentación, espacios, llaves, etc.). Los errores que no se puedan resolver automáticamente se mostrarán para que los corrijas manualmente.
+
+> **Recomendación**: Ejecutá `composer lint` antes de cada push para evitar que el CI falle por errores de estilo.
+
 ## Comandos Útiles
 
 ### Docker

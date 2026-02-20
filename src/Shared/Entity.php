@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared;
 
-use App\Shared\Exceptions\ValidationException;
+use App\Shared\Exceptions\BusinessValidationException;
 use DateTimeImmutable;
 
 abstract class Entity
@@ -57,24 +57,24 @@ abstract class Entity
     /**
      * Valida que un valor no esté vacío
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertNotEmpty(mixed $value, string $field): void
     {
         if ($value === null || $value === '' || (is_array($value) && count($value) === 0)) {
-            throw ValidationException::forField($field, "El campo {$field} es requerido");
+            throw BusinessValidationException::forField($field, "El campo {$field} es requerido");
         }
     }
 
     /**
      * Valida la longitud máxima de un string
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertMaxLength(string $value, int $max, string $field): void
     {
         if (mb_strlen($value) > $max) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} no debe exceder {$max} caracteres"
             );
@@ -84,12 +84,12 @@ abstract class Entity
     /**
      * Valida la longitud exacta de un string
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertExactLength(string $value, int $length, string $field): void
     {
         if (mb_strlen($value) !== $length) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe tener exactamente {$length} caracteres"
             );
@@ -99,12 +99,12 @@ abstract class Entity
     /**
      * Valida la longitud mínima de un string
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertMinLength(string $value, int $min, string $field): void
     {
         if (mb_strlen($value) < $min) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe tener al menos {$min} caracteres"
             );
@@ -114,12 +114,12 @@ abstract class Entity
     /**
      * Valida que un número sea positivo (> 0)
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertPositive(int|float $value, string $field): void
     {
         if ($value <= 0) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe ser mayor a 0"
             );
@@ -129,12 +129,12 @@ abstract class Entity
     /**
      * Valida que un número sea no negativo (>= 0)
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertNonNegative(int|float $value, string $field): void
     {
         if ($value < 0) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} no puede ser negativo"
             );
@@ -144,12 +144,12 @@ abstract class Entity
     /**
      * Valida formato de email
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertValidEmail(string $value, string $field): void
     {
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe ser un email válido"
             );
@@ -160,13 +160,13 @@ abstract class Entity
      * Valida que un valor esté en un array de opciones permitidas
      *
      * @param array<mixed> $allowed
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertInArray(mixed $value, array $allowed, string $field): void
     {
         if (!in_array($value, $allowed, true)) {
             $options = implode(', ', array_map(fn($v) => (string) $v, $allowed));
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe ser uno de: {$options}"
             );
@@ -176,7 +176,7 @@ abstract class Entity
     /**
      * Valida que un string coincida con un patrón regex
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertMatchesPattern(
         string $value,
@@ -185,19 +185,19 @@ abstract class Entity
         string $message
     ): void {
         if (!preg_match($pattern, $value)) {
-            throw ValidationException::forField($field, $message);
+            throw BusinessValidationException::forField($field, $message);
         }
     }
 
     /**
      * Valida que una fecha no sea futura
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertNotFutureDate(DateTimeImmutable $date, string $field): void
     {
         if ($date > new DateTimeImmutable()) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} no puede ser una fecha futura"
             );
@@ -207,18 +207,25 @@ abstract class Entity
     /**
      * Valida que una fecha sea futura o presente
      *
-     * @throws ValidationException
+     * @throws BusinessValidationException
      */
     protected function assertFutureOrPresentDate(DateTimeImmutable $date, string $field): void
     {
         $today = new DateTimeImmutable('today');
         if ($date < $today) {
-            throw ValidationException::forField(
+            throw BusinessValidationException::forField(
                 $field,
                 "El campo {$field} debe ser una fecha presente o futura"
             );
         }
     }
+
+    /**
+     * Reconstruye la entidad desde un registro de base de datos
+     *
+     * @param array<string, mixed> $row
+     */
+    abstract public static function fromDatabase(array $row): self;
 
     /**
      * Serializa la entidad a array para respuesta API

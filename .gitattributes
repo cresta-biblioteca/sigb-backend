@@ -1,0 +1,21 @@
+# Normalizar todos los archivos de texto a LF al hacer commit
+* text=auto eol=lf
+
+# PHP y archivos de configuración explícitamente LF
+*.php text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.env text eol=lf
+*.env.example text eol=lf
+*.sql text eol=lf
+*.sh text eol=lf
+
+# Binarios (sin conversión)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
