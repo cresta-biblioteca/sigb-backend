@@ -4,34 +4,40 @@ declare(strict_types=1);
 
 namespace App\Auth\Services;
 
-use App\Auth\Exception\UserAlreadyExistsException;
+use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
+use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
+use App\Auth\Exception\RoleNotFoundException;
+use App\Auth\Exception\UserAlreadyExistsException;
+use App\Auth\Exception\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
+use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
 use App\Auth\Repositories\RoleRepository;
-use App\Lectores\Repositories\LectorRepository;
-use App\Auth\Models\User;
 use App\Lectores\Models\Lector;
+use App\Lectores\Repositories\LectorRepository;
+use App\Shared\Security\JwtTokenProvider;
+use App\Shared\Security\PasswordEncoder;
 use PDO;
+use Throwable;
 
 class AuthService
 {
-    private PDO $pdo;
-    private AuthRepository $authRepository;
-    private LectorRepository $lectorRepository;
-    private RoleRepository $roleRepository;
-
     public function __construct(
-        PDO $pdo,
-        AuthRepository $repository,
-        LectorRepository $lectorRepository
+        private readonly PDO $pdo,
+        private readonly AuthRepository $authRepository,
+        private readonly LectorRepository $lectorRepository,
+        private readonly RoleRepository $roleRepository,
+        private readonly JwtTokenProvider $jwtTokenProvider,
+        private readonly PasswordEncoder $passwordEncoder
     ) {
-        $this->pdo = $pdo;
-        $this->authRepository = $repository;
-        $this->lectorRepository = $lectorRepository;
     }
 
+    /**
+     * @throws Throwable
+     * @throws UserAlreadyExistsException
+     */
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
         if ($this->authRepository->findByDni($request->dni) !== null) {
@@ -94,10 +100,34 @@ class AuthService
             $this->pdo->commit();
 
             return UserMapper::toRegisterResponse($savedUser, $savedLector);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * @throws UserNotFoundException
+     * @throws RoleNotFoundException
+     */
+    public function login(UserLoginRequest $request): UserLoginResponse
+    {
+        $user = $this->authRepository->findByDni($request->dni);
+        if ($user === null) {
+            throw new UserNotFoundException("User with DNI not found");
+        }
+        if (!$this->passwordEncoder->verify($request->password, $user->getPassword())) {
+            throw new UserNotFoundException("Invalid credentials");
+        }
+
+        $role = $this->roleRepository->findById($user->getRoleId());
+        if ($role === null) {
+            throw new RoleNotFoundException("Role not found for user");
+        }
+
+        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre());
+
+        return UserMapper::toLoginResponse($token);
     }
 
     private function generarTarjetaId(): string

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Shared\Middlewares\JwtMiddleware;
+use App\Shared\Security\JwtTokenProvider;
 use Bramus\Router\Router;
 use Dotenv\Dotenv;
 
@@ -20,8 +22,13 @@ $router->set404(function () {
     echo json_encode(['message' => 'Ruta no encontrada']);
 });
 
-// TODO: Agregar middleware JWT para rutas protegidas
-// $router->before('GET|POST|PUT|DELETE|PATCH', '/.*', function () { JwtMiddleware::handle(); });
+$jwtMiddleware = new JwtMiddleware(new JwtTokenProvider());
+
+$router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth).*', function () use ($jwtMiddleware) {
+    if (!$jwtMiddleware->handle()) {
+        exit();
+    }
+});
 
 require_once __DIR__ . '/../routes/auth.php';
 

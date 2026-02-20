@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Auth\Controllers;
 
+use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Exception\UserAlreadyExistsException;
+use App\Auth\Exception\UserNotFoundException;
 use App\Auth\Services\AuthService;
 use App\Auth\Validators\UserRegisterValidator;
 use App\Shared\Exceptions\BusinessValidationException;
@@ -13,7 +15,7 @@ use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use DateTimeImmutable;
 
-class AuthController
+readonly class AuthController
 {
     public function __construct(private AuthService $authService)
     {
@@ -55,6 +57,26 @@ class AuthController
             JsonHelper::jsonResponse(['message' => 'El usuario ya existe'], 409);
         } catch (\Throwable $e) {
             error_log('[AuthController::register] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+        }
+    }
+
+    public function login(): void
+    {
+        try {
+            $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+            $request = new UserLoginRequest(
+                $data['dni'] ?? '',
+                $data['password'] ?? ''
+            );
+
+            $response = $this->authService->login($request);
+            JsonHelper::jsonResponse($response, 200);
+        } catch (UserNotFoundException $e) {
+            JsonHelper::jsonResponse(['message' => 'Credenciales inválidas'], 401);
+        } catch (\Throwable $e) {
+            error_log('[AuthController::login] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
         }
     }
