@@ -19,20 +19,31 @@ class LectorRepository extends Repository
         return Lector::class;
     }
 
+    public function existsByTarjetaId(string $tarjetaId)
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->getTableName()} WHERE tarjeta_id = :tarjeta_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['tarjeta_id' => $tarjetaId]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function create(array $params): ?Lector
     {
-        $sql = "INSERT INTO {$this->getTableName()} (nombre, apellido, email) VALUES (:nombre, :apellido, :email)";
+        $sql = "
+            INSERT INTO {$this->getTableName()}
+                (tarjeta_id, user_id, nombre, apellido, fecha_nacimiento,
+                telefono, email, legajo, genero, cresta_id)
+            VALUES
+                (:tarjeta_id, :user_id, :nombre, :apellido, :fecha_nacimiento,
+                :telefono, :email, :legajo, :genero, :cresta_id)
+            ";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        $row = $stmt->fetch();
+        $id = (int)$this->pdo->lastInsertId();
 
-        if ($row === false) {
-            return null;
-        }
-
-        return Lector::fromDatabase($row);
+        return $this->findById($id);
     }
 
     public function existsByEmail(string $email): bool

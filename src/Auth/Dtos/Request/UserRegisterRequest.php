@@ -10,7 +10,6 @@ readonly class UserRegisterRequest
 {
     public string $dni;
     public string $password;
-    // datos del lector
     public string $nombre;
     public string $apellido;
     public ?string $legajo;
