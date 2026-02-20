@@ -12,10 +12,10 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Configurar base de datos de prueba
         $this->pdo = $this->createTestDatabase();
-        
+
         // Iniciar transacción para cada test
         $this->pdo->beginTransaction();
     }
@@ -26,8 +26,28 @@ abstract class TestCase extends BaseTestCase
         if ($this->pdo->inTransaction()) {
             $this->pdo->rollBack();
         }
-        
+
         parent::tearDown();
+    }
+
+    /**
+     * Valida y escapa un identificador SQL (tabla o columna)
+     * 
+     * @param string $identifier Nombre de la tabla o columna
+     * @return string Identificador escapado con backticks
+     * @throws \InvalidArgumentException Si el identificador contiene caracteres no permitidos
+     */
+    private function escapeIdentifier(string $identifier): string
+    {
+        // Validar que solo contenga caracteres alfanuméricos y guiones bajos
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $identifier)) {
+            throw new \InvalidArgumentException(
+                "Invalid identifier: '$identifier'. Only alphanumeric characters and underscores are allowed."
+            );
+        }
+
+        // Escapar con backticks para MySQL
+        return "`$identifier`";
     }
 
     /**
@@ -65,18 +85,19 @@ abstract class TestCase extends BaseTestCase
     protected function insertInto(string $table, array $data): int
     {
         $columns = array_keys($data);
+        $escapedColumns = array_map(fn($col) => $this->escapeIdentifier($col), $columns);
         $placeholders = array_map(fn($col) => ":$col", $columns);
-        
+
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
-            $table,
-            implode(', ', $columns),
+            $this->escapeIdentifier($table),
+            implode(', ', $escapedColumns),
             implode(', ', $placeholders)
         );
-        
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
-        
+
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -89,20 +110,25 @@ abstract class TestCase extends BaseTestCase
      */
     protected function countRecords(string $table, array $where = []): int
     {
+        $escapedTable = $this->escapeIdentifier($table);
+
         if (empty($where)) {
-            $sql = "SELECT COUNT(*) FROM $table";
+            $sql = "SELECT COUNT(*) FROM $escapedTable";
             $stmt = $this->pdo->query($sql);
         } else {
-            $conditions = array_map(fn($col) => "$col = :$col", array_keys($where));
+            $conditions = array_map(
+                fn($col) => $this->escapeIdentifier($col) . " = :$col",
+                array_keys($where)
+            );
             $sql = sprintf(
                 'SELECT COUNT(*) FROM %s WHERE %s',
-                $table,
+                $escapedTable,
                 implode(' AND ', $conditions)
             );
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($where);
         }
-        
+
         return (int) $stmt->fetchColumn();
     }
 
@@ -115,10 +141,11 @@ abstract class TestCase extends BaseTestCase
      */
     protected function findById(string $table, int $id): ?array
     {
-        $sql = "SELECT * FROM $table WHERE id = :id LIMIT 1";
+        $escapedTable = $this->escapeIdentifier($table);
+        $sql = "SELECT * FROM $escapedTable WHERE id = :id LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
-        
+
         $row = $stmt->fetch();
         return $row === false ? null : $row;
     }
@@ -130,8 +157,9 @@ abstract class TestCase extends BaseTestCase
      */
     protected function truncateTable(string $table): void
     {
+        $escapedTable = $this->escapeIdentifier($table);
         $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-        $this->pdo->exec("TRUNCATE TABLE $table");
+        $this->pdo->exec("TRUNCATE TABLE $escapedTable");
         $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
     }
 
@@ -143,13 +171,16 @@ abstract class TestCase extends BaseTestCase
      */
     protected function deleteFrom(string $table, array $where): void
     {
-        $conditions = array_map(fn($col) => "$col = :$col", array_keys($where));
+        $conditions = array_map(
+            fn($col) => $this->escapeIdentifier($col) . " = :$col",
+            array_keys($where)
+        );
         $sql = sprintf(
             'DELETE FROM %s WHERE %s',
-            $table,
+            $this->escapeIdentifier($table),
             implode(' AND ', $conditions)
         );
-        
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($where);
     }
@@ -159,6 +190,7 @@ abstract class TestCase extends BaseTestCase
      * 
      * @param string $table Nombre de la tabla
      * @param array<string, mixed> $where Condiciones WHERE
+     * @return bool
      */
     protected function recordExists(string $table, array $where): bool
     {

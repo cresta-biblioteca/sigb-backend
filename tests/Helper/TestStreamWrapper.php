@@ -1,7 +1,7 @@
 <?php
 namespace Tests\Helper;
 
-// Clase helper para la simulacion de php://input en tests
+// Clase helper para la simulación de php://input en tests
 class TestStreamWrapper
 {
     public static $data = '';

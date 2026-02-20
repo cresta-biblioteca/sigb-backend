@@ -27,7 +27,7 @@ test('getAll devuelve un array vacío cuando no hay materias', function () {
     expect($response)
         ->toHaveKey('error')
         ->toHaveKey('data')
-        ->and($response['error'])->toBe('false')
+        ->and($response['error'])->toBe(false)
         ->and($response['data'])->toBeArray()
         ->and($response['data'])->toBeEmpty();
 });
@@ -54,7 +54,7 @@ test("getAll devuelve el listado de materias", function() {
     expect($response)
         ->toHaveKey("error")
         ->toHaveKey("data")
-        ->and($response["error"])->toBe("false")
+        ->and($response["error"])->toBe(false)
         ->and($response["data"])->toBeArray()
         ->and($response["data"])->toHaveCount(3);
 });
