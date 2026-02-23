@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Catalogo\Articulos\Dtos\Response;
 
-class MateriaResponse
+readonly class MateriaResponse
 {
-    public readonly int $id;
-    public readonly string $titulo;
+    public int $id;
+    public string $titulo;
 
     public function __construct(
         int $id,

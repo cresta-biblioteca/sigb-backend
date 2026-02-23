@@ -23,9 +23,8 @@ class MateriaRepository extends Repository
         return Materia::class;
     }
 
-    public function insertMateria(Entity $materia): Materia
+    public function insertMateria(Materia $materia): Materia
     {
-        /** @var Materia $materia */
         $sql = 'INSERT INTO materia(titulo) VALUES (:titulo)';
 
         $stmt = $this->pdo->prepare($sql);
@@ -41,9 +40,8 @@ class MateriaRepository extends Repository
         return $materia;
     }
 
-    public function updateMateria(int $id, Entity $materia): Materia
+    public function updateMateria(int $id, Materia $materia): Materia
     {
-        /** @var Materia $materia */
         $sql = 'UPDATE materia SET titulo = :titulo WHERE id = :id';
 
         $stmt = $this->pdo->prepare($sql);
@@ -69,6 +67,7 @@ class MateriaRepository extends Repository
     public function findByTitulo(string $titulo): array
     {
         $sql = 'SELECT * FROM materia WHERE titulo LIKE :titulo ORDER BY titulo';
+        $titulo = addcslashes($titulo, '%_');
 
         return $this->findByQuery($sql, [
             'titulo' => '%' . $titulo . '%',
