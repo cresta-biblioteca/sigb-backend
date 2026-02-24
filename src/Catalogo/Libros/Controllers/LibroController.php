@@ -4,10 +4,19 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Controllers;
 
+use App\Catalogo\Libros\Dtos\Request\LibroCatalogFilterRequest;
+use App\Catalogo\Libros\Dtos\Request\LibroRequest;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
 use App\Catalogo\Libros\Services\LibroService;
+use App\Catalogo\Libros\Validators\LibroCatalogQueryValidator;
+use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\EntityAlreadyExistsException;
+use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\ValidationException;
+use App\Shared\Http\JsonHelper;
+use JsonException;
+use Throwable;
 
 class LibroController
 {
@@ -22,28 +31,35 @@ class LibroController
      */
     public function listAll(): void
     {
-        $filters = [];
+        try {
+            /** @var LibroCatalogFilterRequest $catalogFilterRequest */
+            $catalogFilterRequest = LibroCatalogQueryValidator::fromQuery($_GET);
 
-        if (!empty($_GET['autor'])) {
-            $filters['autor'] = $_GET['autor'];
+            $result = $this->service->listPaginated(
+                $catalogFilterRequest->filters,
+                $catalogFilterRequest->page,
+                $catalogFilterRequest->perPage
+            );
+
+            $response = array_map(
+                fn($libroDto) => $libroDto->toArray(),
+                $result['items']
+            );
+
+            JsonHelper::jsonResponse([
+                'error' => false,
+                'data' => $response,
+                'pagination' => $result['pagination'],
+            ]);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'errors' => $e->getErrors(),
+            ], 422);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
-
-        if (!empty($_GET['isbn'])) {
-            $filters['isbn'] = $_GET['isbn'];
-        }
-
-        if (!empty($_GET['cdu'])) {
-            $filters['cdu'] = (int) $_GET['cdu'];
-        }
-
-        $libros = $this->service->listAll($filters);
-
-        $response = array_map(
-            fn($libroDto) => $libroDto->toArray(),
-            $libros
-        );
-
-        $this->json($response);
     }
 
     /**
@@ -54,17 +70,24 @@ class LibroController
         try {
             $libro = $this->service->getById($id);
 
-            $this->json(
-                $libro->toArray()
-            );
-        } catch (LibroNotFoundException $e) {
-            $this->json(['error' => $e->getMessage()], 404);
+            JsonHelper::jsonResponse([
+                'error' => false,
+                'data' => $libro->toArray(),
+            ]);
+        } catch (LibroNotFoundException | EntityNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
     /**
      * POST /libros
-     * Crea un nuevo libro
+     * Crea un nuevo libro.
+     * Si no se informa articulo_id, crea el artículo en la misma operación.
      */
     public function create(): void
     {
@@ -76,20 +99,38 @@ class LibroController
                 JSON_THROW_ON_ERROR
             );
 
-            $requestDto = LibroRequest::fromArray($data);
+            $libro = $this->service->createFromCatalog($data);
 
-            $libro = $this->service->create($requestDto);
-
-            $this->json(
-                $libro->toArray(),
-                201
-            );
-        } catch (LibroAlreadyExistsException $e) {
-            $this->json(['error' => $e->getMessage()], 409);
-        } catch (\JsonException) {
-            $this->json(['error' => 'JSON inválido'], 400);
-        } catch (\Throwable $e) {
-            $this->json(['error' => 'Error interno'], 500);
+            JsonHelper::jsonResponse([
+                'error' => false,
+                'data' => $libro->toArray(),
+            ], 201);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'errors' => $e->getErrors(),
+            ], 422);
+        } catch (BusinessValidationException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'errors' => [
+                    $e->getField() => [$e->getMessage()],
+                ],
+            ], 400);
+        } catch (LibroAlreadyExistsException | EntityAlreadyExistsException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (JsonException) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => 'JSON inválido',
+            ], 400);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -111,16 +152,34 @@ class LibroController
 
             $libro = $this->service->update($id, $requestDto);
 
-            $this->json(
-                $libro->toArray()
-            );
-
-        } catch (LibroNotFoundException $e) {
-            $this->json(['error' => $e->getMessage()], 404);
-        } catch (\JsonException) {
-            $this->json(['error' => 'JSON inválido'], 400);
-        } catch (\Throwable) {
-            $this->json(['error' => 'Error interno'], 500);
+            JsonHelper::jsonResponse([
+                'error' => false,
+                'data' => $libro->toArray(),
+            ]);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'errors' => $e->getErrors(),
+            ], 422);
+        } catch (BusinessValidationException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'field' => $e->getField(),
+            ], 400);
+        } catch (LibroNotFoundException | EntityNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (JsonException) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => 'JSON inválido',
+            ], 400);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -132,19 +191,27 @@ class LibroController
         try {
             $this->service->delete($id);
 
-            $this->json(['message' => 'Libro eliminado']);
-        } catch (LibroNotFoundException $e) {
-            $this->json(['error' => $e->getMessage()], 404);
+            JsonHelper::jsonResponse([
+                'error' => false,
+                'message' => 'Libro eliminado',
+            ]);
+        } catch (LibroNotFoundException | EntityNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
-    /**
-     * Respuesta JSON centralizada
-     */
-    private function json(array $data, int $status = 200): void
+    private function handleServerError(Throwable $e): void
     {
-        http_response_code($status);
-        header('Content-Type: application/json');
-        echo json_encode($data, JSON_THROW_ON_ERROR);
+        JsonHelper::jsonResponse([
+            'error' => true,
+            'message' => 'Error interno del servidor',
+        ], 500);
+
+        error_log($e->getMessage());
     }
 }

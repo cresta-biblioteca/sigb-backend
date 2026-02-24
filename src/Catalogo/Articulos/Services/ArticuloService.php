@@ -96,4 +96,34 @@ class ArticuloService
 			$articulos
 		);
 	}
+
+	/**
+	 * @param array<string, mixed> $filters
+	 * @return array{items: ArticuloResponse[], pagination: array<string, int>}
+	 */
+	public function listPaginated(array $filters, int $page, int $perPage): array
+	{
+		$page = max(1, $page);
+		$perPage = max(1, min($perPage, 100));
+
+		$total = $this->repository->countSearch($filters);
+		$articulos = $this->repository->searchPaginated($filters, $page, $perPage);
+
+		$items = array_map(
+			fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
+			$articulos
+		);
+
+		$totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
+
+		return [
+			'items' => $items,
+			'pagination' => [
+				'page' => $page,
+				'per_page' => $perPage,
+				'total' => $total,
+				'total_pages' => $totalPages,
+			],
+		];
+	}
 }

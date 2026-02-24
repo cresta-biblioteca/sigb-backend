@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Controllers;
 
+use App\Catalogo\Articulos\Dtos\Request\ArticuloCatalogFilterRequest;
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Articulos\Validators\ArticuloCatalogQueryValidator;
 use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
-use Exception;
+use App\Shared\Http\JsonHelper;
+use JsonException;
+use Throwable;
 
 class ArticuloController
 {
@@ -24,45 +28,33 @@ class ArticuloController
     public function getAll(): void
     {
         try {
-            $filters = [];
+            /** @var ArticuloCatalogFilterRequest $catalogFilterRequest */
+            $catalogFilterRequest = ArticuloCatalogQueryValidator::fromQuery($_GET);
 
-            if (!empty($_GET['titulo'])) {
-                $filters['titulo'] = (string) $_GET['titulo'];
-            }
-
-            if (!empty($_GET['tipo_documento_id'])) {
-                $filters['tipo_documento_id'] = (int) $_GET['tipo_documento_id'];
-            }
-
-            if (!empty($_GET['idioma'])) {
-                $filters['idioma'] = (string) $_GET['idioma'];
-            }
-
-            if (!empty($_GET['anio_publicacion'])) {
-                $filters['anio_publicacion'] = (int) $_GET['anio_publicacion'];
-            }
-
-            $articulos = !empty($filters)
-                ? $this->service->search($filters)
-                : $this->service->getAll();
+            $result = $this->service->listPaginated(
+                $catalogFilterRequest->filters,
+                $catalogFilterRequest->page,
+                $catalogFilterRequest->perPage
+            );
 
             $response = array_map(
                 fn($articuloDto) => $articuloDto->toArray(),
-                $articulos
+                $result['items']
             );
 
-            http_response_code(200);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => false,
                 'data' => $response,
+                'pagination' => $result['pagination'],
             ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
                 'error' => true,
-                'message' => 'Error interno del servidor',
-            ]);
-            error_log($e->getMessage());
+                'message' => $e->getMessage(),
+                'errors' => $e->getErrors(),
+            ], 422);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -74,24 +66,17 @@ class ArticuloController
         try {
             $articulo = $this->service->getById($id);
 
-            http_response_code(200);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => false,
                 'data' => $articulo->toArray(),
             ]);
         } catch (ArticuloNotFoundException $e) {
-            http_response_code(404);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => true,
-                'message' => 'Error interno del servidor',
-            ]);
-            error_log($e->getMessage());
+            ], 404);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -107,37 +92,31 @@ class ArticuloController
 
             $articulo = $this->service->create($request);
 
-            http_response_code(201);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => false,
                 'data' => $articulo->toArray(),
-            ]);
+            ], 201);
         } catch (ValidationException $e) {
-            http_response_code(422);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
                 'errors' => $e->getErrors(),
-            ]);
+            ], 422);
         } catch (BusinessValidationException $e) {
-            http_response_code(400);
-            echo json_encode([
+            JsonHelper::jsonResponse([
+                'error' => true,
                 'message' => $e->getMessage(),
-                'field' => $e->getField(),
-            ]);
-        } catch (\JsonException) {
-            http_response_code(400);
-            echo json_encode([
+                'errors' => [
+                    $e->getField() => [$e->getMessage()],
+                ],
+            ], 400);
+        } catch (JsonException) {
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => 'JSON inválido',
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => true,
-                'message' => 'Error interno del servidor',
-            ]);
-            error_log($e->getMessage());
+            ], 400);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -148,11 +127,10 @@ class ArticuloController
     {
         try {
             if ($id < 1) {
-                http_response_code(422);
-                echo json_encode([
+                JsonHelper::jsonResponse([
                     'error' => true,
                     'message' => 'ID inválido. El ID debe ser un entero positivo mayor que 0.',
-                ]);
+                ], 422);
                 return;
             }
 
@@ -162,43 +140,36 @@ class ArticuloController
 
             $articulo = $this->service->update($id, $request);
 
-            http_response_code(200);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => false,
                 'data' => $articulo->toArray(),
             ]);
         } catch (ValidationException $e) {
-            http_response_code(422);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
                 'errors' => $e->getErrors(),
-            ]);
+            ], 422);
         } catch (BusinessValidationException $e) {
-            http_response_code(400);
-            echo json_encode([
-                'message' => $e->getMessage(),
-                'field' => $e->getField(),
-            ]);
-        } catch (ArticuloNotFoundException $e) {
-            http_response_code(404);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ]);
-        } catch (\JsonException) {
-            http_response_code(400);
-            echo json_encode([
+                'errors' => [
+                    $e->getField() => [$e->getMessage()],
+                ],
+            ], 400);
+        } catch (ArticuloNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (JsonException) {
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => 'JSON inválido',
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => true,
-                'message' => 'Error interno del servidor',
-            ]);
-            error_log($e->getMessage());
+            ], 400);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
     }
 
@@ -210,24 +181,27 @@ class ArticuloController
         try {
             $this->service->delete($id);
 
-            http_response_code(200);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => false,
                 'message' => 'Articulo eliminado',
             ]);
         } catch (ArticuloNotFoundException $e) {
-            http_response_code(404);
-            echo json_encode([
+            JsonHelper::jsonResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => true,
-                'message' => 'Error interno del servidor',
-            ]);
-            error_log($e->getMessage());
+            ], 404);
+        } catch (Throwable $e) {
+            $this->handleServerError($e);
         }
+    }
+
+    private function handleServerError(Throwable $e): void
+    {
+        JsonHelper::jsonResponse([
+            'error' => true,
+            'message' => 'Error interno del servidor',
+        ], 500);
+
+        error_log($e->getMessage());
     }
 }

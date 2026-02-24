@@ -97,13 +97,13 @@ class LibroRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'articulo_id' => $libro->getArticuloId(),
-            'isbn' => $libro->toArray()['isbn'],
-            'autor' => $libro->toArray()['autor'],
-            'autores' => $libro->toArray()['autores'],
-            'colaboradores' => $libro->toArray()['colaboradores'],
-            'titulo_informativo' => $libro->toArray()['titulo_informativo'],
-            'cdu' => $libro->toArray()['cdu'],
-            'export_marc' => $libro->toArray()['export_marc'],
+            'isbn' => $libro->getIsbn(),
+            'autor' => $libro->getAutor(),
+            'autores' => $libro->getAutores(),
+            'colaboradores' => $libro->getColaboradores(),
+            'titulo_informativo' => $libro->getTituloInformativo(),
+            'cdu' => $libro->getCdu(),
+            'export_marc' => $libro->getExportMarc(),
         ]);
     }
 
@@ -122,13 +122,13 @@ class LibroRepository extends Repository
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'isbn' => $libro->toArray()['isbn'],
-            'autor' => $libro->toArray()['autor'],
-            'autores' => $libro->toArray()['autores'],
-            'colaboradores' => $libro->toArray()['colaboradores'],
-            'titulo_informativo' => $libro->toArray()['titulo_informativo'],
-            'cdu' => $libro->toArray()['cdu'],
-            'export_marc' => $libro->toArray()['export_marc'],
+            'isbn' => $libro->getIsbn(),
+            'autor' => $libro->getAutor(),
+            'autores' => $libro->getAutores(),
+            'colaboradores' => $libro->getColaboradores(),
+            'titulo_informativo' => $libro->getTituloInformativo(),
+            'cdu' => $libro->getCdu(),
+            'export_marc' => $libro->getExportMarc(),
             'articulo_id' => $libro->getArticuloId(),
         ]);
 
@@ -142,6 +142,24 @@ class LibroRepository extends Repository
         return $this->findOneByQuery($sql, [
             'isbn' => $isbn
         ]);
+    }
+
+    public function existsByIsbn(string $isbn, ?int $excludeArticuloId = null): bool
+    {
+        $sql = 'SELECT 1 FROM libro WHERE isbn = :isbn';
+        $params = ['isbn' => $isbn];
+
+        if ($excludeArticuloId !== null) {
+            $sql .= ' AND articulo_id <> :exclude_articulo_id';
+            $params['exclude_articulo_id'] = $excludeArticuloId;
+        }
+
+        $sql .= ' LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetch() !== false;
     }
     public function findByAutor(string $autor): array
     {
@@ -208,6 +226,18 @@ class LibroRepository extends Repository
             'id' => $articuloId
         ]);
     }
+
+    public function existsByArticuloId(int $articuloId): bool
+    {
+        $sql = 'SELECT 1 FROM libro WHERE articulo_id = :articulo_id LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'articulo_id' => $articuloId,
+        ]);
+
+        return $stmt->fetch() !== false;
+    }
     public function findByCreatedBetween(string $from, string $to): array
     {
         $sql = "SELECT * FROM libro 
@@ -232,23 +262,7 @@ class LibroRepository extends Repository
 
     public function search(array $filters): array
     {
-        $conditions = [];
-        $params = [];
-
-        if (!empty($filters['autor'])) {
-            $conditions[] = "l.autor LIKE :autor";
-            $params['autor'] = '%' . $filters['autor'] . '%';
-        }
-
-        if (!empty($filters['isbn'])) {
-            $conditions[] = "l.isbn = :isbn";
-            $params['isbn'] = $filters['isbn'];
-        }
-
-        if (!empty($filters['cdu'])) {
-            $conditions[] = "l.cdu = :cdu";
-            $params['cdu'] = $filters['cdu'];
-        }
+        [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
 
         $sql = "SELECT 
                 l.*,
@@ -266,6 +280,8 @@ class LibroRepository extends Repository
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
+        $sql .= " ORDER BY a.titulo, l.articulo_id";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -275,6 +291,329 @@ class LibroRepository extends Repository
         }
 
         return $libros;
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return Libro[]
+     */
+    public function searchPaginated(array $filters, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+        $offset = ($page - 1) * $perPage;
+
+        [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
+
+        $sql = "SELECT 
+                l.*,
+                a.id AS a_id,
+                a.titulo AS a_titulo,
+                a.anio_publicacion AS a_anio_publicacion,
+                a.tipo_documento_id AS a_tipo_documento_id,
+                a.idioma AS a_idioma,
+                a.created_at AS a_created_at,
+                a.updated_at AS a_updated_at
+            FROM libro l
+            INNER JOIN articulo a ON a.id = l.articulo_id";
+
+        if ($conditions) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql .= " ORDER BY a.titulo, l.articulo_id LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        foreach ($params as $name => $value) {
+            $stmt->bindValue(':' . $name, $value);
+        }
+
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $libros = [];
+        while ($row = $stmt->fetch()) {
+            $libros[] = $this->hydrateLibroWithArticulo($row);
+        }
+
+        return $libros;
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    public function countSearch(array $filters): int
+    {
+        [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
+
+        $sql = "SELECT COUNT(*)
+            FROM libro l
+            INNER JOIN articulo a ON a.id = l.articulo_id";
+
+        if ($conditions) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{0: array<int, string>, 1: array<string, mixed>}
+     */
+    private function buildSearchConditionsAndParams(array $filters): array
+    {
+        $conditions = [];
+        $params = [];
+
+        $this->applyLibroFilters($filters, $conditions, $params);
+        $this->applyArticuloFilters($filters, $conditions, $params);
+        $this->applyTemaMateriaFilters($filters, $conditions, $params);
+
+        return [$conditions, $params];
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @param array<int, string> $conditions
+     * @param array<string, mixed> $params
+     */
+    private function applyLibroFilters(array $filters, array &$conditions, array &$params): void
+    {
+        if (!empty($filters['articulo_id'])) {
+            $conditions[] = 'l.articulo_id = :l_articulo_id';
+            $params['l_articulo_id'] = (int) $filters['articulo_id'];
+        }
+
+        if (!empty($filters['autor'])) {
+            $conditions[] = 'l.autor LIKE :autor';
+            $params['autor'] = '%' . $filters['autor'] . '%';
+        }
+
+        if (!empty($filters['autores'])) {
+            $conditions[] = 'l.autores LIKE :autores';
+            $params['autores'] = '%' . $filters['autores'] . '%';
+        }
+
+        if (!empty($filters['colaboradores'])) {
+            $conditions[] = 'l.colaboradores LIKE :colaboradores';
+            $params['colaboradores'] = '%' . $filters['colaboradores'] . '%';
+        }
+
+        if (!empty($filters['titulo_informativo'])) {
+            $conditions[] = 'l.titulo_informativo LIKE :titulo_informativo';
+            $params['titulo_informativo'] = '%' . $filters['titulo_informativo'] . '%';
+        }
+
+        if (!empty($filters['isbn'])) {
+            $conditions[] = 'l.isbn = :isbn';
+            $params['isbn'] = $filters['isbn'];
+        }
+
+        if (!empty($filters['cdu'])) {
+            $conditions[] = 'l.cdu = :cdu';
+            $params['cdu'] = $filters['cdu'];
+        }
+
+        if (!empty($filters['export_marc'])) {
+            $conditions[] = 'l.export_marc LIKE :export_marc';
+            $params['export_marc'] = '%' . $filters['export_marc'] . '%';
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @param array<int, string> $conditions
+     * @param array<string, mixed> $params
+     */
+    private function applyArticuloFilters(array $filters, array &$conditions, array &$params): void
+    {
+        if (!empty($filters['titulo'])) {
+            $conditions[] = 'a.titulo LIKE :a_titulo';
+            $params['a_titulo'] = '%' . $filters['titulo'] . '%';
+        }
+
+        if (!empty($filters['anio_publicacion'])) {
+            $conditions[] = 'a.anio_publicacion = :a_anio_publicacion';
+            $params['a_anio_publicacion'] = (int) $filters['anio_publicacion'];
+        }
+
+        if (!empty($filters['tipo_documento_id'])) {
+            $conditions[] = 'a.tipo_documento_id = :a_tipo_documento_id';
+            $params['a_tipo_documento_id'] = (int) $filters['tipo_documento_id'];
+        }
+
+        if (!empty($filters['idioma'])) {
+            $conditions[] = 'a.idioma = :a_idioma';
+            $params['a_idioma'] = strtolower((string) $filters['idioma']);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @param array<int, string> $conditions
+     * @param array<string, mixed> $params
+     */
+    private function applyTemaMateriaFilters(array $filters, array &$conditions, array &$params): void
+    {
+        $temaIds = array_values(array_filter(
+            array_map(static fn(mixed $id): int => (int) $id, $this->normalizeFilterAsArray($filters['tema_ids'] ?? null)),
+            static fn(int $id): bool => $id > 0
+        ));
+
+        if ($temaIds !== []) {
+            $this->appendExistsByIdsCondition(
+                conditions: $conditions,
+                params: $params,
+                ids: $temaIds,
+                prefix: 'tema_id_',
+                pivotTable: 'articulo_tema',
+                pivotAlias: 'at',
+                foreignKey: 'tema_id'
+            );
+        }
+
+        $materiaIds = array_values(array_filter(
+            array_map(static fn(mixed $id): int => (int) $id, $this->normalizeFilterAsArray($filters['materia_ids'] ?? null)),
+            static fn(int $id): bool => $id > 0
+        ));
+
+        if ($materiaIds !== []) {
+            $this->appendExistsByIdsCondition(
+                conditions: $conditions,
+                params: $params,
+                ids: $materiaIds,
+                prefix: 'materia_id_',
+                pivotTable: 'materia_articulo',
+                pivotAlias: 'ma',
+                foreignKey: 'materia_id'
+            );
+        }
+
+        $temas = array_values(array_filter(
+            array_map(static fn(mixed $tema): string => trim((string) $tema), $this->normalizeFilterAsArray($filters['temas'] ?? null)),
+            static fn(string $tema): bool => $tema !== ''
+        ));
+
+        if ($temas !== []) {
+            $this->appendExistsByTitleCondition(
+                conditions: $conditions,
+                params: $params,
+                values: $temas,
+                prefix: 'tema_titulo_',
+                pivotTable: 'articulo_tema',
+                pivotAlias: 'at',
+                relatedTable: 'tema',
+                relatedAlias: 't',
+                relatedIdField: 'tema_id'
+            );
+        }
+
+        $materias = array_values(array_filter(
+            array_map(static fn(mixed $materia): string => trim((string) $materia), $this->normalizeFilterAsArray($filters['materias'] ?? null)),
+            static fn(string $materia): bool => $materia !== ''
+        ));
+
+        if ($materias !== []) {
+            $this->appendExistsByTitleCondition(
+                conditions: $conditions,
+                params: $params,
+                values: $materias,
+                prefix: 'materia_titulo_',
+                pivotTable: 'materia_articulo',
+                pivotAlias: 'ma',
+                relatedTable: 'materia',
+                relatedAlias: 'm',
+                relatedIdField: 'materia_id'
+            );
+        }
+    }
+
+    /**
+     * @param array<int, string> $conditions
+     * @param array<string, mixed> $params
+     * @param array<int, int> $ids
+     */
+    private function appendExistsByIdsCondition(
+        array &$conditions,
+        array &$params,
+        array $ids,
+        string $prefix,
+        string $pivotTable,
+        string $pivotAlias,
+        string $foreignKey
+    ): void {
+        $inParams = [];
+
+        foreach ($ids as $index => $id) {
+            $paramName = $prefix . $index;
+            $inParams[] = ':' . $paramName;
+            $params[$paramName] = $id;
+        }
+
+        $conditions[] = 'EXISTS (
+            SELECT 1
+            FROM ' . $pivotTable . ' ' . $pivotAlias . '
+            WHERE ' . $pivotAlias . '.articulo_id = a.id
+            AND ' . $pivotAlias . '.' . $foreignKey . ' IN (' . implode(', ', $inParams) . ')
+        )';
+    }
+
+    /**
+     * @param array<int, string> $conditions
+     * @param array<string, mixed> $params
+     * @param array<int, string> $values
+     */
+    private function appendExistsByTitleCondition(
+        array &$conditions,
+        array &$params,
+        array $values,
+        string $prefix,
+        string $pivotTable,
+        string $pivotAlias,
+        string $relatedTable,
+        string $relatedAlias,
+        string $relatedIdField
+    ): void {
+        $titleConditions = [];
+
+        foreach ($values as $index => $value) {
+            $paramName = $prefix . $index;
+            $titleConditions[] = $relatedAlias . '.titulo LIKE :' . $paramName;
+            $params[$paramName] = '%' . $value . '%';
+        }
+
+        $conditions[] = 'EXISTS (
+            SELECT 1
+            FROM ' . $pivotTable . ' ' . $pivotAlias . '
+            INNER JOIN ' . $relatedTable . ' ' . $relatedAlias . ' ON ' . $relatedAlias . '.id = ' . $pivotAlias . '.' . $relatedIdField . '
+            WHERE ' . $pivotAlias . '.articulo_id = a.id
+            AND (' . implode(' OR ', $titleConditions) . ')
+        )';
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function normalizeFilterAsArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(
+                $value,
+                static fn(mixed $item): bool => $item !== null && $item !== ''
+            ));
+        }
+
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        return [$value];
     }
 
     /**
