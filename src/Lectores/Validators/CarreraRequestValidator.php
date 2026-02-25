@@ -54,21 +54,21 @@ class CarreraRequestValidator
         // Verificar que no haya campos desconocidos
         $unknownKeys = array_diff(array_keys($input), $allowedKeys);
         if (!empty($unknownKeys)) {
-            $errors[] = "Campos no permitidos: " . implode(', ', $unknownKeys);
+            $errors["general"][] = "Campos no permitidos: " . implode(', ', $unknownKeys);
         }
 
         // Al menos un campo debe estar presente
         if (!isset($input['cod']) && !isset($input['nombre'])) {
-            $errors[] = "Debe enviar al menos un campo para actualizar (cod o nombre)";
+            $errors["general"][] = "Debe enviar al menos un campo para actualizar (cod o nombre)";
         }
 
         // Validar formatos si están presentes
         if (isset($input['cod']) && !is_string($input['cod'])) {
-            $errors[] = "El campo 'cod' debe ser un string";
+            $errors["cod"] = "El campo 'cod' debe ser un string";
         }
 
         if (isset($input['nombre']) && !is_string($input['nombre'])) {
-            $errors[] = "El campo 'nombre' debe ser un string";
+            $errors["nombre"] = "El campo 'nombre' debe ser un string";
         }
 
         if (!empty($errors)) {
@@ -102,7 +102,7 @@ class CarreraRequestValidator
 
         $unknownKeys = array_diff(array_keys($params), $allowedParams);
         if (!empty($unknownKeys)) {
-            $errors[] = "Campos no permitidos: " . implode(', ', $unknownKeys);
+            $errors["general"][] = "Campos no permitidos: " . implode(', ', $unknownKeys);
         }
 
         if (isset($params["cod"])) {

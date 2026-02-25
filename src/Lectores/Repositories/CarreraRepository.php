@@ -185,7 +185,6 @@ class CarreraRepository extends Repository
             "idMateria" => $idMateria,
         ]);
         if ($stmt->rowCount() === 0) {
-            $this->pdo->rollBack();
             throw new Exception("Error al agregar la materia a la carrera");
         }
     }
@@ -199,7 +198,6 @@ class CarreraRepository extends Repository
             "idMateria" => $idMateria,
         ]);
         if ($stmt->rowCount() === 0) {
-            $this->pdo->rollBack();
             throw new Exception("Error al eliminar la materia de la carrera");
         }
     }

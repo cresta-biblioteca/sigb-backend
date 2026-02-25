@@ -148,7 +148,7 @@ class CarreraService
         $this->repo->addMateriaToCarrera($idCarrera, $idMateria);
     }
 
-    public function deleteMateriaFromCarrera(int $idCarrera, int $idMateria)
+    public function deleteMateriaFromCarrera(int $idCarrera, int $idMateria): void
     {
         $carreraExistente = $this->repo->findById($idCarrera);
         if (!$carreraExistente) {

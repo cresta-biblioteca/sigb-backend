@@ -75,7 +75,7 @@ class CarreraController
         }
     }
 
-    public function getMateriasByCarrera($idCarrera)
+    public function getMateriasByCarrera($idCarrera): void
     {
         try {
             CarreraRequestValidator::validateId($idCarrera);
@@ -184,7 +184,7 @@ class CarreraController
         }
     }
 
-    public function deleteMateriaFromCarrera(string $idCarrera, string $idMateria)
+    public function deleteMateriaFromCarrera(string $idCarrera, string $idMateria): void
     {
         try {
             CarreraRequestValidator::validateId($idCarrera);
@@ -240,14 +240,14 @@ class CarreraController
             "errors" => $e->getErrors()
         ], 400);
     }
-    private function businessValidationResponse(BusinessValidationException $e)
+    private function businessValidationResponse(BusinessValidationException $e): void
     {
         JsonHelper::jsonResponse([
             "message" => $e->getMessage()
         ], 422);
     }
 
-    private function exceptionResponse(\Exception $e, string $method)
+    private function exceptionResponse(\Exception $e, string $method): void
     {
         JsonHelper::jsonResponse([
             "message" => "Error interno del servidor"

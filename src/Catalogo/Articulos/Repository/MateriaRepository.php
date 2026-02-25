@@ -74,7 +74,7 @@ class MateriaRepository extends Repository
         ]);
     }
 
-    public function findMateriasByCarrera($idCarrera): array
+    public function findMateriasByCarrera(int $idCarrera): array
     {
         $sql = "SELECT m.id, m.titulo FROM carrera_materia cm 
                 JOIN materia m ON cm.materia_id = m.id
