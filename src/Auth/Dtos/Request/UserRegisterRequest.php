@@ -8,38 +8,67 @@ use DateTimeImmutable;
 
 readonly class UserRegisterRequest
 {
-    public string $dni;
-    public string $password;
-    public string $nombre;
-    public string $apellido;
-    public ?string $legajo;
-    public ?string $genero;
-    public DateTimeImmutable $fechaNacimiento;
-    public string $telefono;
-    public string $email;
-    public ?string $crestaId;
-
     public function __construct(
-        string $dni,
-        string $password,
-        string $nombre,
-        string $apellido,
-        ?string $legajo,
-        ?string $genero,
-        DateTimeImmutable $fechaNacimiento,
-        string $telefono,
-        string $email,
-        ?string $crestaId
+        private string $dni,
+        private string $password,
+        private string $nombre,
+        private string $apellido,
+        private ?string $legajo,
+        private string $genero,
+        private DateTimeImmutable $fechaNacimiento,
+        private string $telefono,
+        private string $email,
+        private ?string $crestaId
     ) {
-        $this->dni = $dni;
-        $this->password = $password;
-        $this->nombre = $nombre;
-        $this->apellido = $apellido;
-        $this->legajo = $legajo;
-        $this->genero = $genero;
-        $this->fechaNacimiento = $fechaNacimiento;
-        $this->telefono = $telefono;
-        $this->email = $email;
-        $this->crestaId = $crestaId;
+    }
+
+    public function getDni(): string
+    {
+        return $this->dni;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function getNombre(): string
+    {
+        return $this->nombre;
+    }
+
+    public function getApellido(): string
+    {
+        return $this->apellido;
+    }
+
+    public function getLegajo(): ?string
+    {
+        return $this->legajo;
+    }
+
+    public function getGenero(): ?string
+    {
+        return $this->genero;
+    }
+
+    public function getFechaNacimiento(): DateTimeImmutable
+    {
+        return $this->fechaNacimiento;
+    }
+
+    public function getTelefono(): string
+    {
+        return $this->telefono;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function getCrestaId(): ?string
+    {
+        return $this->crestaId;
     }
 }

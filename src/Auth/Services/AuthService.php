@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Services;
 
+use App\Auth\Dtos\Request\ChangePasswordRequest;
 use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserLoginResponse;
@@ -39,11 +40,11 @@ class AuthService
      */
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
-        if ($this->authRepository->findByDni($request->dni) !== null) {
+        if ($this->authRepository->findByDni($request->getDni()) !== null) {
             throw new UserAlreadyExistsException("User with DNI already exists");
         }
 
-        if ($this->lectorRepository->existsByEmail($request->email)) {
+        if ($this->lectorRepository->existsByEmail($request->getEmail())) {
             throw new UserAlreadyExistsException("User with email already exists");
         }
 
@@ -56,12 +57,12 @@ class AuthService
             }
 
             $user = User::create(
-                $request->dni,
-                $request->password,
+                $request->getDni(),
+                $request->getPassword(),
                 $role->getId()
             );
 
-            $hashedPassword = $this->passwordEncoder->hash($request->password);
+            $hashedPassword = $this->passwordEncoder->hash($request->getPassword());
 
             $savedUser = $this->authRepository->create(
                 [
@@ -76,14 +77,14 @@ class AuthService
             $lector = Lector::create(
                 $this->generarTarjetaId(),
                 $savedUser->getId(),
-                $request->nombre,
-                $request->apellido,
-                $request->fechaNacimiento,
-                $request->telefono,
-                $request->email,
-                $request->legajo,
-                $request->genero,
-                $request->crestaId
+                $request->getNombre(),
+                $request->getApellido(),
+                $request->getFechaNacimiento(),
+                $request->getTelefono(),
+                $request->getEmail(),
+                $request->getLegajo(),
+                $request->getGenero(),
+                $request->getCrestaId()
             );
 
             $savedLector = $this->lectorRepository->create(
@@ -115,11 +116,11 @@ class AuthService
      */
     public function login(UserLoginRequest $request): UserLoginResponse
     {
-        $user = $this->authRepository->findByDni($request->dni);
+        $user = $this->authRepository->findByDni($request->getDni());
         if ($user === null) {
-            throw new UserNotFoundException("User with DNI not found");
+            throw new UserNotFoundException("User not found");
         }
-        if (!$this->passwordEncoder->verify($request->password, $user->getPassword())) {
+        if (!$this->passwordEncoder->verify($request->getPassword(), $user->getPassword())) {
             throw new UserNotFoundException("Invalid credentials");
         }
 
@@ -133,6 +134,28 @@ class AuthService
         $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre());
 
         return UserMapper::toLoginResponse($token);
+    }
+
+    // public function logout(): void
+    // {
+    //     En una implementación real, podrías invalidar el token JWT aquí.
+    //     Sin embargo, dado que los tokens JWT son stateless, no hay una forma directa de invalidarlos sin mantener una lista de tokens revocados.
+    //     Para este ejemplo, simplemente no hacemos nada en el método logout.
+    // }
+
+    public function changePassword(ChangePasswordRequest $request, int $userId): void
+    {
+        $user = $this->authRepository->findById($userId);
+        if ($user === null) {
+            throw new UserNotFoundException("User not found");
+        }
+
+        if (!$this->passwordEncoder->verify($request->getCurrentPassword(), $user->getPassword())) {
+            throw new UserNotFoundException("Current password is incorrect");
+        }
+
+        $newHashedPassword = $this->passwordEncoder->hash($request->getNewPassword());
+        $this->authRepository->updatePassword($userId, $newHashedPassword);
     }
 
     private function generarTarjetaId(): string
