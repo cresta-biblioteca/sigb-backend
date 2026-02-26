@@ -160,7 +160,7 @@ class CarreraRepository extends Repository
 
         /** @var ?Carrera */
         return $this->findOneByQuery($sql, [
-            'cod' => $cod,
+            'cod' => strtoupper($cod),
             'nombre' => $nombre,
         ]);
     }
