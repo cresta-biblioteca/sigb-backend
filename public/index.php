@@ -33,5 +33,8 @@ $router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth).*', function () use ($jw
 require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/materia.php';
 require_once __DIR__ . '/../routes/carrera.php';
+require_once __DIR__ . '/../routes/articulo.php';
+require_once __DIR__ . '/../routes/libro.php';
+require_once __DIR__ . '/../routes/ejemplar.php';
 
 $router->run();
