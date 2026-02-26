@@ -74,6 +74,15 @@ class MateriaRepository extends Repository
         ]);
     }
 
+    public function findMateriasByCarrera(int $idCarrera): array
+    {
+        $sql = "SELECT m.id, m.titulo FROM carrera_materia cm 
+                JOIN materia m ON cm.materia_id = m.id
+                WHERE cm.carrera_id = :idCarrera";
+        $materias = $this->findByQuery($sql, ["idCarrera" => $idCarrera]);
+        return $materias;
+    }
+
     /**
      * Busca una materia por título exacto
      */
