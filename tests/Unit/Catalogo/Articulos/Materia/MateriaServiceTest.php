@@ -3,6 +3,7 @@
 use App\Catalogo\Articulos\Dtos\Request\MateriaRequest;
 use App\Catalogo\Articulos\Dtos\Response\MateriaResponse;
 use App\Catalogo\Articulos\Exceptions\MateriaAlreadyExistsException;
+use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Models\Materia;
 use App\Catalogo\Articulos\Repository\MateriaRepository;
 use App\Catalogo\Articulos\Services\MateriaService;
@@ -124,4 +125,37 @@ test('retorna MateriaResponse con los datos correctos', function () {
         ->toHaveProperties(['id', 'titulo']);
     expect($result->id)->toEqual(42);
     expect($result->titulo)->toEqual('Química');
+});
+
+test('elimina una materia exitosamente', function () {
+    $materia = Materia::create('Historia');
+    $materia->setId(1);
+
+    $this->repositoryMock
+        ->shouldReceive('findById')
+        ->with(1)
+        ->once()
+        ->andReturn($materia);
+
+    $this->repositoryMock
+        ->shouldReceive('delete')
+        ->with(1)
+        ->once()
+        ->andReturn(true);
+
+    $this->service->deleteMateria(1);
+
+    // Si llega aquí sin excepción, el test pasa
+    expect(true)->toBeTrue();
+});
+
+test('lanza MateriaNotFoundException al eliminar materia inexistente', function () {
+    $this->repositoryMock
+        ->shouldReceive('findById')
+        ->with(999)
+        ->once()
+        ->andReturnNull();
+
+    expect(fn() => $this->service->deleteMateria(999))
+        ->toThrow(MateriaNotFoundException::class);
 });

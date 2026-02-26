@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Catalogo\Articulos\Dtos\Request;
 
-class MateriaRequest
+readonly class MateriaRequest
 {
-    public readonly string $titulo;
+    public string $titulo;
 
     public function __construct(
         string $titulo

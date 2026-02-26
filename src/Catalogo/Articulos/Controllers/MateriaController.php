@@ -11,6 +11,7 @@ use App\Catalogo\Articulos\Services\MateriaService;
 use App\Catalogo\Articulos\Validators\MateriaRequestValidator;
 use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
+use App\Shared\Http\JsonHelper;
 use Exception;
 
 class MateriaController
@@ -21,19 +22,54 @@ class MateriaController
 
     public function getAll(): void
     {
+        if (isset($_GET["titulo"])) {
+            $this->getByTitulo($_GET["titulo"]);
+            return;
+        }
         try {
             $response = $this->service->getAll();
-            http_response_code(200);
-            echo json_encode([
-                "error" => false,
-                "data" => $response
-            ]);
+            JsonHelper::jsonResponse($response, 200);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                "error" => true,
-                "message" => $e->getMessage()
-            ]);
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log("[MateriaController::getAll] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        }
+    }
+
+    public function getById($id): void
+    {
+        try {
+            MateriaRequestValidator::validateId($id);
+
+            $response = $this->service->getById((int) $id);
+            JsonHelper::jsonResponse($response, 200);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                "message" => $e->getMessage(),
+                "errors" => $e->getErrors()
+            ], 400);
+        } catch (MateriaNotFoundException $e) {
+            JsonHelper::jsonResponse(["message" => $e->getMessage()], 404);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(["message" => "Error interno del servidor"], 500);
+            error_log("[MateriaController::getById] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        }
+    }
+
+    public function getByTitulo(mixed $titulo): void
+    {
+        try {
+            MateriaRequestValidator::validateBusquedaTitulo($titulo);
+
+            $response = $this->service->getByTitulo(trim($titulo));
+            JsonHelper::jsonResponse($response, 200);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                "message" => $e->getMessage(),
+                "errors" => $e->getErrors()
+            ], 400);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(["message" => "Error interno del servidor"], 500);
+            error_log("[MateriaController::getByTitulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
         }
     }
 
@@ -48,52 +84,29 @@ class MateriaController
 
             $materia = $this->service->createMateria($materiaRequest);
 
-            http_response_code(201);
-            echo json_encode([
-                'error' => false,
-                'data' => $materia
-            ]);
+            JsonHelper::jsonResponse($materia, 201);
         } catch (ValidationException $e) {
-            http_response_code(422);
-            echo json_encode([
-                'error' => true,
-                'message' => $e->getMessage(),
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
                 'errors' => $e->getErrors()
-            ]);
+            ], 400);
         } catch (BusinessValidationException $e) {
-            http_response_code(400);
-            echo json_encode([
-                "message" => $e->getMessage(),
-                "field" => $e->getField()
-            ]);
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+                'field' => $e->getField()
+            ], 422);
         } catch (MateriaAlreadyExistsException $e) {
-            http_response_code(409);
-            echo json_encode([
-                'error' => true,
-                'message' => $e->getMessage()
-            ]);
+            JsonHelper::jsonResponse(['message' => 'La materia ya existe'], 409);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => true,
-                'message' => 'Error interno del servidor'
-            ]);
-            // Log del error real para debugging
-            error_log($e->getMessage());
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log("[MateriaController::createMateria] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
         }
     }
 
     public function updateMateria($id): void
     {
         try {
-            if ((int)$id < 1) {
-                http_response_code(422);
-                echo json_encode([
-                    "error" => true,
-                    "message" => "ID inválido. El ID debe ser un entero positivo mayor que 0."
-                ]);
-                return;
-            }
+            MateriaRequestValidator::validateId($id);
 
             $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
@@ -101,39 +114,47 @@ class MateriaController
 
             $request = MateriaMapper::fromArray($input);
 
-            $materia = $this->service->updateMateria((int)$id, $request);
+            $materia = $this->service->updateMateria((int) $id, $request);
 
-            http_response_code(200);
-            echo json_encode([
-                "error" => false,
-                "data" => $materia
-            ]);
+            JsonHelper::jsonResponse($materia, 200);
         } catch (ValidationException $e) {
-            http_response_code(422);
-            echo json_encode([
-                "error" => true,
-                "message" => $e->getMessage(),
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
                 'errors' => $e->getErrors()
-            ]);
+            ], 400);
+        } catch (BusinessValidationException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+                'field' => $e->getField()
+            ], 422);
         } catch (MateriaAlreadyExistsException $e) {
-            http_response_code(409);
-            echo json_encode([
-                "error" => true,
-                "message" => $e->getMessage()
-            ]);
+            JsonHelper::jsonResponse(['message' => 'La materia ya existe'], 409);
         } catch (MateriaNotFoundException $e) {
-            http_response_code(404);
-            echo json_encode([
-                "error" => true,
-                "message" => $e->getMessage()
-            ]);
+            JsonHelper::jsonResponse(["message" => $e->getMessage()], 404);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                "error" => true,
-                "message" => "Error interno del servidor"
-            ]);
-            error_log($e->getMessage());
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log("[MateriaController::updateMateria] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        }
+    }
+
+    public function deleteMateria($id): void
+    {
+        try {
+            MateriaRequestValidator::validateId($id);
+
+            $this->service->deleteMateria((int) $id);
+
+            http_response_code(204);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
+                'errors' => $e->getErrors()
+            ], 400);
+        } catch (MateriaNotFoundException $e) {
+            JsonHelper::jsonResponse(['message' => $e->getMessage()], 404);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log("[MateriaController::deleteMateria] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
         }
     }
 }

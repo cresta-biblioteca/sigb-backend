@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Mappers;
 
+use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
 use App\Auth\Models\User;
 use App\Lectores\Models\Lector;
@@ -17,5 +18,10 @@ class UserMapper
             $lector->getId(),
             $lector->getNombre() . " " . $lector->getApellido()
         );
+    }
+
+    public static function toLoginResponse(string $token): UserLoginResponse
+    {
+        return new UserLoginResponse($token);
     }
 }

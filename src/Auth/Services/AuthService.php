@@ -4,41 +4,46 @@ declare(strict_types=1);
 
 namespace App\Auth\Services;
 
-use App\Auth\Exception\UserAlreadyExistsException;
+use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
+use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
+use App\Auth\Exception\UserAlreadyExistsException;
+use App\Auth\Exception\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
+use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
 use App\Auth\Repositories\RoleRepository;
-use App\Lectores\Repositories\LectorRepository;
-use App\Auth\Models\User;
 use App\Lectores\Models\Lector;
+use App\Lectores\Repositories\LectorRepository;
+use App\Shared\Security\JwtTokenProvider;
+use App\Shared\Security\PasswordEncoder;
 use PDO;
+use Throwable;
 
 class AuthService
 {
-    private PDO $pdo;
-    private AuthRepository $authRepository;
-    private LectorRepository $lectorRepository;
-    private RoleRepository $roleRepository;
-
     public function __construct(
-        PDO $pdo,
-        AuthRepository $repository,
-        LectorRepository $lectorRepository
+        private readonly PDO $pdo,
+        private readonly AuthRepository $authRepository,
+        private readonly LectorRepository $lectorRepository,
+        private readonly RoleRepository $roleRepository,
+        private readonly JwtTokenProvider $jwtTokenProvider,
+        private readonly PasswordEncoder $passwordEncoder
     ) {
-        $this->pdo = $pdo;
-        $this->authRepository = $repository;
-        $this->lectorRepository = $lectorRepository;
     }
 
+    /**
+     * @throws Throwable
+     * @throws UserAlreadyExistsException
+     */
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
         if ($this->authRepository->findByDni($request->dni) !== null) {
             throw new UserAlreadyExistsException("User with DNI already exists");
         }
 
-        if ($this->lectorRepository->existsByEmail($request->email) !== null) {
+        if ($this->lectorRepository->existsByEmail($request->email)) {
             throw new UserAlreadyExistsException("User with email already exists");
         }
 
@@ -46,6 +51,9 @@ class AuthService
 
         try {
             $role = $this->roleRepository->getRoleByName('lector');
+            if ($role === null) {
+                throw new \RuntimeException("Role 'lector' not found in database");
+            }
 
             $user = User::create(
                 $request->dni,
@@ -53,10 +61,12 @@ class AuthService
                 $role->getId()
             );
 
+            $hashedPassword = $this->passwordEncoder->hash($request->password);
+
             $savedUser = $this->authRepository->create(
                 [
                     'dni' => $user->getDni(),
-                    'password' => $user->getPassword(),
+                    'password' => $hashedPassword,
                     'role_id' => $user->getRoleId(),
                 ]
             );
@@ -65,7 +75,7 @@ class AuthService
 
             $lector = Lector::create(
                 $this->generarTarjetaId(),
-                $user->getId(),
+                $savedUser->getId(),
                 $request->nombre,
                 $request->apellido,
                 $request->fechaNacimiento,
@@ -94,14 +104,49 @@ class AuthService
             $this->pdo->commit();
 
             return UserMapper::toRegisterResponse($savedUser, $savedLector);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
         }
     }
 
+    /**
+     * @throws UserNotFoundException
+     */
+    public function login(UserLoginRequest $request): UserLoginResponse
+    {
+        $user = $this->authRepository->findByDni($request->dni);
+        if ($user === null) {
+            throw new UserNotFoundException("User with DNI not found");
+        }
+        if (!$this->passwordEncoder->verify($request->password, $user->getPassword())) {
+            throw new UserNotFoundException("Invalid credentials");
+        }
+
+        $role = $this->roleRepository->findById($user->getRoleId());
+        if ($role === null) {
+            throw new \RuntimeException(
+                "Role not found for user {$user->getId()}, role_id: {$user->getRoleId()}"
+            );
+        }
+
+        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre());
+
+        return UserMapper::toLoginResponse($token);
+    }
+
     private function generarTarjetaId(): string
     {
-        return "tarjeta identificadora " . uniqid();
+        $maxIntentos = 10;
+
+        for ($i = 0; $i < $maxIntentos; $i++) {
+            $tarjetaId = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            if (!$this->lectorRepository->existsByTarjetaId($tarjetaId)) {
+                return $tarjetaId;
+            }
+        }
+
+        throw new \RuntimeException('No se pudo generar una tarjeta ID única');
     }
 }

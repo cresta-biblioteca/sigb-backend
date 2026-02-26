@@ -31,12 +31,8 @@ class AuthRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        $row = $stmt->fetch();
+        $id = (int)$this->pdo->lastInsertId();
 
-        if ($row === false) {
-            return null;
-        }
-
-        return User::fromDatabase($row);
+        return $this->findById($id);
     }
 }

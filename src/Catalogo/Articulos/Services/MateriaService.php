@@ -18,11 +18,24 @@ class MateriaService
     {
     }
 
+    /**
+     * @return MateriaResponse[]
+     */
     public function getAll(): array
     {
         $materias = $this->repo->findAll();
         $materiasDTO = array_map(fn($materia) => MateriaMapper::toMateriaResponse($materia), $materias);
         return $materiasDTO;
+    }
+
+    public function getById(int $id): MateriaResponse
+    {
+        $materia = $this->repo->findById($id);
+
+        if (!$materia) {
+            throw new MateriaNotFoundException($id);
+        }
+        return MateriaMapper::toMateriaResponse($materia);
     }
 
     public function createMateria(MateriaRequest $request): MateriaResponse
@@ -43,12 +56,13 @@ class MateriaService
     {
         $materia = MateriaMapper::fromMateriaRequest($request);
 
-        /** @var Materia $materiaExistente */
         $materiaExistente = $this->repo->findById($id);
 
         if (!$materiaExistente) {
             throw new MateriaNotFoundException($id);
         }
+
+        /** @var Materia $materiaExistente */
 
         if ($materia->getTitulo() !== $materiaExistente->getTitulo()) {
             $coincidencia = $this->repo->findCoincidence($materia->getTitulo());
@@ -60,5 +74,29 @@ class MateriaService
         $materiaActualizada = $this->repo->updateMateria($id, $materia);
 
         return MateriaMapper::toMateriaResponse($materiaActualizada);
+    }
+
+    /**
+     * @return MateriaResponse[]
+     */
+    public function getByTitulo(string $titulo): array
+    {
+        $materias = $this->repo->findByTitulo($titulo);
+        $materiasDTO = array_map(fn($materia) => MateriaMapper::toMateriaResponse($materia), $materias);
+        return $materiasDTO;
+    }
+
+    public function deleteMateria(int $id): void
+    {
+        $materiaExistente = $this->repo->findById($id);
+
+        if (!$materiaExistente) {
+            throw new MateriaNotFoundException($id);
+        }
+
+        $borrada = $this->repo->delete($id);
+        if (!$borrada) {
+            throw new MateriaNotFoundException($id);
+        }
     }
 }

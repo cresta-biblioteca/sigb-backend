@@ -22,9 +22,9 @@ class RoleRepository extends Repository
     public function getRoleByName(string $name): ?Role
     {
         $name = strtolower($name);
-        $sql = 'SELECT * FROM role WHERE name = :name LIMIT 1';
+        $sql = 'SELECT * FROM role WHERE nombre = :nombre LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['name' => $name]);
+        $stmt->execute(['nombre' => $name]);
 
         $row = $stmt->fetch();
 

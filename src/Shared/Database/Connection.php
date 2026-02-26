@@ -43,14 +43,12 @@ class Connection
         );
 
         try {
-            $pdo = new PDO($dsn, $username, $password, [
+            return new PDO($dsn, $username, $password, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::ATTR_STRINGIFY_FETCHES => false,
             ]);
-
-            return $pdo;
         } catch (PDOException $e) {
             throw new RuntimeException(
                 'Error de conexión a base de datos: ' . $e->getMessage(),

@@ -9,6 +9,9 @@ use App\Shared\Entity;
 class User extends Entity
 {
     private const DNI_PATTERN = '/^\d{7,8}$/';
+    private const PASSWORD_UPPERCASE_PATTERN = '/[A-Z]/';
+    private const PASSWORD_LOWERCASE_PATTERN = '/[a-z]/';
+    private const PASSWORD_DIGIT_PATTERN = '/\d/';
 
     private string $dni;
     private string $password;
@@ -40,10 +43,10 @@ class User extends Entity
     public static function fromDatabase(array $row): self
     {
         $user = new self();
-        $user->id = (int) $row['id'];
+        $user->id = (int)$row['id'];
         $user->dni = $row['dni'];
         $user->password = $row['password'];
-        $user->roleId = (int) $row['role_id'];
+        $user->roleId = (int)$row['role_id'];
         $user->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -80,21 +83,26 @@ class User extends Entity
     public function setPassword(string $password): void
     {
         $this->assertNotEmpty($password, 'password');
-        $this->assertMinLength($password, 6, 'password');
-
-        if (!$this->isHashed($password)) {
-            $this->password = password_hash($password, PASSWORD_DEFAULT);
-        } else {
-            $this->password = $password;
-        }
-    }
-
-    /**
-     * Verifica si un password coincide con el hash almacenado
-     */
-    public function verifyPassword(string $password): bool
-    {
-        return password_verify($password, $this->password);
+        $this->assertMinLength($password, 8, 'password');
+        $this->assertMatchesPattern(
+            $password,
+            self::PASSWORD_UPPERCASE_PATTERN,
+            'password',
+            'La contraseña debe contener al menos una letra mayúscula'
+        );
+        $this->assertMatchesPattern(
+            $password,
+            self::PASSWORD_LOWERCASE_PATTERN,
+            'password',
+            'La contraseña debe contener al menos una letra minúscula'
+        );
+        $this->assertMatchesPattern(
+            $password,
+            self::PASSWORD_DIGIT_PATTERN,
+            'password',
+            'La contraseña debe contener al menos un dígito'
+        );
+        $this->password = $password;
     }
 
     public function getRoleId(): int
@@ -137,14 +145,5 @@ class User extends Entity
         }
 
         return $data;
-    }
-
-    /**
-     * Verifica si un string ya es un hash de password
-     */
-    private function isHashed(string $password): bool
-    {
-        $info = password_get_info($password);
-        return $info['algo'] !== null && $info['algo'] !== 0;
     }
 }
