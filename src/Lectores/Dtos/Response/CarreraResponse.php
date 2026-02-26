@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Lectores\Dtos\Response;
 
-readonly class CarreraResponse
-{
-    public int $id;
-    public string $cod;
-    public string $nombre;
+use JsonSerializable;
 
-    public function __construct(int $id, string $cod, string $nombre)
+readonly class CarreraResponse implements JsonSerializable
+{
+    public function __construct(
+        private int $id,
+        private string $cod,
+        private string $nombre
+    ) {
+    }
+
+    public function jsonSerialize(): array
     {
-        $this->id = $id;
-        $this->cod = $cod;
-        $this->nombre = $nombre;
+        return [
+            'id' => $this->id,
+            'codigo' => $this->cod,
+            'nombre' => $this->nombre,
+        ];
     }
 }

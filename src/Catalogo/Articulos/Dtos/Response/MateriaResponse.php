@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Dtos\Response;
 
-readonly class MateriaResponse
-{
-    public int $id;
-    public string $titulo;
+use JsonSerializable;
 
+readonly class MateriaResponse implements JsonSerializable
+{
     public function __construct(
-        int $id,
-        string $titulo
+        private int $id,
+        private string $titulo
     ) {
-        $this->id = $id;
-        $this->titulo = $titulo;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'nombre' => $this->titulo,
+        ];
     }
 }
