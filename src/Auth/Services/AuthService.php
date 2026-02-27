@@ -139,7 +139,8 @@ class AuthService
     // public function logout(): void
     // {
     //     En una implementación real, podrías invalidar el token JWT aquí.
-    //     Sin embargo, dado que los tokens JWT son stateless, no hay una forma directa de invalidarlos sin mantener una lista de tokens revocados.
+    //     Sin embargo, dado que los tokens JWT son stateless, no hay una forma directa de
+    //     invalidarlos sin mantener una lista de tokens revocados.
     //     Para este ejemplo, simplemente no hacemos nada en el método logout.
     // }
 

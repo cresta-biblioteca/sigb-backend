@@ -86,7 +86,10 @@ readonly class AuthController
         } catch (UserNotFoundException $e) {
             JsonHelper::jsonResponse(['message' => 'Credenciales inválidas'], 401);
         } catch (Throwable $e) {
-            error_log('[AuthController::changePassword] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            error_log('[AuthController::changePassword] '
+                . $e->getMessage()
+                . ' in ' . $e->getFile()
+                . ':' . $e->getLine());
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
         }
     }
