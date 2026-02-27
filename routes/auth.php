@@ -33,4 +33,8 @@ $router->mount('/auth', function () use ($router, $controller) {
     $router->post('/login', function () use ($controller) {
         $controller->login();
     });
+
+    $router->post('/change-password', function () use ($controller) {
+        $controller->changePassword();
+    });
 });

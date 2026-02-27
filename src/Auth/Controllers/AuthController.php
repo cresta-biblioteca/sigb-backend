@@ -72,7 +72,7 @@ readonly class AuthController
             UserChangePasswordValidator::validate($data);
 
             $request = new ChangePasswordRequest(
-                $data['password'] ?? '',
+                $data['current_password'] ?? '',
                 $data['new_password'] ?? ''
             );
 

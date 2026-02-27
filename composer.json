@@ -14,6 +14,7 @@
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",
+    "mockery/mockery": "^1.6",
     "pestphp/pest": "^2.34",
     "phpunit/phpunit": "^10.5",
     "squizlabs/php_codesniffer": "^4.0"

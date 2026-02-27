@@ -9,7 +9,7 @@ use App\Shared\Exceptions\ValidationException;
 class UserChangePasswordValidator
 {
     private const REQUIRED_FIELDS = [
-        'password',
+        'current_password',
         'new_password'
     ];
 
@@ -33,8 +33,8 @@ class UserChangePasswordValidator
             throw new ValidationException($errors);
         }
 
-        if (!is_string($data['password'])) {
-            $errors['password'] = ['El campo password debe ser un string'];
+        if (!is_string($data['current_password'])) {
+            $errors['current_password'] = ['El campo current_password debe ser un string'];
         }
 
         if (!is_string($data['new_password'])) {

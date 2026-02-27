@@ -24,7 +24,7 @@ $router->set404(function () {
 
 $jwtMiddleware = new JwtMiddleware(new JwtTokenProvider());
 
-$router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth).*', function () use ($jwtMiddleware) {
+$router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth\/login|auth\/register).*', function () use ($jwtMiddleware) {
     if (!$jwtMiddleware->handle()) {
         exit();
     }
