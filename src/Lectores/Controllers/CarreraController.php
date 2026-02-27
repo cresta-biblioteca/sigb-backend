@@ -22,7 +22,7 @@ class CarreraController
     {
     }
 
-    private const SEARCH_PARAMS = ['cod', 'nombre'];
+    private const SEARCH_PARAMS = ['cod', 'nombre', 'order'];
 
     public function getAll(): void
     {

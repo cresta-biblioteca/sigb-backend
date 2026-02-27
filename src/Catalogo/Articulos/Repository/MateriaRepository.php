@@ -64,21 +64,39 @@ class MateriaRepository extends Repository
      *
      * @return Materia[]
      */
-    public function findByTitulo(string $titulo): array
+    public function findByParams(array $params): array
     {
-        $sql = 'SELECT * FROM materia WHERE titulo LIKE :titulo ORDER BY titulo';
-        $titulo = addcslashes($titulo, '%_');
+        $conditions = [];
+        $bindings = [];
 
-        return $this->findByQuery($sql, [
-            'titulo' => '%' . $titulo . '%',
-        ]);
+        if (!empty($params['titulo'])) {
+            $conditions[] = 'titulo LIKE :titulo';
+            $escapedTitulo = addcslashes(trim($params['titulo']), '%_');
+            $bindings['titulo'] = '%' . $escapedTitulo . '%';
+        }
+
+        $sql = sprintf('SELECT * FROM %s', $this->getTableName());
+
+        if (!empty($conditions)) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+        if (!empty($params['order'])) {
+            $order = strtoupper($params['order']) === 'DESC' ? 'DESC' : 'ASC';
+            $sql .= " ORDER BY titulo {$order}";
+        } else {
+            $sql .= ' ORDER BY titulo';
+        }
+
+        /** @var Materia[] */
+        return $this->findByQuery($sql, $bindings);
     }
 
     public function findMateriasByCarrera(int $idCarrera): array
     {
         $sql = "SELECT m.id, m.titulo FROM carrera_materia cm 
                 JOIN materia m ON cm.materia_id = m.id
-                WHERE cm.carrera_id = :idCarrera";
+                WHERE cm.carrera_id = :idCarrera
+                ORDER BY m.titulo ASC";
         $materias = $this->findByQuery($sql, ["idCarrera" => $idCarrera]);
         return $materias;
     }

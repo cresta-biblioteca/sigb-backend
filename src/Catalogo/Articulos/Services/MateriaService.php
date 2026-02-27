@@ -79,9 +79,9 @@ class MateriaService
     /**
      * @return MateriaResponse[]
      */
-    public function getByTitulo(string $titulo): array
+    public function getByParams(array $params): array
     {
-        $materias = $this->repo->findByTitulo($titulo);
+        $materias = $this->repo->findByParams($params);
         $materiasDTO = array_map(fn($materia) => MateriaMapper::toMateriaResponse($materia), $materias);
         return $materiasDTO;
     }

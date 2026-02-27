@@ -98,7 +98,7 @@ class CarreraRequestValidator
     public static function validateParams(array $params): void
     {
         $errors = [];
-        $allowedParams = ["cod", "nombre"];
+        $allowedParams = ["cod", "nombre", "order"];
 
         $unknownKeys = array_diff(array_keys($params), $allowedParams);
         if (!empty($unknownKeys)) {
@@ -124,6 +124,15 @@ class CarreraRequestValidator
                 $errors["nombre"] = ["El nombre no puede contener caracteres especiales"];
             } elseif (trim($params["nombre"]) === "") {
                 $errors["nombre"] = ["El nombre no puede estar vacio"];
+            }
+        }
+        if (isset($params["order"])) {
+            if (!is_string($params["order"])) {
+                $errors["order"] = ["El orden debe ser un string"];
+            } elseif (trim($params["order"]) === "") {
+                $errors["order"] = ["El orden no puede estar vacio"];
+            } elseif (strtoupper($params["order"]) !== "ASC" && strtoupper($params["order"]) !== "DESC") {
+                $errors["order"] = ["El orden solo puede ser 'asc' o 'desc'"];
             }
         }
 

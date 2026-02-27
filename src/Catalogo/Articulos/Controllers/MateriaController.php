@@ -16,14 +16,18 @@ use Exception;
 
 class MateriaController
 {
+    private const ALLOWED_PARAMS = ["titulo", "order"];
     public function __construct(private MateriaService $service)
     {
     }
 
     public function getAll(): void
     {
-        if (isset($_GET["titulo"])) {
-            $this->getByTitulo($_GET["titulo"]);
+        $params = array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS));
+        $params = array_filter($params, fn($value) => $value !== '');
+        
+        if (!empty($params)) {
+            $this->getByParams($params);
             return;
         }
         try {
@@ -55,12 +59,12 @@ class MateriaController
         }
     }
 
-    public function getByTitulo(mixed $titulo): void
+    public function getByParams(array $params): void
     {
         try {
-            MateriaRequestValidator::validateBusquedaTitulo($titulo);
+            MateriaRequestValidator::validateParams($params);
 
-            $response = $this->service->getByTitulo(trim($titulo));
+            $response = $this->service->getByParams($params);
             JsonHelper::jsonResponse($response, 200);
         } catch (ValidationException $e) {
             JsonHelper::jsonResponse([

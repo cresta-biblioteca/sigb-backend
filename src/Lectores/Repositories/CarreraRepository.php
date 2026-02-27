@@ -129,7 +129,12 @@ class CarreraRepository extends Repository
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
-        $sql .= ' ORDER BY nombre';
+        if (!empty($params["order"])) {
+            $order = strtoupper($params['order']) === 'DESC' ? 'DESC' : 'ASC';
+            $sql .= " ORDER BY nombre {$order}";;
+        } else {
+            $sql .= ' ORDER BY nombre';
+        }
 
         /** @var Carrera[] */
         return $this->findByQuery($sql, $bindings);
