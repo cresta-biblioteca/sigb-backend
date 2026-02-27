@@ -7,8 +7,8 @@ namespace App\Auth\Dtos\Request;
 readonly class UserLoginRequest
 {
     public function __construct(
-        public string $dni,
-        public string $password
+        private readonly string $dni,
+        private readonly string $password
     ) {
     }
 

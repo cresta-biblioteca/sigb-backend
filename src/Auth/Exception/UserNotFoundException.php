@@ -8,8 +8,8 @@ use App\Shared\Exceptions\EntityNotFoundException;
 
 class UserNotFoundException extends EntityNotFoundException
 {
-    public function __construct(string $dni)
+    public function __construct(mixed $identifier)
     {
-        parent::__construct('User', $dni);
+        parent::__construct('User', $identifier);
     }
 }
