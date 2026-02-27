@@ -8,12 +8,6 @@ use App\Catalogo\Articulos\Models\Tema;
 use App\Catalogo\Articulos\Repository\TemaRepository;
 use App\Catalogo\Articulos\Services\TemaService;
 use App\Shared\Exceptions\BusinessValidationException;
-use Mockery\MockInterface;
-
-/** @var MockInterface */
-$repositoryMock = null;
-/** @var TemaService */
-$service = null;
 
 beforeEach(function () {
     $this->repositoryMock = Mockery::mock(TemaRepository::class);

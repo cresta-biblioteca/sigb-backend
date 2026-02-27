@@ -77,12 +77,10 @@ class TemaService
             throw new TemaNotFoundException($id);
         }
 
-        /** @var Tema $temaExistente */
-
-        if ($tema->getTitulo() !== $temaExistente->getTitulo()) {
-            if ($this->repo->findCoincidence($tema->getTitulo())) {
-                throw new TemaAlreadyExistsException($tema->getTitulo());
-            }
+        /** @var Tema|null $temaCoincidente */
+        $temaCoincidente = $this->repo->findCoincidence($tema->getTitulo());
+        if ($temaCoincidente !== null && $temaCoincidente->getId() !== $id) {
+            throw new TemaAlreadyExistsException($tema->getTitulo());
         }
 
         $temaActualizado = $this->repo->updateTema($id, $tema);

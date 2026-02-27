@@ -119,7 +119,7 @@ class TemaController
             TemaRequestValidator::validateId($id);
 
             $this->service->deleteTema((int) $id);
-            JsonHelper::jsonResponse(null, 204);
+            http_response_code(204);
         } catch (TemaNotFoundException $e) {
             $this->temaNotFoundResponse($e);
         } catch (ValidationException $e) {
@@ -154,7 +154,8 @@ class TemaController
     private function businessValidationResponse(BusinessValidationException $e): void
     {
         JsonHelper::jsonResponse([
-            "message" => $e->getMessage()
+            "message" => $e->getMessage(),
+            "field" => $e->getField()
         ], 422);
     }
 
