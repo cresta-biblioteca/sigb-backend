@@ -59,7 +59,7 @@ class MateriaRequestValidator
     public static function validateParams(array $params): void
     {
         $errors = [];
-        
+
         if (isset($params["titulo"])) {
             if (!is_string($params["titulo"])) {
                 $errors["titulo"] = ["el campo titulo tiene que ser un string"];

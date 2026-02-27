@@ -25,7 +25,7 @@ class MateriaController
     {
         $params = array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS));
         $params = array_filter($params, fn($value) => $value !== '');
-        
+
         if (!empty($params)) {
             $this->getByParams($params);
             return;

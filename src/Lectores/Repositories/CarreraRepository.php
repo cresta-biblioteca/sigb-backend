@@ -131,7 +131,7 @@ class CarreraRepository extends Repository
 
         if (!empty($params["order"])) {
             $order = strtoupper($params['order']) === 'DESC' ? 'DESC' : 'ASC';
-            $sql .= " ORDER BY nombre {$order}";;
+            $sql .= " ORDER BY nombre {$order}";
         } else {
             $sql .= ' ORDER BY nombre';
         }
