@@ -40,12 +40,6 @@ class TemaRequestValidator
     public static function validateParams(array $params): void
     {
         $errors = [];
-        $allowedParams = ["titulo"];
-
-        $unknownKeys = array_diff(array_keys($params), $allowedParams);
-        if (!empty($unknownKeys)) {
-            $errors["general"][] = "Campos no permitidos: " . implode(', ', $unknownKeys);
-        }
 
         if (isset($params["titulo"])) {
             if (!is_string($params["titulo"])) {
@@ -54,6 +48,16 @@ class TemaRequestValidator
                 $errors["titulo"] = ["El campo titulo no puede estar vacio"];
             } elseif (!preg_match('/^[\p{L}0-9 -]+$/u', $params["titulo"])) {
                 $errors["titulo"] = ["El campo titulo no puede contener caracteres especiales"];
+            }
+        }
+
+        if (isset($params["order"])) {
+            if (!is_string($params["order"])) {
+                $errors["order"] = ["El orden debe ser un string"];
+            } elseif (trim($params["order"]) === "") {
+                $errors["order"] = ["El orden no puede estar vacio"];
+            } elseif (strtoupper($params["order"]) !== "ASC" && strtoupper($params["order"]) !== "DESC") {
+                $errors["order"] = ["El orden solo puede ser 'asc' o 'desc'"];
             }
         }
 
@@ -70,9 +74,7 @@ class TemaRequestValidator
             $errors["id"] = ["El id debe ser un numero"];
         } elseif ((int) $id < 1) {
             $errors["id"] = ["ID inválido. El ID debe ser un entero positivo mayor que 0."];
-        }
-
-        if (!ctype_digit($id)) {
+        } elseif (!ctype_digit($id)) {
             $errors["id"] = ["El id debe ser un numero válido"];
         }
 

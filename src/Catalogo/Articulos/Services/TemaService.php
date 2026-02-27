@@ -10,7 +10,6 @@ use App\Catalogo\Articulos\Exceptions\TemaAlreadyExistsException;
 use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\TemaMapper;
 use App\Catalogo\Articulos\Models\Tema;
-use App\Catalogo\Articulos\Repository\MateriaRepository;
 use App\Catalogo\Articulos\Repository\TemaRepository;
 
 class TemaService
@@ -37,10 +36,7 @@ class TemaService
      */
     public function getByParams(array $params = []): array
     {
-        $allowedKeys = ['titulo'];
-        $filteredParams = array_intersect_key($params, array_flip($allowedKeys));
-
-        $temas = $this->repo->findByParams($filteredParams);
+        $temas = $this->repo->findByParams($params);
 
         $temasDTO = array_map(
             fn($tema) => TemaMapper::toTemaResponse($tema),

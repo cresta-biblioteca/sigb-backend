@@ -76,7 +76,7 @@ class TemaRepository extends Repository
 
         if (!empty($params['titulo'])) {
             $conditions[] = 'titulo LIKE :titulo';
-            $escapedTitulo = addcslashes($params['titulo'], '%_');
+            $escapedTitulo = addcslashes(trim($params['titulo']), '%_');
             $bindings['titulo'] = '%' . $escapedTitulo . '%';
         }
 
@@ -85,8 +85,12 @@ class TemaRepository extends Repository
         if (!empty($conditions)) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
-
-        $sql .= ' ORDER BY titulo';
+        if (!empty($params['order'])) {
+            $order = strtoupper($params['order']) === 'DESC' ? 'DESC' : 'ASC';
+            $sql .= " ORDER BY titulo {$order}";
+        } else {
+            $sql .= ' ORDER BY titulo';
+        }
 
         /** @var Tema[] */
         return $this->findByQuery($sql, $bindings);

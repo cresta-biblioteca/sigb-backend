@@ -15,22 +15,22 @@ use App\Shared\Http\JsonHelper;
 
 class TemaController
 {
-    private const SEARCH_PARAMS = ["titulo"];
+    private const ALLOWED_PARAMS = ["titulo", "order"];
     public function __construct(private TemaService $service)
     {
     }
 
     public function getAll(): void
     {
+        $params = array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS));
+        $params = array_filter($params, fn($value) => $value !== '');
+
+        if (!empty($params)) {
+            $this->getByParams($params);
+            return;
+        }
+
         try {
-            $params = array_intersect_key($_GET, array_flip(self::SEARCH_PARAMS));
-            $params = array_filter($params, fn($value) => $value !== '');
-
-            if (!empty($params)) {
-                $this->getByParams($params);
-                return;
-            }
-
             $temas = $this->service->getAll();
             JsonHelper::jsonResponse($temas, 200);
         } catch (\Exception $e) {
