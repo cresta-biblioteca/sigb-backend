@@ -49,7 +49,7 @@ class CarreraService
      */
     public function getByParams(array $params = []): array
     {
-        $allowedKeys = ['cod', 'nombre'];
+        $allowedKeys = ['cod', 'nombre', 'order'];
         $filteredParams = array_intersect_key($params, array_flip($allowedKeys));
 
         $carreras = $this->repo->findByParams($filteredParams);

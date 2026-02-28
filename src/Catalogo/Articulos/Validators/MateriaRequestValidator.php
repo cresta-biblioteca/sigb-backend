@@ -56,17 +56,28 @@ class MateriaRequestValidator
         }
     }
 
-    public static function validateBusquedaTitulo(mixed $titulo): void
+    public static function validateParams(array $params): void
     {
         $errors = [];
-        if (!is_string($titulo)) {
-            $errors["titulo"] = ["el campo titulo tiene que ser un string"];
-        } elseif (!preg_match('/^[\p{L}0-9 ]+$/u', $titulo)) {
-            $errors["titulo"] = ["el campo titulo no puede contener caracteres especiales"];
+
+        if (isset($params["titulo"])) {
+            if (!is_string($params["titulo"])) {
+                $errors["titulo"] = ["el campo titulo tiene que ser un string"];
+            } elseif (trim($params["titulo"]) === "") {
+                $errors["titulo"] = ["el campo titulo es requerido"];
+            } elseif (!preg_match('/^[\p{L}0-9 ]+$/u', $params["titulo"])) {
+                $errors["titulo"] = ["el campo titulo no puede contener caracteres especiales"];
+            }
         }
 
-        if (trim($titulo) === "") {
-            $errors["titulo"] = ["el campo titulo es requerido"];
+        if (isset($params["order"])) {
+            if (!is_string($params["order"])) {
+                $errors["order"] = ["El orden debe ser un string"];
+            } elseif (trim($params["order"]) === "") {
+                $errors["order"] = ["El orden no puede estar vacio"];
+            } elseif (strtoupper($params["order"]) !== "ASC" && strtoupper($params["order"]) !== "DESC") {
+                $errors["order"] = ["El orden solo puede ser 'asc' o 'desc'"];
+            }
         }
 
         if (!empty($errors)) {

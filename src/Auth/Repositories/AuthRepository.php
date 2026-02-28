@@ -31,8 +31,15 @@ class AuthRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        $id = (int)$this->pdo->lastInsertId();
+        $id = (int) $this->pdo->lastInsertId();
 
         return $this->findById($id);
+    }
+
+    public function updatePassword(int $userId, string $newPassword): void
+    {
+        $sql = "UPDATE user SET password = :password WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['password' => $newPassword, 'id' => $userId]);
     }
 }
