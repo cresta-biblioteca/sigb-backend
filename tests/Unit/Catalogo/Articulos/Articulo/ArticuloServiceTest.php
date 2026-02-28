@@ -89,7 +89,7 @@ test('actualiza articulo exitosamente', function () {
         ->with(12, $this->isInstanceOf(Articulo::class))
         ->willReturn($updated);
 
-    $result = $this->service->update(12, $request);
+    $result = $this->service->updateArticulo(12, $request);
 
     expect($result->id)->toBe(12);
     expect($result->titulo)->toBe('Titulo nuevo');
@@ -110,35 +110,26 @@ test('elimina articulo exitosamente', function () {
         ->method('delete')
         ->with(30);
 
-    $this->service->delete(30);
+    $this->service->deleteArticulo(30);
 
     expect(true)->toBeTrue();
 });
 
-test('lista articulos paginados con metadatos', function () {
+test('obtiene lista completa de articulos', function () {
     $articulo1 = Articulo::create('A', 2020, 1, 'es');
     $articulo1->setId(1);
 
     $articulo2 = Articulo::create('B', 2021, 1, 'es');
     $articulo2->setId(2);
 
-    $filters = ['titulo' => 'a'];
-
     $this->repositoryMock
         ->expects($this->once())
-        ->method('countSearch')
-        ->with($filters)
-        ->willReturn(2);
-
-    $this->repositoryMock
-        ->expects($this->once())
-        ->method('searchPaginated')
-        ->with($filters, 1, 10)
+        ->method('getAll')
         ->willReturn([$articulo1, $articulo2]);
 
-    $result = $this->service->listPaginated($filters, 1, 10);
+    $result = $this->service->getAll();
 
-    expect($result['items'])->toHaveCount(2);
-    expect($result['pagination']['total'])->toBe(2);
-    expect($result['pagination']['page'])->toBe(1);
+    expect($result)->toHaveCount(2);
+    expect($result[0])->toBeInstanceOf(ArticuloResponse::class);
+    expect($result[1])->toBeInstanceOf(ArticuloResponse::class);
 });

@@ -25,17 +25,17 @@ test('crea un ejemplar exitosamente', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('existsByCodigoBarras')
+        ->method('existsEjemplarByCodigoBarras')
         ->with('1234567890123')
         ->willReturn(false);
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('save')
+        ->method('insertEjemplar')
         ->with($this->isInstanceOf(Ejemplar::class))
         ->willReturn($ejemplar);
 
-    $result = $this->service->create($request);
+    $result = $this->service->createEjemplar($request);
 
     expect($result)->toBeInstanceOf(EjemplarResponse::class);
     expect($result->id)->toBe(1);
@@ -51,11 +51,11 @@ test('lanza excepcion si codigo de barras ya existe', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('existsByCodigoBarras')
+        ->method('existsEjemplarByCodigoBarras')
         ->with('1234567890123')
         ->willReturn(true);
 
-    expect(fn () => $this->service->create($request))
+    expect(fn () => $this->service->createEjemplar($request))
         ->toThrow(EntityAlreadyExistsException::class);
 });
 
@@ -107,17 +107,17 @@ test('actualiza ejemplar exitosamente', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('existsByCodigoBarras')
+        ->method('existsEjemplarByCodigoBarras')
         ->with('22222', 8)
         ->willReturn(false);
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('update')
+        ->method('updateEjemplar')
         ->with($this->isInstanceOf(Ejemplar::class))
         ->willReturn(true);
 
-    $result = $this->service->update(8, $request);
+    $result = $this->service->updateEjemplar(8, $request);
 
     expect($result->codigoBarras)->toBe('22222');
     expect($result->habilitado)->toBeFalse();
@@ -135,11 +135,11 @@ test('deshabilita ejemplar exitosamente', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('update')
+        ->method('updateEjemplar')
         ->with($this->isInstanceOf(Ejemplar::class))
         ->willReturn(true);
 
-    $result = $this->service->deshabilitar(9);
+    $result = $this->service->deshabilitarEjemplar(9);
 
     expect($result->habilitado)->toBeFalse();
 });
@@ -153,7 +153,7 @@ test('lista ejemplares por articulo', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('findByArticuloId')
+        ->method('findEjemplaresByArticuloId')
         ->with(20)
         ->willReturn([$ejemplar1, $ejemplar2]);
 

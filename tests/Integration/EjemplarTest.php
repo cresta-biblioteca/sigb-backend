@@ -56,7 +56,7 @@ test('create crea ejemplar correctamente', function () {
         'habilitado' => true,
     ], function () {
         ob_start();
-        $this->controller->create();
+        $this->controller->createEjemplar();
         $this->output = ob_get_clean();
     });
 

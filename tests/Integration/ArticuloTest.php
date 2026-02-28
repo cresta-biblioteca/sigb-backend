@@ -35,7 +35,7 @@ function withJsonInput(array $payload, callable $callback): void
     }
 }
 
-test('create crea articulo correctamente', function () {
+test('getById obtiene articulo por id correctamente', function () {
     $tipoDocumentoId = $this->insertInto('tipo_documento', [
         'codigo' => 'LIB',
         'descripcion' => 'Libro',
@@ -43,24 +43,22 @@ test('create crea articulo correctamente', function () {
         'detalle' => 'Material bibliografico',
     ]);
 
-    withJsonInput([
+    $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Integracion',
         'anio_publicacion' => 2024,
         'tipo_documento_id' => $tipoDocumentoId,
         'idioma' => 'es',
-    ], function () {
-        ob_start();
-        $this->controller->create();
-        $this->output = ob_get_clean();
-    });
+    ]);
 
-    $response = json_decode($this->output, true);
+    ob_start();
+    $this->controller->getById($articuloId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
 
     expect($response['error'])->toBe(false)
         ->and($response['data']['titulo'])->toBe('Articulo Integracion')
         ->and($response['data']['tipo_documento_id'])->toBe($tipoDocumentoId);
-
-    expect($this->recordExists('articulo', ['id' => $response['data']['id']]))->toBeTrue();
 });
 
 test('getAll lista articulos paginados', function () {
@@ -98,13 +96,74 @@ test('getAll lista articulos paginados', function () {
         ->and($response['pagination']['total'])->toBe(2);
 });
 
-test('showById devuelve 404 para articulo inexistente', function () {
+test('getById devuelve 404 para articulo inexistente', function () {
     ob_start();
-    $this->controller->showById(99999);
+    $this->controller->getById(99999);
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
 
     expect($response['error'])->toBe(true)
         ->and($response)->toHaveKey('message');
+});
+
+test('updateArticulo actualiza articulo correctamente', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Titulo Original',
+        'anio_publicacion' => 2023,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    withJsonInput([
+        'titulo' => 'Titulo Actualizado',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'en',
+    ], function () use ($articuloId) {
+        ob_start();
+        $this->controller->updateArticulo($articuloId);
+        $this->output = ob_get_clean();
+    });
+
+    $response = json_decode($this->output, true);
+
+    expect($response['error'])->toBe(false)
+        ->and($response['data']['titulo'])->toBe('Titulo Actualizado')
+        ->and($response['data']['anio_publicacion'])->toBe(2024)
+        ->and($response['data']['idioma'])->toBe('en');
+});
+
+test('deleteArticulo elimina articulo correctamente', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo a Eliminar',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    ob_start();
+    $this->controller->deleteArticulo($articuloId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['error'])->toBe(false)
+        ->and($response['message'])->toContain('eliminado');
+
+    expect($this->recordExists('articulo', ['id' => $articuloId]))->toBeFalse();
 });

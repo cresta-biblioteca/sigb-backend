@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Services;
 
-use App\Catalogo\Articulos\Mappers\ArticuloMapper;
-use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
+use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Catalogo\Libros\Dtos\Request\LibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
@@ -13,239 +14,166 @@ use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
-use App\Shared\Database\Connection;
-use App\Shared\Exceptions\ValidationException;
-use PDO;
-use PDOException;
-use Throwable;
+use App\Catalogo\Libros\Validators\LibroRequestValidator;
 
 class LibroService
 {
-	private ArticuloRepository $articuloRepository;
-    private PDO $pdo;
-
-	public function __construct(
+    public function __construct(
         private LibroRepository $repository,
-        ?ArticuloRepository $articuloRepository = null,
-        ?PDO $pdo = null
+        private ArticuloService $articuloService
     ) {
-        $this->articuloRepository = $articuloRepository ?? new ArticuloRepository();
-        $this->pdo = $pdo ?? Connection::getInstance();
-	}
+    }
 
-	/**
-	 * Crea un libro y, opcionalmente, crea el artículo en la misma operación
-	 * cuando no se provee articulo_id.
-	 *
-	 * Payload soportado:
-	 * - Con artículo existente: { ...campos libro..., articulo_id }
-	 * - Con artículo nuevo:
-	 *   {
-	 *     "articulo": { titulo, anio_publicacion, tipo_documento_id, idioma? },
-	 *     "libro": { isbn, export_marc, autor?, ... }
-	 *   }
-	 *
-	 * También acepta payload plano para artículo/libro sin anidar.
-	 *
-	 * @param array<string, mixed> $payload
-	 * @throws LibroAlreadyExistsException
-	 * @throws LibroNotFoundException
-	 * @throws ValidationException
-	 */
-	public function createFromCatalog(array $payload): LibroResponse
-	{
-		$libroPayload = isset($payload['libro']) && is_array($payload['libro'])
-			? $payload['libro']
-			: $payload;
+    /**
+     * @return LibroResponse[]
+     */
+    public function getAll(): array
+    {
+        $libros = $this->repository->findAll();
+        return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
+    }
 
-		$articuloId = isset($libroPayload['articulo_id'])
-			? (int) $libroPayload['articulo_id']
-			: null;
+    public function getById(int $id): LibroResponse
+    {
+        $libro = $this->repository->findById($id);
 
-		if ($articuloId !== null && $articuloId > 0) {
-			$requestDto = LibroRequest::fromArray($libroPayload);
-			return $this->create($requestDto);
-		}
+        if ($libro === null) {
+            throw new LibroNotFoundException($id);
+        }
 
-		$articuloPayload = isset($payload['articulo']) && is_array($payload['articulo'])
-			? $payload['articulo']
-			: $payload;
+        return LibroMapper::toLibroResponse($libro);
+    }
 
-		$this->pdo->beginTransaction();
+    /**
+     * Crea un libro completo con artículo y libro en una sola operación
+     */
+    public function create(array $articuloData, array $libroData): LibroResponse
+    {
+        // Validar datos del artículo
+        ArticuloRequestValidator::validate($articuloData);
+        
+        // Validar datos del libro
+        $allLibroData = array_merge($libroData, ['articulo_id' => 1]); // articulo_id temporal para validación
+        LibroRequestValidator::validate($allLibroData);
 
-		try {
-			$articuloRequest = ArticuloMapper::fromArray($articuloPayload);
-			$articulo = ArticuloMapper::fromArticuloRequest($articuloRequest);
-			$articulo = $this->articuloRepository->insertArticulo($articulo);
+        if (isset($libroData['isbn']) && $this->repository->existsByIsbn($libroData['isbn'])) {
+            throw new LibroAlreadyExistsException($libroData['isbn'], 'isbn');
+        }
 
-			$libroPayload['articulo_id'] = $articulo->getId();
-			$requestDto = LibroRequest::fromArray($libroPayload);
-			$createdLibro = $this->create($requestDto);
+        $articuloRequest = new ArticuloRequest(
+            titulo: $articuloData['titulo'],
+            anioPublicacion: (int) $articuloData['anio_publicacion'],
+            tipoDocumentoId: (int) $articuloData['tipo_documento_id'],
+            idioma: $articuloData['idioma'] ?? 'es'
+        );
 
-			$this->pdo->commit();
+        $articuloResponse = $this->articuloService->create($articuloRequest);
+        
+        $libroRequest = new LibroRequest(
+            articuloId: $articuloResponse->id,
+            isbn: $libroData['isbn'],
+            exportMarc: $libroData['export_marc'],
+            autor: $libroData['autor'] ?? null,
+            autores: $libroData['autores'] ?? null,
+            colaboradores: $libroData['colaboradores'] ?? null,
+            tituloInformativo: $libroData['titulo_informativo'] ?? null,
+            cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null
+        );
 
-			return $createdLibro;
-		} catch (Throwable $e) {
-			if ($this->pdo->inTransaction()) {
-				$this->pdo->rollBack();
-			}
+        $libro = Libro::create(
+            $libroRequest->articuloId,
+            $libroRequest->isbn,
+            $libroRequest->exportMarc,
+            $libroRequest->autor,
+            $libroRequest->autores,
+            $libroRequest->colaboradores,
+            $libroRequest->tituloInformativo,
+            $libroRequest->cdu
+        );
 
-			throw $e;
-		}
-	}
+        $this->repository->save($libro);
 
-	/**
-	 * @param array<string, mixed> $filters
-	 * @return LibroResponse[]
-	 */
-	public function listAll(array $filters = []): array
-	{
-		$libros = !empty($filters)
-			? $this->repository->search($filters)
-			: $this->repository->findAll();
+        $savedLibro = $this->repository->findById($articuloResponse->id);
 
-		return array_map(
-			fn (Libro $libro) => LibroMapper::toResponse($libro),
-			$libros
-		);
-	}
+        return LibroMapper::toLibroResponse($savedLibro);
+    }
 
-	/**
-	 * @param array<string, mixed> $filters
-	 * @return array{items: LibroResponse[], pagination: array<string, int>}
-	 */
-	public function listPaginated(array $filters, int $page, int $perPage): array
-	{
-		$page = max(1, $page);
-		$perPage = max(1, min($perPage, 100));
+    public function updateLibro(int $id, LibroRequest $request): LibroResponse
+    {
+        LibroRequestValidator::validateId($id);
+        
+        $existing = $this->repository->findById($id);
 
-		$total = $this->repository->countSearch($filters);
-		$libros = $this->repository->searchPaginated($filters, $page, $perPage);
+        if ($existing === null) {
+            throw new LibroNotFoundException($id);
+        }
 
-		$items = array_map(
-			fn (Libro $libro) => LibroMapper::toResponse($libro),
-			$libros
-		);
+        if ($this->repository->existsByIsbn($request->isbn, $id)) {
+            throw new LibroAlreadyExistsException($request->isbn, 'isbn');
+        }
 
-		$totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
+        $libro = Libro::create(
+            $request->articuloId,
+            $request->isbn,
+            $request->exportMarc,
+            $request->autor,
+            $request->autores,
+            $request->colaboradores,
+            $request->tituloInformativo,
+            $request->cdu
+        );
+        
+        $this->repository->update($libro);
 
-		return [
-			'items' => $items,
-			'pagination' => [
-				'page' => $page,
-				'per_page' => $perPage,
-				'total' => $total,
-				'total_pages' => $totalPages,
-			],
-		];
-	}
+        $updated = $this->repository->findById($id);
 
-	/**
-	 * @throws LibroNotFoundException
-	 */
-	public function getById(int $id): LibroResponse
-	{
-		$libro = $this->repository->findById($id);
+        return LibroMapper::toLibroResponse($updated);
+    }
 
-		if ($libro === null) {
-			throw new LibroNotFoundException($id);
-		}
+    public function deleteLibro(int $id): void
+    {
+        LibroRequestValidator::validateId($id);
+        
+        if ($this->repository->findById($id) === null) {
+            throw new LibroNotFoundException($id);
+        }
 
-		return LibroMapper::toResponse($libro);
-	}
+        $this->repository->delete($id);
+    }
 
-	/**
-	 * @throws LibroAlreadyExistsException
-	 * @throws LibroNotFoundException
-	 */
-	public function create(LibroRequest $request): LibroResponse
-	{
-		if ($this->repository->existsByArticuloId($request->articuloId)) {
-			throw new LibroAlreadyExistsException($request->articuloId);
-		}
+    /**
+     * @param array<string, mixed> $filters
+     * @return LibroResponse[]
+     */
+    public function search(array $filters): array
+    {
+        LibroRequestValidator::validateSearchParams($filters);
+        
+        $libros = $this->repository->search($filters);
+        return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
+    }
 
-		if ($this->repository->existsByIsbn($request->isbn)) {
-			throw new LibroAlreadyExistsException($request->isbn, 'isbn');
-		}
 
-		$libro = LibroMapper::requestToEntity($request);
+    public function searchPaginated(array $filters, int $page, int $perPage): array
+    {
+        LibroRequestValidator::validateSearchParams($filters);
+        LibroRequestValidator::validatePaginationParams(['page' => $page, 'per_page' => $perPage]);
+        $page = max(1, $page);
+        $perPage = max(1, min($perPage, 100));
 
-		try {
-			$this->repository->save($libro);
-		} catch (PDOException $e) {
-			if ($this->isDuplicateKeyException($e)) {
-				if (str_contains(strtolower($e->getMessage()), 'uq_libro_isbn')) {
-					throw new LibroAlreadyExistsException($request->isbn, 'isbn');
-				}
+        $total = $this->repository->countSearch($filters);
+        $libros = $this->repository->searchPaginated($filters, $page, $perPage);
 
-				throw new LibroAlreadyExistsException($request->articuloId);
-			}
+        $items = array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
 
-			throw $e;
-		}
-
-		$libroConArticulo = $this->repository->findById($libro->getArticuloId());
-
-		if ($libroConArticulo === null) {
-			throw new LibroNotFoundException($libro->getArticuloId());
-		}
-
-		return LibroMapper::toResponse($libroConArticulo);
-	}
-
-	/**
-	 * @throws LibroNotFoundException
-	 * @throws LibroAlreadyExistsException
-	 */
-	public function update(int $id, LibroRequest $request): LibroResponse
-	{
-		/** @var ?Libro $libroExistente */
-		$libroExistente = $this->repository->findById($id);
-
-		if ($libroExistente === null) {
-			throw new LibroNotFoundException($id);
-		}
-
-		if ($this->repository->existsByIsbn($request->isbn, $id)) {
-			throw new LibroAlreadyExistsException($request->isbn, 'isbn');
-		}
-
-		$libro = LibroMapper::requestToEntity($request);
-		$libro->setArticuloId($id);
-
-		try {
-			$this->repository->update($libro);
-		} catch (PDOException $e) {
-			if ($this->isDuplicateKeyException($e)) {
-				throw new LibroAlreadyExistsException($request->isbn, 'isbn');
-			}
-
-			throw $e;
-		}
-
-		$libroActualizado = $this->repository->findById($id);
-
-		if ($libroActualizado === null) {
-			throw new LibroNotFoundException($id);
-		}
-
-		return LibroMapper::toResponse($libroActualizado);
-	}
-
-	/**
-	 * @throws LibroNotFoundException
-	 */
-	public function delete(int $id): void
-	{
-		if ($this->repository->findById($id) === null) {
-			throw new LibroNotFoundException($id);
-		}
-
-		$this->repository->delete($id);
-	}
-
-	private function isDuplicateKeyException(PDOException $exception): bool
-	{
-		return $exception->getCode() === '23000';
-	}
+        return [
+            'items' => $items,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => $total > 0 ? (int) ceil($total / $perPage) : 1,
+            ],
+        ];
+    }
 }

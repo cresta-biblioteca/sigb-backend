@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Ejemplares\Controllers;
 
-use App\Catalogo\Ejemplares\Dtos\Request\EjemplarCatalogFilterRequest;
-use App\Catalogo\Ejemplares\Mappers\EjemplarMapper;
+use App\Catalogo\Ejemplares\Dtos\Request\EjemplarRequest;
 use App\Catalogo\Ejemplares\Services\EjemplarService;
-use App\Catalogo\Ejemplares\Validators\EjemplarCatalogQueryValidator;
+use App\Catalogo\Ejemplares\Validators\EjemplarRequestValidator;
 use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\EntityAlreadyExistsException;
 use App\Shared\Exceptions\EntityNotFoundException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
+use Exception;
 use JsonException;
-use Throwable;
 
 class EjemplarController
 {
-	public function __construct(private EjemplarService $service)
+	public function __construct(private EjemplarService $ejemplarService)
 	{
 	}
 
@@ -29,17 +28,56 @@ class EjemplarController
 	public function getAll(): void
 	{
 		try {
-			/** @var EjemplarCatalogFilterRequest $filterRequest */
-			$filterRequest = EjemplarCatalogQueryValidator::fromQuery($_GET);
+			if (isset($_GET['codigo_barras']) && $_GET['codigo_barras'] !== '') {
+				$codigoBarras = trim((string) $_GET['codigo_barras']);
 
-			$ejemplares = !empty($filterRequest->filters)
-				? $this->service->search($filterRequest->filters)
-				: $this->service->getAll();
+				if (!EjemplarRequestValidator::validateCodigoBarras($codigoBarras)) {
+					throw ValidationException::forField(
+						'codigo_barras',
+						'El campo codigo_barras debe contener solo dígitos (máximo 13)'
+					);
+				}
 
-			$response = array_map(
-				fn($ejemplarDto) => $ejemplarDto->toArray(),
-				$ejemplares
-			);
+				$ejemplar = $this->ejemplarService->getByCodigoBarras($codigoBarras);
+				$response = $ejemplar === null ? [] : [$ejemplar];
+
+				JsonHelper::jsonResponse([
+					'error' => false,
+					'data' => $response,
+				]);
+				return;
+			}
+
+			if (isset($_GET['articulo_id']) && $_GET['articulo_id'] !== '') {
+				$articuloId = (int) $_GET['articulo_id'];
+				EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
+
+				if (isset($_GET['habilitado']) && filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN)) {
+					$this->getHabilitadosByArticuloId($articuloId);
+					return;
+				}
+
+				$this->getByArticuloId($articuloId);
+				return;
+			}
+
+			if (isset($_GET['habilitado']) && $_GET['habilitado'] !== '') {
+				$habilitado = filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+				if (!is_bool($habilitado)) {
+					throw ValidationException::forField('habilitado', 'El campo habilitado debe ser booleano');
+				}
+
+				$response = $this->ejemplarService->getByHabilitado($habilitado);
+
+				JsonHelper::jsonResponse([
+					'error' => false,
+					'data' => $response,
+				]);
+				return;
+			}
+
+			$response = $this->ejemplarService->getAll();
 
 			JsonHelper::jsonResponse([
 				'error' => false,
@@ -51,47 +89,53 @@ class EjemplarController
 				'message' => $e->getMessage(),
 				'errors' => $e->getErrors(),
 			], 422);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::getAll] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
 	/**
 	 * GET /ejemplares/{id}
 	 */
-	public function showById(int $id): void
+	public function getById(int $id): void
 	{
 		try {
-			$ejemplar = $this->service->getById($id);
+			$ejemplar = $this->ejemplarService->getById($id);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $ejemplar->toArray(),
+				'data' => $ejemplar,
 			]);
 		} catch (EntityNotFoundException $e) {
 			JsonHelper::jsonResponse([
 				'error' => true,
 				'message' => $e->getMessage(),
 			], 404);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::getById] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
 	/**
 	 * POST /ejemplares
 	 */
-	public function create(): void
+	public function createEjemplar(): void
 	{
 		try {
 			$input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
-
-			$request = EjemplarMapper::fromArray($input);
-			$ejemplar = $this->service->create($request);
+			EjemplarRequestValidator::validate($input);
+			$request = new EjemplarRequest(
+				(int) $input['articulo_id'],
+				trim((string) $input['codigo_barras']),
+				(bool) $input['habilitado']
+			);
+			$ejemplar = $this->ejemplarService->createEjemplar($request);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $ejemplar->toArray(),
+				'data' => $ejemplar,
 			], 201);
 		} catch (ValidationException $e) {
 			JsonHelper::jsonResponse([
@@ -117,15 +161,16 @@ class EjemplarController
 				'error' => true,
 				'message' => 'JSON inválido',
 			], 400);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::createEjemplar] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
 	/**
 	 * PUT /ejemplares/{id}
 	 */
-	public function update(int $id): void
+	public function updateEjemplar(int $id): void
 	{
 		try {
 			if ($id < 1) {
@@ -137,13 +182,18 @@ class EjemplarController
 			}
 
 			$input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+			EjemplarRequestValidator::validate($input);
 
-			$request = EjemplarMapper::fromArray($input);
-			$ejemplar = $this->service->update($id, $request);
+			$request = new EjemplarRequest(
+				(int) $input['articulo_id'],
+				trim((string) $input['codigo_barras']),
+				(bool) $input['habilitado']
+			);
+			$ejemplar = $this->ejemplarService->updateEjemplar($id, $request);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $ejemplar->toArray(),
+				'data' => $ejemplar,
 			]);
 		} catch (ValidationException $e) {
 			JsonHelper::jsonResponse([
@@ -174,18 +224,19 @@ class EjemplarController
 				'error' => true,
 				'message' => 'JSON inválido',
 			], 400);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::updateEjemplar] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
 	/**
 	 * DELETE /ejemplares/{id}
 	 */
-	public function destroy(int $id): void
+	public function deleteEjemplar(int $id): void
 	{
 		try {
-			$this->service->delete($id);
+			$this->ejemplarService->deleteEjemplar($id);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
@@ -196,8 +247,9 @@ class EjemplarController
 				'error' => true,
 				'message' => $e->getMessage(),
 			], 404);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::deleteEjemplar] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
@@ -207,19 +259,15 @@ class EjemplarController
 	public function getByArticuloId(int $articuloId): void
 	{
 		try {
-			$ejemplares = $this->service->getByArticuloId($articuloId);
-
-			$response = array_map(
-				fn($ejemplarDto) => $ejemplarDto->toArray(),
-				$ejemplares
-			);
+			$ejemplares = $this->ejemplarService->getByArticuloId($articuloId);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $response,
+				'data' => $ejemplares,
 			]);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::getByArticuloId] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
@@ -229,19 +277,15 @@ class EjemplarController
 	public function getHabilitadosByArticuloId(int $articuloId): void
 	{
 		try {
-			$ejemplares = $this->service->getHabilitadosByArticuloId($articuloId);
-
-			$response = array_map(
-				fn($ejemplarDto) => $ejemplarDto->toArray(),
-				$ejemplares
-			);
+			$ejemplares = $this->ejemplarService->getHabilitadosByArticuloId($articuloId);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $response,
+				'data' => $ejemplares,
 			]);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::getHabilitadosByArticuloId] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
@@ -251,19 +295,20 @@ class EjemplarController
 	public function habilitar(int $id): void
 	{
 		try {
-			$ejemplar = $this->service->habilitar($id);
+			$ejemplar = $this->ejemplarService->habilitarEjemplar($id);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $ejemplar->toArray(),
+				'data' => $ejemplar,
 			]);
 		} catch (EntityNotFoundException $e) {
 			JsonHelper::jsonResponse([
 				'error' => true,
 				'message' => $e->getMessage(),
 			], 404);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::habilitar] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
@@ -273,29 +318,21 @@ class EjemplarController
 	public function deshabilitar(int $id): void
 	{
 		try {
-			$ejemplar = $this->service->deshabilitar($id);
+			$ejemplar = $this->ejemplarService->deshabilitarEjemplar($id);
 
 			JsonHelper::jsonResponse([
 				'error' => false,
-				'data' => $ejemplar->toArray(),
+				'data' => $ejemplar,
 			]);
 		} catch (EntityNotFoundException $e) {
 			JsonHelper::jsonResponse([
 				'error' => true,
 				'message' => $e->getMessage(),
 			], 404);
-		} catch (Throwable $e) {
-			$this->handleServerError($e);
+		} catch (Exception $e) {
+			JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+			error_log("[EjemplarController::deshabilitar] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
 		}
 	}
 
-	private function handleServerError(Throwable $e): void
-	{
-		JsonHelper::jsonResponse([
-			'error' => true,
-			'message' => 'Error interno del servidor',
-		], 500);
-
-		error_log($e->getMessage());
-	}
 }

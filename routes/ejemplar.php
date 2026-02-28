@@ -19,19 +19,19 @@ $router->get('/ejemplares', function () use ($ejemplarController) {
 });
 
 $router->get('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->showById((int) $id);
+    $ejemplarController->getById((int) $id);
 });
 
 $router->post('/ejemplares', function () use ($ejemplarController) {
-    $ejemplarController->create();
+    $ejemplarController->createEjemplar();
 });
 
 $router->put('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->update((int) $id);
+    $ejemplarController->updateEjemplar((int) $id);
 });
 
 $router->delete('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->destroy((int) $id);
+    $ejemplarController->deleteEjemplar((int) $id);
 });
 
 $router->patch('/ejemplares/{id}/habilitar', function ($id) use ($ejemplarController) {

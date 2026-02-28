@@ -14,215 +14,127 @@ use App\Shared\Exceptions\EntityNotFoundException;
 
 class EjemplarService
 {
-	public function __construct(private EjemplarRepository $repository)
+	public function __construct(private readonly EjemplarRepository $ejemplarRepository)
 	{
 	}
 
-	/**
-	 * @return EjemplarResponse[]
-	 */
 	public function getAll(): array
 	{
-		$ejemplares = $this->repository->findAll();
+		$ejemplares = $this->ejemplarRepository->findAll();
 
 		return array_map(
-			fn (Ejemplar $ejemplar) => EjemplarMapper::toEjemplarResponse($ejemplar),
+			static fn(Ejemplar $ejemplar): EjemplarResponse => EjemplarMapper::toResponse($ejemplar),
 			$ejemplares
 		);
 	}
 
-	/**
-	 * @throws EntityNotFoundException
-	 */
 	public function getById(int $id): EjemplarResponse
 	{
-		/** @var ?Ejemplar $ejemplar */
-		$ejemplar = $this->repository->findById($id);
-
-		if ($ejemplar === null) {
-			throw new EntityNotFoundException('Ejemplar', $id);
-		}
-
-		return EjemplarMapper::toEjemplarResponse($ejemplar);
+		return EjemplarMapper::toResponse($this->findOrFail($id));
 	}
 
-	/**
-	 * @throws EntityAlreadyExistsException
-	 */
-	public function create(EjemplarRequest $request): EjemplarResponse
+	public function createEjemplar(EjemplarRequest $request): EjemplarResponse
 	{
-		if (
-			$request->codigoBarras !== null
-			&& $request->codigoBarras !== ''
-			&& $this->repository->existsByCodigoBarras($request->codigoBarras)
-		) {
+		if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->codigoBarras)) {
 			throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->codigoBarras);
 		}
 
-		$ejemplar = EjemplarMapper::fromEjemplarRequest($request);
-		$created = $this->repository->save($ejemplar);
+		$ejemplar = Ejemplar::create(
+			$request->articuloId,
+			$request->codigoBarras,
+			$request->habilitado
+		);
 
-		return EjemplarMapper::toEjemplarResponse($created);
+		$savedEjemplar = $this->ejemplarRepository->insertEjemplar($ejemplar);
+
+		return EjemplarMapper::toResponse($savedEjemplar);
 	}
 
-	/**
-	 * @throws EntityNotFoundException
-	 * @throws EntityAlreadyExistsException
-	 */
-	public function update(int $id, EjemplarRequest $request): EjemplarResponse
+	public function updateEjemplar(int $id, EjemplarRequest $request): EjemplarResponse
 	{
-		/** @var ?Ejemplar $existing */
-		$existing = $this->repository->findById($id);
+		$ejemplar = $this->findOrFail($id);
 
-		if ($existing === null) {
-			throw new EntityNotFoundException('Ejemplar', $id);
-		}
-
-		if (
-			$request->codigoBarras !== null
-			&& $request->codigoBarras !== ''
-			&& $this->repository->existsByCodigoBarras($request->codigoBarras, $id)
-		) {
+		if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->codigoBarras, $id)) {
 			throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->codigoBarras);
 		}
 
-		$ejemplar = EjemplarMapper::updateFromRequest($existing, $request);
-		$this->repository->update($ejemplar);
+		$ejemplar->setArticuloId($request->articuloId);
+		$ejemplar->setCodigoBarras($request->codigoBarras);
+		$ejemplar->setHabilitado($request->habilitado);
 
-		/** @var ?Ejemplar $updated */
-		$updated = $this->repository->findById($id);
+		$this->ejemplarRepository->updateEjemplar($ejemplar);
 
-		if ($updated === null) {
-			throw new EntityNotFoundException('Ejemplar', $id);
-		}
-
-		return EjemplarMapper::toEjemplarResponse($updated);
+		return EjemplarMapper::toResponse($ejemplar);
 	}
 
-	/**
-	 * @throws EntityNotFoundException
-	 */
-	public function delete(int $id): void
+	public function deleteEjemplar(int $id): void
 	{
-		if ($this->repository->findById($id) === null) {
-			throw new EntityNotFoundException('Ejemplar', $id);
-		}
-
-		$this->repository->delete($id);
+		$this->findOrFail($id);
+		$this->ejemplarRepository->delete($id);
 	}
 
-	/**
-	 * @param array<string, mixed> $filters
-	 * @return EjemplarResponse[]
-	 */
-	public function search(array $filters): array
+	public function getByCodigoBarras(string $codigoBarras): ?EjemplarResponse
 	{
-		if (isset($filters['codigo_barras']) && $filters['codigo_barras'] !== '') {
-			$ejemplar = $this->repository->findByCodigoBarras((string) $filters['codigo_barras']);
+		$ejemplar = $this->ejemplarRepository->findEjemplarByCodigoBarras($codigoBarras);
 
-			if ($ejemplar === null) {
-				return [];
-			}
-
-			return [EjemplarMapper::toEjemplarResponse($ejemplar)];
-		}
-
-		if (isset($filters['articulo_id'])) {
-			$articuloId = (int) $filters['articulo_id'];
-
-			$ejemplares = isset($filters['habilitado'])
-				? $this->filterByHabilitado($this->repository->findByArticuloId($articuloId), (bool) $filters['habilitado'])
-				: $this->repository->findByArticuloId($articuloId);
-
-			return array_map(
-				fn (Ejemplar $ejemplar) => EjemplarMapper::toEjemplarResponse($ejemplar),
-				$ejemplares
-			);
-		}
-
-		if (isset($filters['habilitado'])) {
-			$ejemplares = $this->repository->findByHabilitado((bool) $filters['habilitado']);
-
-			return array_map(
-				fn (Ejemplar $ejemplar) => EjemplarMapper::toEjemplarResponse($ejemplar),
-				$ejemplares
-			);
-		}
-
-		return $this->getAll();
+		return $ejemplar === null ? null : EjemplarMapper::toResponse($ejemplar);
 	}
 
-	/**
-	 * @return EjemplarResponse[]
-	 */
+	public function getByHabilitado(bool $habilitado): array
+	{
+		$ejemplares = $this->ejemplarRepository->findEjemplaresByHabilitado($habilitado);
+		$ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
+
+		return $ejemplaresDto;
+	}
+
 	public function getByArticuloId(int $articuloId): array
 	{
-		$ejemplares = $this->repository->findByArticuloId($articuloId);
+		$ejemplares = $this->ejemplarRepository->findEjemplaresByArticuloId($articuloId);
+		$ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
 
-		return array_map(
-			fn (Ejemplar $ejemplar) => EjemplarMapper::toEjemplarResponse($ejemplar),
-			$ejemplares
-		);
+		return $ejemplaresDto;
 	}
 
-	/**
-	 * @return EjemplarResponse[]
-	 */
 	public function getHabilitadosByArticuloId(int $articuloId): array
 	{
-		$ejemplares = $this->repository->findHabilitadosByArticuloId($articuloId);
+		$ejemplares = $this->ejemplarRepository->findEjemplaresHabilitadosByArticuloId($articuloId);
+		$ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
 
-		return array_map(
-			fn (Ejemplar $ejemplar) => EjemplarMapper::toEjemplarResponse($ejemplar),
-			$ejemplares
-		);
+		return $ejemplaresDto;
 	}
 
-	/**
-	 * @throws EntityNotFoundException
-	 */
-	public function habilitar(int $id): EjemplarResponse
+
+	public function habilitarEjemplar(int $id): EjemplarResponse
 	{
-		/** @var ?Ejemplar $ejemplar */
-		$ejemplar = $this->repository->findById($id);
-
-		if ($ejemplar === null) {
-			throw new EntityNotFoundException('Ejemplar', $id);
-		}
-
+		$ejemplar = $this->findOrFail($id);
 		$ejemplar->habilitar();
-		$this->repository->update($ejemplar);
+		$this->ejemplarRepository->updateEjemplar($ejemplar);
 
-		return EjemplarMapper::toEjemplarResponse($ejemplar);
+		return EjemplarMapper::toResponse($ejemplar);
 	}
 
-	/**
-	 * @throws EntityNotFoundException
-	 */
-	public function deshabilitar(int $id): EjemplarResponse
+
+	public function deshabilitarEjemplar(int $id): EjemplarResponse
+	{
+		$ejemplar = $this->findOrFail($id);
+		$ejemplar->deshabilitar();
+		$this->ejemplarRepository->updateEjemplar($ejemplar);
+
+		return EjemplarMapper::toResponse($ejemplar);
+	}
+
+
+	private function findOrFail(int $id): Ejemplar
 	{
 		/** @var ?Ejemplar $ejemplar */
-		$ejemplar = $this->repository->findById($id);
+		$ejemplar = $this->ejemplarRepository->findById($id);
 
 		if ($ejemplar === null) {
 			throw new EntityNotFoundException('Ejemplar', $id);
 		}
 
-		$ejemplar->deshabilitar();
-		$this->repository->update($ejemplar);
-
-		return EjemplarMapper::toEjemplarResponse($ejemplar);
+		return $ejemplar;
 	}
 
-	/**
-	 * @param Ejemplar[] $ejemplares
-	 * @return Ejemplar[]
-	 */
-	private function filterByHabilitado(array $ejemplares, bool $habilitado): array
-	{
-		return array_values(array_filter(
-			$ejemplares,
-			fn (Ejemplar $ejemplar): bool => $ejemplar->isHabilitado() === $habilitado
-		));
-	}
 }

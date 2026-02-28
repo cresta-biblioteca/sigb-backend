@@ -17,9 +17,7 @@ class ArticuloService
 	{
 	}
 
-	/**
-	 * @return ArticuloResponse[]
-	 */
+
 	public function getAll(): array
 	{
 		$articulos = $this->repository->findAll();
@@ -30,9 +28,6 @@ class ArticuloService
 		);
 	}
 
-	/**
-	 * @throws ArticuloNotFoundException
-	 */
 	public function getById(int $id): ArticuloResponse
 	{
 		$articulo = $this->repository->findById($id);
@@ -46,17 +41,20 @@ class ArticuloService
 
 	public function create(ArticuloRequest $request): ArticuloResponse
 	{
-		$articulo = ArticuloMapper::fromArticuloRequest($request);
+		$articulo = Articulo::create(
+			titulo: $request->titulo,
+			anioPublicacion: $request->anioPublicacion,
+			tipoDocumentoId: $request->tipoDocumentoId,
+			idioma: $request->idioma
+		);
 
 		$created = $this->repository->insertArticulo($articulo);
 
 		return ArticuloMapper::toArticuloResponse($created);
 	}
 
-	/**
-	 * @throws ArticuloNotFoundException
-	 */
-	public function update(int $id, ArticuloRequest $request): ArticuloResponse
+
+	public function updateArticulo(int $id, ArticuloRequest $request): ArticuloResponse
 	{
 		$existing = $this->repository->findById($id);
 
@@ -64,17 +62,20 @@ class ArticuloService
 			throw new ArticuloNotFoundException($id);
 		}
 
-		$articulo = ArticuloMapper::fromArticuloRequest($request);
+		$articulo = Articulo::create(
+			titulo: $request->titulo,
+			anioPublicacion: $request->anioPublicacion,
+			tipoDocumentoId: $request->tipoDocumentoId,
+			idioma: $request->idioma
+		);
 
 		$updated = $this->repository->updateArticulo($id, $articulo);
 
 		return ArticuloMapper::toArticuloResponse($updated);
 	}
 
-	/**
-	 * @throws ArticuloNotFoundException
-	 */
-	public function delete(int $id): void
+
+	public function deleteArticulo(int $id): void
 	{
 		if ($this->repository->findById($id) === null) {
 			throw new ArticuloNotFoundException($id);
@@ -83,47 +84,5 @@ class ArticuloService
 		$this->repository->delete($id);
 	}
 
-	/**
-	 * @param array<string, mixed> $filters
-	 * @return ArticuloResponse[]
-	 */
-	public function search(array $filters): array
-	{
-		$articulos = $this->repository->search($filters);
-
-		return array_map(
-			fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
-			$articulos
-		);
-	}
-
-	/**
-	 * @param array<string, mixed> $filters
-	 * @return array{items: ArticuloResponse[], pagination: array<string, int>}
-	 */
-	public function listPaginated(array $filters, int $page, int $perPage): array
-	{
-		$page = max(1, $page);
-		$perPage = max(1, min($perPage, 100));
-
-		$total = $this->repository->countSearch($filters);
-		$articulos = $this->repository->searchPaginated($filters, $page, $perPage);
-
-		$items = array_map(
-			fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
-			$articulos
-		);
-
-		$totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
-
-		return [
-			'items' => $items,
-			'pagination' => [
-				'page' => $page,
-				'per_page' => $perPage,
-				'total' => $total,
-				'total_pages' => $totalPages,
-			],
-		];
-	}
+	
 }

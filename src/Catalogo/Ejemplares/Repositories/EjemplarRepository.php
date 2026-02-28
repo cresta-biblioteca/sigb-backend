@@ -14,15 +14,12 @@ class EjemplarRepository extends Repository
 		return 'ejemplar';
 	}
 
-	/**
-	 * @return class-string<Ejemplar>
-	 */
 	protected function getEntityClass(): string
 	{
 		return Ejemplar::class;
 	}
 
-	public function save(Ejemplar $ejemplar): Ejemplar
+	public function insertEjemplar(Ejemplar $ejemplar): Ejemplar
 	{
 		$sql = 'INSERT INTO ejemplar (codigo_barras, habilitado, articulo_id, created_at, updated_at)
 				VALUES (:codigo_barras, :habilitado, :articulo_id, NOW(), NOW())';
@@ -43,7 +40,7 @@ class EjemplarRepository extends Repository
 		return $ejemplar;
 	}
 
-	public function update(Ejemplar $ejemplar): bool
+	public function updateEjemplar(Ejemplar $ejemplar): bool
 	{
 		$sql = 'UPDATE ejemplar
 				SET codigo_barras = :codigo_barras,
@@ -63,7 +60,7 @@ class EjemplarRepository extends Repository
 		return $stmt->rowCount() > 0;
 	}
 
-	public function findByCodigoBarras(string $codigoBarras): ?Ejemplar
+	public function findEjemplarByCodigoBarras(string $codigoBarras): ?Ejemplar
 	{
 		$sql = 'SELECT * FROM ejemplar WHERE codigo_barras = :codigo_barras LIMIT 1';
 
@@ -72,11 +69,7 @@ class EjemplarRepository extends Repository
 			'codigo_barras' => $codigoBarras,
 		]);
 	}
-
-	/**
-	 * @return Ejemplar[]
-	 */
-	public function findByArticuloId(int $articuloId): array
+	public function findEjemplaresByArticuloId(int $articuloId): array
 	{
 		$sql = 'SELECT * FROM ejemplar WHERE articulo_id = :articulo_id ORDER BY id DESC';
 
@@ -86,10 +79,7 @@ class EjemplarRepository extends Repository
 		]);
 	}
 
-	/**
-	 * @return Ejemplar[]
-	 */
-	public function findByHabilitado(bool $habilitado): array
+	public function findEjemplaresByHabilitado(bool $habilitado): array
 	{
 		$sql = 'SELECT * FROM ejemplar WHERE habilitado = :habilitado ORDER BY id DESC';
 
@@ -99,10 +89,7 @@ class EjemplarRepository extends Repository
 		]);
 	}
 
-	/**
-	 * @return Ejemplar[]
-	 */
-	public function findHabilitadosByArticuloId(int $articuloId): array
+	public function findEjemplaresHabilitadosByArticuloId(int $articuloId): array
 	{
 		$sql = 'SELECT * FROM ejemplar
 				WHERE articulo_id = :articulo_id
@@ -115,7 +102,7 @@ class EjemplarRepository extends Repository
 		]);
 	}
 
-	public function existsByCodigoBarras(string $codigoBarras, ?int $excludeId = null): bool
+	public function existsEjemplarByCodigoBarras(string $codigoBarras, ?int $excludeId = null): bool
 	{
 		$sql = 'SELECT COUNT(*) FROM ejemplar WHERE codigo_barras = :codigo_barras';
 		$params = ['codigo_barras' => $codigoBarras];

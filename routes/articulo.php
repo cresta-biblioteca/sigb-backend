@@ -19,17 +19,13 @@ $router->get('/articulos', function () use ($articuloController) {
 });
 
 $router->get('/articulos/{id}', function ($id) use ($articuloController) {
-    $articuloController->showById((int) $id);
-});
-
-$router->post('/articulos', function () use ($articuloController) {
-    $articuloController->create();
+    $articuloController->getById($id);
 });
 
 $router->put('/articulos/{id}', function ($id) use ($articuloController) {
-    $articuloController->update((int) $id);
+    $articuloController->updateArticulo($id);
 });
 
 $router->delete('/articulos/{id}', function ($id) use ($articuloController) {
-    $articuloController->destroy((int) $id);
+    $articuloController->deleteArticulo($id);
 });
