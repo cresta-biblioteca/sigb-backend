@@ -8,8 +8,8 @@ use App\Shared\Exceptions\EntityAlreadyExistsException;
 
 class ArticuloAlreadyExistsException extends EntityAlreadyExistsException
 {
-	public function __construct(string $field, mixed $value)
-	{
-		parent::__construct('Articulo', $field, $value);
-	}
+    public function __construct(string $field, mixed $value)
+    {
+        parent::__construct('Articulo', $field, $value);
+    }
 }

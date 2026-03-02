@@ -49,7 +49,8 @@ class ArticuloRequestValidator
             $anio = (int) $data['anio_publicacion'];
             $currentYear = (int) date('Y');
             if ($anio < self::MIN_ANIO_PUBLICACION || $anio > $currentYear) {
-                $errors['anio_publicacion'] = ["El año de publicación debe estar entre " . self::MIN_ANIO_PUBLICACION . " y {$currentYear}"];
+                $errors['anio_publicacion'] = ["El año de publicación debe estar entre " . self::MIN_ANIO_PUBLICACION
+                . " y {$currentYear}"];
             }
         }
 

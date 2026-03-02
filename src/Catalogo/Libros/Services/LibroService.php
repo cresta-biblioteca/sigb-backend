@@ -51,7 +51,7 @@ class LibroService
     {
         // Validar datos del artículo
         ArticuloRequestValidator::validate($articuloData);
-        
+
         // Validar datos del libro
         $allLibroData = array_merge($libroData, ['articulo_id' => 1]); // articulo_id temporal para validación
         LibroRequestValidator::validate($allLibroData);
@@ -68,7 +68,7 @@ class LibroService
         );
 
         $articuloResponse = $this->articuloService->create($articuloRequest);
-        
+
         $libroRequest = new LibroRequest(
             articuloId: $articuloResponse->id,
             isbn: $libroData['isbn'],
@@ -101,7 +101,7 @@ class LibroService
     public function updateLibro(int $id, LibroRequest $request): LibroResponse
     {
         LibroRequestValidator::validateId($id);
-        
+
         $existing = $this->repository->findById($id);
 
         if ($existing === null) {
@@ -122,7 +122,7 @@ class LibroService
             $request->tituloInformativo,
             $request->cdu
         );
-        
+
         $this->repository->update($libro);
 
         $updated = $this->repository->findById($id);
@@ -133,7 +133,7 @@ class LibroService
     public function deleteLibro(int $id): void
     {
         LibroRequestValidator::validateId($id);
-        
+
         if ($this->repository->findById($id) === null) {
             throw new LibroNotFoundException($id);
         }
@@ -148,7 +148,7 @@ class LibroService
     public function search(array $filters): array
     {
         LibroRequestValidator::validateSearchParams($filters);
-        
+
         $libros = $this->repository->search($filters);
         return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
     }

@@ -13,76 +13,74 @@ use App\Catalogo\Articulos\Repository\ArticuloRepository;
 
 class ArticuloService
 {
-	public function __construct(private ArticuloRepository $repository)
-	{
-	}
+    public function __construct(private ArticuloRepository $repository)
+    {
+    }
 
 
-	public function getAll(): array
-	{
-		$articulos = $this->repository->findAll();
+    public function getAll(): array
+    {
+        $articulos = $this->repository->findAll();
 
-		return array_map(
-			fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
-			$articulos
-		);
-	}
+        return array_map(
+            fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
+            $articulos
+        );
+    }
 
-	public function getById(int $id): ArticuloResponse
-	{
-		$articulo = $this->repository->findById($id);
+    public function getById(int $id): ArticuloResponse
+    {
+        $articulo = $this->repository->findById($id);
 
-		if ($articulo === null) {
-			throw new ArticuloNotFoundException($id);
-		}
+        if ($articulo === null) {
+            throw new ArticuloNotFoundException($id);
+        }
 
-		return ArticuloMapper::toArticuloResponse($articulo);
-	}
+        return ArticuloMapper::toArticuloResponse($articulo);
+    }
 
-	public function create(ArticuloRequest $request): ArticuloResponse
-	{
-		$articulo = Articulo::create(
-			titulo: $request->titulo,
-			anioPublicacion: $request->anioPublicacion,
-			tipoDocumentoId: $request->tipoDocumentoId,
-			idioma: $request->idioma
-		);
+    public function create(ArticuloRequest $request): ArticuloResponse
+    {
+        $articulo = Articulo::create(
+            titulo: $request->titulo,
+            anioPublicacion: $request->anioPublicacion,
+            tipoDocumentoId: $request->tipoDocumentoId,
+            idioma: $request->idioma
+        );
 
-		$created = $this->repository->insertArticulo($articulo);
+        $created = $this->repository->insertArticulo($articulo);
 
-		return ArticuloMapper::toArticuloResponse($created);
-	}
-
-
-	public function updateArticulo(int $id, ArticuloRequest $request): ArticuloResponse
-	{
-		$existing = $this->repository->findById($id);
-
-		if ($existing === null) {
-			throw new ArticuloNotFoundException($id);
-		}
-
-		$articulo = Articulo::create(
-			titulo: $request->titulo,
-			anioPublicacion: $request->anioPublicacion,
-			tipoDocumentoId: $request->tipoDocumentoId,
-			idioma: $request->idioma
-		);
-
-		$updated = $this->repository->updateArticulo($id, $articulo);
-
-		return ArticuloMapper::toArticuloResponse($updated);
-	}
+        return ArticuloMapper::toArticuloResponse($created);
+    }
 
 
-	public function deleteArticulo(int $id): void
-	{
-		if ($this->repository->findById($id) === null) {
-			throw new ArticuloNotFoundException($id);
-		}
+    public function updateArticulo(int $id, ArticuloRequest $request): ArticuloResponse
+    {
+        $existing = $this->repository->findById($id);
 
-		$this->repository->delete($id);
-	}
+        if ($existing === null) {
+            throw new ArticuloNotFoundException($id);
+        }
 
-	
+        $articulo = Articulo::create(
+            titulo: $request->titulo,
+            anioPublicacion: $request->anioPublicacion,
+            tipoDocumentoId: $request->tipoDocumentoId,
+            idioma: $request->idioma
+        );
+
+        $updated = $this->repository->updateArticulo($id, $articulo);
+
+        return ArticuloMapper::toArticuloResponse($updated);
+    }
+
+
+    public function deleteArticulo(int $id): void
+    {
+        if ($this->repository->findById($id) === null) {
+            throw new ArticuloNotFoundException($id);
+        }
+
+        $this->repository->delete($id);
+    }
 }

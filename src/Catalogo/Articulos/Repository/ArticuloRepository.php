@@ -9,44 +9,44 @@ use App\Shared\Repository;
 
 class ArticuloRepository extends Repository
 {
-	protected function getTableName(): string
-	{
-		return 'articulo';
-	}
+    protected function getTableName(): string
+    {
+        return 'articulo';
+    }
 
-	/**
-	 * @return class-string<Articulo>
-	 */
-	protected function getEntityClass(): string
-	{
-		return Articulo::class;
-	}
+    /**
+     * @return class-string<Articulo>
+     */
+    protected function getEntityClass(): string
+    {
+        return Articulo::class;
+    }
 
-	public function insertArticulo(Articulo $articulo): Articulo
-	{
-		$sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, created_at, updated_at)
+    public function insertArticulo(Articulo $articulo): Articulo
+    {
+        $sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, created_at, updated_at)
 				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, NOW(), NOW())';
 
-		$stmt = $this->pdo->prepare($sql);
-		$success = $stmt->execute([
-			'titulo' => $articulo->getTitulo(),
-			'anio_publicacion' => $articulo->getAnioPublicacion(),
-			'tipo_documento_id' => $articulo->getTipoDocumentoId(),
-			'idioma' => $articulo->getIdioma(),
-		]);
+        $stmt = $this->pdo->prepare($sql);
+        $success = $stmt->execute([
+            'titulo' => $articulo->getTitulo(),
+            'anio_publicacion' => $articulo->getAnioPublicacion(),
+            'tipo_documento_id' => $articulo->getTipoDocumentoId(),
+            'idioma' => $articulo->getIdioma(),
+        ]);
 
-		if ($success === false || $stmt->rowCount() === 0) {
-			throw new \RuntimeException('Error al insertar el artículo');
-		}
+        if ($success === false || $stmt->rowCount() === 0) {
+            throw new \RuntimeException('Error al insertar el artículo');
+        }
 
-		$articulo->setId((int) $this->pdo->lastInsertId());
+        $articulo->setId((int) $this->pdo->lastInsertId());
 
-		return $articulo;
-	}
+        return $articulo;
+    }
 
-	public function updateArticulo(int $id, Articulo $articulo): Articulo
-	{
-		$sql = 'UPDATE articulo
+    public function updateArticulo(int $id, Articulo $articulo): Articulo
+    {
+        $sql = 'UPDATE articulo
 				SET titulo = :titulo,
 					anio_publicacion = :anio_publicacion,
 					tipo_documento_id = :tipo_documento_id,
@@ -54,33 +54,33 @@ class ArticuloRepository extends Repository
 					updated_at = NOW()
 				WHERE id = :id';
 
-		$stmt = $this->pdo->prepare($sql);
-		$success = $stmt->execute([
-			'titulo' => $articulo->getTitulo(),
-			'anio_publicacion' => $articulo->getAnioPublicacion(),
-			'tipo_documento_id' => $articulo->getTipoDocumentoId(),
-			'idioma' => $articulo->getIdioma(),
-			'id' => $id,
-		]);
+        $stmt = $this->pdo->prepare($sql);
+        $success = $stmt->execute([
+            'titulo' => $articulo->getTitulo(),
+            'anio_publicacion' => $articulo->getAnioPublicacion(),
+            'tipo_documento_id' => $articulo->getTipoDocumentoId(),
+            'idioma' => $articulo->getIdioma(),
+            'id' => $id,
+        ]);
 
-		if ($success === false) {
-			throw new \RuntimeException('Error al actualizar el artículo');
-		}
+        if ($success === false) {
+            throw new \RuntimeException('Error al actualizar el artículo');
+        }
 
-		$articulo->setId($id);
+        $articulo->setId($id);
 
-		return $articulo;
-	}
+        return $articulo;
+    }
 
-	/**
-	 * @return Articulo[]
-	 */
-	public function findByTitulo(string $titulo): array
-	{
-		$sql = 'SELECT * FROM articulo WHERE titulo LIKE :titulo ORDER BY titulo';
+    /**
+     * @return Articulo[]
+     */
+    public function findByTitulo(string $titulo): array
+    {
+        $sql = 'SELECT * FROM articulo WHERE titulo LIKE :titulo ORDER BY titulo';
 
-		return $this->findByQuery($sql, [
-			'titulo' => '%' . $titulo . '%',
-		]);
-	}
+        return $this->findByQuery($sql, [
+            'titulo' => '%' . $titulo . '%',
+        ]);
+    }
 }

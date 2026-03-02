@@ -6,7 +6,6 @@ namespace App\Catalogo\Ejemplares\Validators;
 
 use App\Shared\Exceptions\ValidationException;
 
-
 class EjemplarRequestValidator
 {
     private const CODIGO_BARRAS_PATTERN = '/^\d{1,13}$/';
@@ -74,6 +73,4 @@ class EjemplarRequestValidator
 
         return true;
     }
-
-
 }

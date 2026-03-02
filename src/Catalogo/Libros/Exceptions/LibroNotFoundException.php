@@ -11,6 +11,5 @@ class LibroNotFoundException extends EntityNotFoundException
     public function __construct(int $articuloId)
     {
         parent::__construct('Libro', $articuloId);
-        
     }
 }

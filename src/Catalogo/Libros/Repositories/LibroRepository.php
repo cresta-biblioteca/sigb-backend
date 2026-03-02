@@ -90,9 +90,11 @@ class LibroRepository extends Repository
     public function save(Libro $libro): void
     {
         $sql = "INSERT INTO libro 
-            (articulo_id, isbn, autor, autores, colaboradores, titulo_informativo, cdu, export_marc, created_at, updated_at)
+            (articulo_id, isbn, autor, autores, colaboradores, titulo_informativo, cdu, export_marc, created_at,
+             updated_at)
             VALUES
-            (:articulo_id, :isbn, :autor, :autores, :colaboradores, :titulo_informativo, :cdu, :export_marc, NOW(), NOW())";
+            (:articulo_id, :isbn, :autor, :autores, :colaboradores, :titulo_informativo, :cdu,
+             :export_marc, NOW(), NOW())";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -462,7 +464,10 @@ class LibroRepository extends Repository
     private function applyTemaMateriaFilters(array $filters, array &$conditions, array &$params): void
     {
         $temaIds = array_values(array_filter(
-            array_map(static fn(mixed $id): int => (int) $id, $this->normalizeFilterAsArray($filters['tema_ids'] ?? null)),
+            array_map(
+                static fn(mixed $id): int => (int) $id,
+                $this->normalizeFilterAsArray($filters['tema_ids'] ?? null)
+            ),
             static fn(int $id): bool => $id > 0
         ));
 
@@ -479,7 +484,10 @@ class LibroRepository extends Repository
         }
 
         $materiaIds = array_values(array_filter(
-            array_map(static fn(mixed $id): int => (int) $id, $this->normalizeFilterAsArray($filters['materia_ids'] ?? null)),
+            array_map(
+                static fn(mixed $id): int => (int) $id,
+                $this->normalizeFilterAsArray($filters['materia_ids'] ?? null)
+            ),
             static fn(int $id): bool => $id > 0
         ));
 
@@ -496,7 +504,10 @@ class LibroRepository extends Repository
         }
 
         $temas = array_values(array_filter(
-            array_map(static fn(mixed $tema): string => trim((string) $tema), $this->normalizeFilterAsArray($filters['temas'] ?? null)),
+            array_map(
+                static fn(mixed $tema): string => trim((string) $tema),
+                $this->normalizeFilterAsArray($filters['temas'] ?? null)
+            ),
             static fn(string $tema): bool => $tema !== ''
         ));
 
@@ -515,7 +526,10 @@ class LibroRepository extends Repository
         }
 
         $materias = array_values(array_filter(
-            array_map(static fn(mixed $materia): string => trim((string) $materia), $this->normalizeFilterAsArray($filters['materias'] ?? null)),
+            array_map(
+                static fn(mixed $materia): string => trim((string) $materia),
+                $this->normalizeFilterAsArray($filters['materias'] ?? null)
+            ),
             static fn(string $materia): bool => $materia !== ''
         ));
 
@@ -591,7 +605,8 @@ class LibroRepository extends Repository
         $conditions[] = 'EXISTS (
             SELECT 1
             FROM ' . $pivotTable . ' ' . $pivotAlias . '
-            INNER JOIN ' . $relatedTable . ' ' . $relatedAlias . ' ON ' . $relatedAlias . '.id = ' . $pivotAlias . '.' . $relatedIdField . '
+            INNER JOIN ' . $relatedTable . ' ' . $relatedAlias . ' ON ' . $relatedAlias . '.id = '
+            . $pivotAlias . '.' . $relatedIdField . '
             WHERE ' . $pivotAlias . '.articulo_id = a.id
             AND (' . implode(' OR ', $titleConditions) . ')
         )';
