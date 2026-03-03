@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Services;
 
-use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
-use App\Catalogo\Articulos\Services\ArticuloService;
-use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Catalogo\Libros\Dtos\Request\LibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
@@ -14,13 +11,11 @@ use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
-use App\Catalogo\Libros\Validators\LibroRequestValidator;
 
 class LibroService
 {
     public function __construct(
-        private LibroRepository $repository,
-        private ArticuloService $articuloService
+        private LibroRepository $repository
     ) {
     }
 
@@ -45,95 +40,58 @@ class LibroService
     }
 
     /**
-     * Crea un libro completo con artículo y libro en una sola operación
+     * Crea un nuevo libro
      */
-    public function create(array $articuloData, array $libroData): LibroResponse
+    public function create(LibroRequest $request): LibroResponse
     {
-        // Validar datos del artículo
-        ArticuloRequestValidator::validate($articuloData);
-
-        // Validar datos del libro
-        $allLibroData = array_merge($libroData, ['articulo_id' => 1]); // articulo_id temporal para validación
-        LibroRequestValidator::validate($allLibroData);
-
-        if (isset($libroData['isbn']) && $this->repository->existsByIsbn($libroData['isbn'])) {
-            throw new LibroAlreadyExistsException($libroData['isbn'], 'isbn');
+        if ($this->repository->existsByIsbn($request->getIsbn())) {
+            throw new LibroAlreadyExistsException($request->getIsbn(), 'isbn');
         }
 
-        $articuloRequest = new ArticuloRequest(
-            titulo: $articuloData['titulo'],
-            anioPublicacion: (int) $articuloData['anio_publicacion'],
-            tipoDocumentoId: (int) $articuloData['tipo_documento_id'],
-            idioma: $articuloData['idioma'] ?? 'es'
-        );
-
-        $articuloResponse = $this->articuloService->create($articuloRequest);
-
-        $libroRequest = new LibroRequest(
-            articuloId: $articuloResponse->id,
-            isbn: $libroData['isbn'],
-            exportMarc: $libroData['export_marc'],
-            autor: $libroData['autor'] ?? null,
-            autores: $libroData['autores'] ?? null,
-            colaboradores: $libroData['colaboradores'] ?? null,
-            tituloInformativo: $libroData['titulo_informativo'] ?? null,
-            cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null
-        );
-
         $libro = Libro::create(
-            $libroRequest->articuloId,
-            $libroRequest->isbn,
-            $libroRequest->exportMarc,
-            $libroRequest->autor,
-            $libroRequest->autores,
-            $libroRequest->colaboradores,
-            $libroRequest->tituloInformativo,
-            $libroRequest->cdu
+            $request->getArticuloId(),
+            $request->getIsbn(),
+            $request->getExportMarc(),
+            $request->getAutor(),
+            $request->getAutores(),
+            $request->getColaboradores(),
+            $request->getTituloInformativo(),
+            $request->getCdu()
         );
 
-        $this->repository->save($libro);
-
-        $savedLibro = $this->repository->findById($articuloResponse->id);
+        $savedLibro = $this->repository->insertLibro($libro);
 
         return LibroMapper::toLibroResponse($savedLibro);
     }
 
     public function updateLibro(int $id, LibroRequest $request): LibroResponse
     {
-        LibroRequestValidator::validateId($id);
-
+        // Obtener libro existente para verificar que existe y preservar inmutables
         $existing = $this->repository->findById($id);
 
         if ($existing === null) {
             throw new LibroNotFoundException($id);
         }
 
-        if ($this->repository->existsByIsbn($request->isbn, $id)) {
-            throw new LibroAlreadyExistsException($request->isbn, 'isbn');
-        }
-
+        // Preservar campos inmutables del libro existente, usar campos editables del request
         $libro = Libro::create(
-            $request->articuloId,
-            $request->isbn,
-            $request->exportMarc,
-            $request->autor,
-            $request->autores,
-            $request->colaboradores,
-            $request->tituloInformativo,
-            $request->cdu
+            $existing->getArticuloId(), // Inmutable - del existente
+            $existing->getIsbn(), // Inmutable - del existente
+            $existing->getExportMarc(), // Inmutable - del existente
+            $request->getAutor() ?? $existing->getAutor(), // Editable - del request o existente si no se proporciona
+            $request->getAutores() ?? $existing->getAutores(),
+            $request->getColaboradores() ?? $existing->getColaboradores(),
+            $request->getTituloInformativo() ?? $existing->getTituloInformativo(),
+            $request->getCdu() ?? $existing->getCdu()
         );
 
-        $this->repository->update($libro);
-
-        $updated = $this->repository->findById($id);
+        $updated = $this->repository->updateLibro($id, $libro);
 
         return LibroMapper::toLibroResponse($updated);
     }
 
     public function deleteLibro(int $id): void
     {
-        LibroRequestValidator::validateId($id);
-
         if ($this->repository->findById($id) === null) {
             throw new LibroNotFoundException($id);
         }
@@ -147,8 +105,6 @@ class LibroService
      */
     public function search(array $filters): array
     {
-        LibroRequestValidator::validateSearchParams($filters);
-
         $libros = $this->repository->search($filters);
         return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
     }
@@ -156,8 +112,6 @@ class LibroService
 
     public function searchPaginated(array $filters, int $page, int $perPage): array
     {
-        LibroRequestValidator::validateSearchParams($filters);
-        LibroRequestValidator::validatePaginationParams(['page' => $page, 'per_page' => $perPage]);
         $page = max(1, $page);
         $perPage = max(1, min($perPage, 100));
 

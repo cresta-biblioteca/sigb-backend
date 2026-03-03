@@ -9,15 +9,23 @@ use JsonSerializable;
 readonly class ArticuloResponse implements JsonSerializable
 {
     public function __construct(
-        public int $id,
-        public string $titulo,
-        public int $anioPublicacion,
-        public int $tipoDocumentoId,
-        public string $idioma,
-        public ?array $tipoDocumento = null,
-        public array $temas = [],
-        public array $materias = []
+        private int $id,
+        private string $titulo,
+        private int $anioPublicacion,
+        private int $tipoDocumentoId,
+        private string $idioma,
+        private ?array $tipoDocumento = null,
+        private array $temas = [],
+        private array $materias = []
     ) {
+    }
+
+    /**
+     * Getter para ID - necesario para relaciones padre-hijo (ej: crear Libro)
+     */
+    public function getId(): int
+    {
+        return $this->id;
     }
 
     public function jsonSerialize(): array

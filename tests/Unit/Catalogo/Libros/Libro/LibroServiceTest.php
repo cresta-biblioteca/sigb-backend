@@ -1,7 +1,5 @@
 <?php
 
-use App\Catalogo\Articulos\Services\ArticuloService;
-use App\Catalogo\Articulos\Dtos\Response\ArticuloResponse;
 use App\Catalogo\Libros\Dtos\Request\LibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
@@ -15,15 +13,12 @@ use Mockery\MockInterface;
 
 /** @var MockInterface */
 $repositoryMock = null;
-/** @var MockInterface */
-$articuloServiceMock = null;
 /** @var LibroService */
 $service = null;
 
 beforeEach(function () {
     $this->repositoryMock = Mockery::mock(LibroRepository::class);
-    $this->articuloServiceMock = Mockery::mock(ArticuloService::class);
-    $this->service = new LibroService($this->repositoryMock, $this->articuloServiceMock);
+    $this->service = new LibroService($this->repositoryMock);
 });
 
 afterEach(function () {
@@ -44,8 +39,11 @@ test('obtiene todos los libros exitosamente', function () {
     expect($result)->toHaveCount(2);
     expect($result[0])->toBeInstanceOf(LibroResponse::class);
     expect($result[1])->toBeInstanceOf(LibroResponse::class);
-    expect($result[0]->isbn)->toBe('9780132350884');
-    expect($result[1]->isbn)->toBe('9780137081073');
+    
+    $json0 = $result[0]->jsonSerialize();
+    $json1 = $result[1]->jsonSerialize();
+    expect($json0['isbn'])->toBe('9780132350884');
+    expect($json1['isbn'])->toBe('9780137081073');
 });
 
 test('obtiene libro por id exitosamente', function () {
@@ -60,10 +58,12 @@ test('obtiene libro por id exitosamente', function () {
     $result = $this->service->getById(5);
 
     expect($result)->toBeInstanceOf(LibroResponse::class);
-    expect($result->articuloId)->toBe(5);
-    expect($result->isbn)->toBe('9780132350884');
-    expect($result->autor)->toBe('Autor Test');
-    expect($result->autores)->toBe('Autores Test');
+    
+    $json = $result->jsonSerialize();
+    expect($json['id'])->toBe(5);
+    expect($json['isbn'])->toBe('9780132350884');
+    expect($json['autor'])->toBe('Autor Test');
+    expect($json['autores'])->toBe('Autores Test');
 });
 
 test('lanza excepcion al obtener libro inexistente', function () {
@@ -78,24 +78,17 @@ test('lanza excepcion al obtener libro inexistente', function () {
 });
 
 test('crea un libro completo exitosamente', function () {
-    $articuloData = [
-        'titulo' => 'Clean Code',
-        'anio_publicacion' => 2008,
-        'tipo_documento_id' => 1,
-        'idioma' => 'en'
-    ];
+    $request = new LibroRequest(
+        articuloId: 1,
+        isbn: '9780132350884',
+        exportMarc: 'MARC Test',
+        autor: 'Robert Martin',
+        autores: 'Robert Martin, Uncle Bob',
+        colaboradores: 'Editor Test',
+        tituloInformativo: 'Título informativo test',
+        cdu: 123
+    );
 
-    $libroData = [
-        'isbn' => '9780132350884',
-        'export_marc' => 'MARC Test',
-        'autor' => 'Robert Martin',
-        'autores' => 'Robert Martin, Uncle Bob',
-        'colaboradores' => 'Editor Test',
-        'titulo_informativo' => 'Título informativo test',
-        'cdu' => 123
-    ];
-
-    $articuloResponse = new ArticuloResponse(1, 'Clean Code', 2008, 1, 'en');
     $libro = Libro::create(1, '9780132350884', 'MARC Test', 'Robert Martin', 'Robert Martin, Uncle Bob', 'Editor Test', 'Título informativo test', 123);
 
     $this->repositoryMock
@@ -104,45 +97,31 @@ test('crea un libro completo exitosamente', function () {
         ->once()
         ->andReturn(false);
 
-    $this->articuloServiceMock
-        ->shouldReceive('create')
-        ->once()
-        ->andReturn($articuloResponse);
-
     $this->repositoryMock
-        ->shouldReceive('save')
-        ->once()
-        ->andReturnNull();
-
-    $this->repositoryMock
-        ->shouldReceive('findById')
-        ->with(1)
+        ->shouldReceive('insertLibro')
         ->once()
         ->andReturn($libro);
 
-    $result = $this->service->create($articuloData, $libroData);
+    $result = $this->service->create($request);
 
     expect($result)->toBeInstanceOf(LibroResponse::class);
-    expect($result->articuloId)->toBe(1);
-    expect($result->isbn)->toBe('9780132350884');
-    expect($result->autor)->toBe('Robert Martin');
-    expect($result->autores)->toBe('Robert Martin, Uncle Bob');
-    expect($result->colaboradores)->toBe('Editor Test');
-    expect($result->tituloInformativo)->toBe('Título informativo test');
-    expect($result->cdu)->toBe(123);
+    
+    $json = $result->jsonSerialize();
+    expect($json['id'])->toBe(1);
+    expect($json['isbn'])->toBe('9780132350884');
+    expect($json['autor'])->toBe('Robert Martin');
+    expect($json['autores'])->toBe('Robert Martin, Uncle Bob');
+    expect($json['colaboradores'])->toBe('Editor Test');
+    expect($json['titulo_informativo'])->toBe('Título informativo test');
+    expect($json['cdu'])->toBe(123);
 });
 
 test('lanza excepcion si isbn ya existe al crear libro', function () {
-    $articuloData = [
-        'titulo' => 'Clean Code',
-        'anio_publicacion' => 2008,
-        'tipo_documento_id' => 1
-    ];
-
-    $libroData = [
-        'isbn' => '9780132350884',
-        'export_marc' => 'MARC'
-    ];
+    $request = new LibroRequest(
+        articuloId: 1,
+        isbn: '9780132350884',
+        exportMarc: 'MARC'
+    );
 
     $this->repositoryMock
         ->shouldReceive('existsByIsbn')
@@ -150,15 +129,15 @@ test('lanza excepcion si isbn ya existe al crear libro', function () {
         ->once()
         ->andReturn(true);
 
-    expect(fn () => $this->service->create($articuloData, $libroData))
+    expect(fn () => $this->service->create($request))
         ->toThrow(LibroAlreadyExistsException::class);
 });
 
 test('actualiza libro exitosamente', function () {
     $request = new LibroRequest(
         articuloId: 7,
-        isbn: '9780132350884',
-        exportMarc: 'MARC-UPDATED',
+        isbn: '9780132350884', // Este valor será ignorado (inmutable)
+        exportMarc: 'MARC-UPDATED', // Este valor será ignorado (inmutable)
         autor: 'Autor Actualizado',
         autores: 'Autores Actualizados',
         colaboradores: 'Colaboradores Actualizados',
@@ -167,32 +146,34 @@ test('actualiza libro exitosamente', function () {
     );
 
     $existing = Libro::create(7, '9780132350883', 'MARC-OLD');
-    $updated = Libro::create(7, '9780132350884', 'MARC-UPDATED', 'Autor Actualizado', 'Autores Actualizados');
+    $updated = Libro::create(7, '9780132350883', 'MARC-OLD', 'Autor Actualizado', 'Autores Actualizados', 'Colaboradores Actualizados', 'Título informativo actualizado', 456);
 
     $this->repositoryMock
         ->shouldReceive('findById')
         ->with(7)
-        ->twice()
-        ->andReturn($existing, $updated);
+        ->once()
+        ->andReturn($existing);
+
+    // No se valida ISBN porque es inmutable
 
     $this->repositoryMock
-        ->shouldReceive('existsByIsbn')
-        ->with('9780132350884', 7)
+        ->shouldReceive('updateLibro')
+        ->with(7, Mockery::type(Libro::class))
         ->once()
-        ->andReturn(false);
-
-    $this->repositoryMock
-        ->shouldReceive('update')
-        ->once()
-        ->andReturnNull();
+        ->andReturn($updated);
 
     $result = $this->service->updateLibro(7, $request);
 
     expect($result)->toBeInstanceOf(LibroResponse::class);
-    expect($result->articuloId)->toBe(7);
-    expect($result->isbn)->toBe('9780132350884');
-    expect($result->exportMarc)->toBe('MARC-UPDATED');
-    expect($result->autor)->toBe('Autor Actualizado');
+    
+    $json = $result->jsonSerialize();
+    expect($json['id'])->toBe(7);
+    expect($json['isbn'])->toBe('9780132350883'); // ISBN original preservado
+    expect($json['export_marc'])->toBe('MARC-OLD'); // Export_marc original preservado
+    expect($json['autor'])->toBe('Autor Actualizado'); // Campo editable actualizado
+    expect($json['colaboradores'])->toBe('Colaboradores Actualizados');
+    expect($json['titulo_informativo'])->toBe('Título informativo actualizado');
+    expect($json['cdu'])->toBe(456);
 });
 
 test('lanza excepcion al actualizar libro inexistente', function () {
@@ -212,14 +193,18 @@ test('lanza excepcion al actualizar libro inexistente', function () {
         ->toThrow(LibroNotFoundException::class);
 });
 
-test('lanza excepcion al actualizar con isbn duplicado', function () {
+test('actualiza solo campos editables mientras preserva inmutables', function () {
+    // Este test reemplaza al de "isbn duplicado" porque ISBN ya no puede cambiar
     $request = new LibroRequest(
         articuloId: 7,
-        isbn: '9780132350884',
-        exportMarc: 'MARC'
+        isbn: '9999999999999', // Valor ignorado porque ISBN es inmutable
+        exportMarc: 'MARC-IGNORADO', // Valor ignorado porque export_marc es inmutable
+        autor: 'Nuevo Autor',
+        cdu: 999
     );
 
-    $existing = Libro::create(7, '9780132350883', 'MARC-OLD');
+    $existing = Libro::create(7, '9780132350883', 'MARC-ORIGINAL', 'Autor Original');
+    $updated = Libro::create(7, '9780132350883', 'MARC-ORIGINAL', 'Nuevo Autor', null, null, null, 999);
 
     $this->repositoryMock
         ->shouldReceive('findById')
@@ -228,13 +213,21 @@ test('lanza excepcion al actualizar con isbn duplicado', function () {
         ->andReturn($existing);
 
     $this->repositoryMock
-        ->shouldReceive('existsByIsbn')
-        ->with('9780132350884', 7)
+        ->shouldReceive('updateLibro')
+        ->with(7, Mockery::type(Libro::class))
         ->once()
-        ->andReturn(true);
+        ->andReturn($updated);
 
-    expect(fn () => $this->service->updateLibro(7, $request))
-        ->toThrow(LibroAlreadyExistsException::class);
+    $result = $this->service->updateLibro(7, $request);
+    $json = $result->jsonSerialize();
+    
+    // Verificar que campos inmutables se preservaron
+    expect($json['isbn'])->toBe('9780132350883'); // Original preservado
+    expect($json['export_marc'])->toBe('MARC-ORIGINAL'); // Original preservado
+    
+    // Verificar que campos editables se actualizaron
+    expect($json['autor'])->toBe('Nuevo Autor'); // Actualizado
+    expect($json['cdu'])->toBe(999); // Actualizado
 });
 
 test('elimina libro exitosamente', function () {
@@ -285,8 +278,11 @@ test('busca libros exitosamente', function () {
     expect($result)->toHaveCount(2);
     expect($result[0])->toBeInstanceOf(LibroResponse::class);
     expect($result[1])->toBeInstanceOf(LibroResponse::class);
-    expect($result[0]->isbn)->toBe('9780132350884');
-    expect($result[1]->isbn)->toBe('9780137081073');
+    
+    $json0 = $result[0]->jsonSerialize();
+    $json1 = $result[1]->jsonSerialize();
+    expect($json0['isbn'])->toBe('9780132350884');
+    expect($json1['isbn'])->toBe('9780137081073');
 });
 
 test('busca libros paginados exitosamente', function () {

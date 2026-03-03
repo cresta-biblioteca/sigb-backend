@@ -11,9 +11,10 @@ class LibroMapper
 {
     public static function toLibroResponse(Libro $libro): LibroResponse
     {
+        $articulo = $libro->getArticulo();
+
         return new LibroResponse(
             id: $libro->getId() ?? 0,
-            articuloId: $libro->getArticuloId(),
             isbn: $libro->getIsbn(),
             autor: $libro->getAutor(),
             autores: $libro->getAutores(),
@@ -21,7 +22,11 @@ class LibroMapper
             tituloInformativo: $libro->getTituloInformativo(),
             cdu: $libro->getCdu(),
             exportMarc: $libro->getExportMarc(),
-            articulo: $libro->getArticulo()?->toArray()
+            // Información del artículo (si está disponible)
+            titulo: $articulo?->getTitulo(),
+            anioPublicacion: $articulo?->getAnioPublicacion(),
+            tipoDocumentoId: $articulo?->getTipoDocumentoId(),
+            idioma: $articulo?->getIdioma()
         );
     }
 }

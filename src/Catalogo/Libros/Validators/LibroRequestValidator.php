@@ -12,10 +12,10 @@ class LibroRequestValidator
     private const MAX_TEXT_LENGTH = 255;
     private const MIN_CDU = 0;
     private const MAX_CDU = 999;
+    private const MIN_YEAR = 1000;
 
     /** @var array<int, string> */
     private const REQUIRED_FIELDS = [
-        'articulo_id',
         'isbn',
         'export_marc',
     ];
@@ -37,12 +37,6 @@ class LibroRequestValidator
             throw new ValidationException($errors);
         }
 
-        if (!is_int($data['articulo_id']) && !is_numeric($data['articulo_id'])) {
-            $errors['articulo_id'] = ['El campo articulo_id debe ser un número entero'];
-        } elseif ((int) $data['articulo_id'] <= 0) {
-            $errors['articulo_id'] = ['El campo articulo_id debe ser un entero positivo'];
-        }
-
         if (!is_string($data['isbn'])) {
             $errors['isbn'] = ['El campo isbn debe ser un string'];
         } elseif (!preg_match(self::ISBN_PATTERN, $data['isbn'])) {
@@ -52,8 +46,8 @@ class LibroRequestValidator
         if (!is_string($data['export_marc'])) {
             $errors['export_marc'] = ['El campo export_marc debe ser un string'];
         } elseif (mb_strlen(trim($data['export_marc'])) > self::MAX_TEXT_LENGTH) {
-            $errors['export_marc'] = ['El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH
-            . ' caracteres'];
+            $errors['export_marc'] = ['El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
+             ' caracteres'];
         }
 
         // Validaciones opcionales
@@ -70,7 +64,7 @@ class LibroRequestValidator
                 $errors['autores'] = ['El campo autores debe ser un string'];
             } elseif (mb_strlen(trim($data['autores'])) > self::MAX_TEXT_LENGTH) {
                 $errors['autores'] = ['El campo autores no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                ' caracteres'];
+                 ' caracteres'];
             }
         }
 
@@ -87,8 +81,8 @@ class LibroRequestValidator
             if (!is_string($data['titulo_informativo'])) {
                 $errors['titulo_informativo'] = ['El campo titulo_informativo debe ser un string'];
             } elseif (mb_strlen(trim($data['titulo_informativo'])) > self::MAX_TEXT_LENGTH) {
-                $errors['titulo_informativo'] = ['El campo titulo_informativo no puede tener más de '
-                . self::MAX_TEXT_LENGTH . ' caracteres'];
+                $errors['titulo_informativo'] = ['El campo titulo_informativo no puede tener más de ' .
+                 self::MAX_TEXT_LENGTH . ' caracteres'];
             }
         }
 
@@ -122,10 +116,20 @@ class LibroRequestValidator
     {
         $errors = [];
         $allowedParams = [
-            'isbn', 'autor', 'autores', 'colaboradores', 'titulo_informativo',
-            'cdu', 'titulo', 'anio_publicacion',
-            'tipo_documento_id', 'idioma', 'tema_ids', 'materia_ids',
-            'page', 'per_page'
+            'isbn',
+            'autor',
+            'autores',
+            'colaboradores',
+            'titulo_informativo',
+            'cdu',
+            'titulo',
+            'anio_publicacion',
+            'tipo_documento_id',
+            'idioma',
+            'tema_ids',
+            'materia_ids',
+            'page',
+            'per_page'
         ];
 
         // Validar que solo se usen parámetros permitidos
@@ -162,8 +166,10 @@ class LibroRequestValidator
                 if (!is_string($params[$field])) {
                     $errors[$field] = ["El campo {$field} debe ser un string"];
                 } elseif (mb_strlen(trim($params[$field])) > self::MAX_TEXT_LENGTH) {
-                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH
-                    . " caracteres"];
+                    $errors[$field] = [
+                        "El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                        " caracteres"
+                    ];
                 }
             }
         }
@@ -175,8 +181,8 @@ class LibroRequestValidator
             } else {
                 $anio = (int) $params['anio_publicacion'];
                 $currentYear = (int) date('Y');
-                if ($anio < 1000 || $anio > $currentYear) {
-                    $errors['anio_publicacion'] = ["El año debe estar entre 1000 y {$currentYear}"];
+                if ($anio < self::MIN_YEAR || $anio > $currentYear) {
+                    $errors['anio_publicacion'] = ["El año debe estar entre " . self::MIN_YEAR . " y {$currentYear}"];
                 }
             }
         }
@@ -199,25 +205,36 @@ class LibroRequestValidator
 
         // Validar arrays de IDs
         if (isset($params['tema_ids'])) {
-            $errors = array_merge($errors, self::validateArrayIds($params['tema_ids'], 'tema_ids'));
+            if (!is_array($params['tema_ids'])) {
+                $errors['tema_ids'] = ['El campo tema_ids debe ser un array'];
+            } elseif (count($params['tema_ids']) > 50) {
+                $errors['tema_ids'] = ['El campo tema_ids no puede tener más de 50 elementos'];
+            } else {
+                foreach ($params['tema_ids'] as $id) {
+                    if (!is_numeric($id) || (int) $id <= 0) {
+                        $errors['tema_ids'] = ['Todos los elementos de tema_ids deben ser números positivos'];
+                        break;
+                    }
+                }
+            }
         }
 
         if (isset($params['materia_ids'])) {
-            $errors = array_merge($errors, self::validateArrayIds($params['materia_ids'], 'materia_ids'));
+            if (!is_array($params['materia_ids'])) {
+                $errors['materia_ids'] = ['El campo materia_ids debe ser un array'];
+            } elseif (count($params['materia_ids']) > 50) {
+                $errors['materia_ids'] = ['El campo materia_ids no puede tener más de 50 elementos'];
+            } else {
+                foreach ($params['materia_ids'] as $id) {
+                    if (!is_numeric($id) || (int) $id <= 0) {
+                        $errors['materia_ids'] = ['Todos los elementos de materia_ids deben ser números positivos'];
+                        break;
+                    }
+                }
+            }
         }
 
-        if (!empty($errors)) {
-            throw new ValidationException($errors);
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    public static function validatePaginationParams(array $params): void
-    {
-        $errors = [];
-
+        // Validar paginación
         if (isset($params['page'])) {
             if (!is_numeric($params['page'])) {
                 $errors['page'] = ['El campo page debe ser un número'];
@@ -243,33 +260,50 @@ class LibroRequestValidator
     }
 
     /**
-     * @param mixed $value
-     * @return array<string, array<string>>
+     * Valida datos para operaciones PATCH (actualización parcial)
+     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo, cdu
+     * ISBN y export_marc NO son modificables via PATCH
+     * @param array<string, mixed> $data
      */
-    private static function validateArrayIds($value, string $fieldName): array
+    public static function validatePatch(array $data): void
     {
         $errors = [];
 
-        if (!is_array($value)) {
-            $errors[$fieldName] = ["El campo {$fieldName} debe ser un array"];
-            return $errors;
+        // Rechazar explícitamente campos no editables
+        if (array_key_exists('isbn', $data)) {
+            $errors['isbn'] = ['El ISBN no puede ser modificado'];
         }
 
-        if (count($value) > 50) {
-            $errors[$fieldName] = ["El campo {$fieldName} no puede tener más de 50 elementos"];
-            return $errors;
+        if (array_key_exists('export_marc', $data)) {
+            $errors['export_marc'] = ['El export_marc se actualiza automáticamente, no puede ser modificado'];
         }
 
-        foreach ($value as $index => $id) {
-            if (!is_numeric($id)) {
-                $errors[$fieldName] = ["Todos los elementos de {$fieldName} deben ser números"];
-                break;
-            } elseif ((int) $id <= 0) {
-                $errors[$fieldName] = ["Todos los elementos de {$fieldName} deben ser positivos"];
-                break;
+        // Validar campos opcionales solo si están presentes
+        foreach (['autor', 'autores', 'colaboradores', 'titulo_informativo'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null) {
+                if (!is_string($data[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH) {
+                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                     " caracteres"];
+                }
             }
         }
 
-        return $errors;
+        // Validar cdu solo si está presente
+        if (array_key_exists('cdu', $data) && $data['cdu'] !== null) {
+            if (!is_numeric($data['cdu'])) {
+                $errors['cdu'] = ['El campo cdu debe ser numérico'];
+            } else {
+                $cdu = (int) $data['cdu'];
+                if ($cdu < self::MIN_CDU || $cdu > self::MAX_CDU) {
+                    $errors['cdu'] = ['El campo cdu debe estar entre ' . self::MIN_CDU . ' y ' . self::MAX_CDU];
+                }
+            }
+        }
+
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
+        }
     }
 }

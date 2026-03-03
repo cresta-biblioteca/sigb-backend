@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Catalogo\Libros\Controllers;
 
 use App\Catalogo\Libros\Dtos\Request\LibroRequest;
+use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Services\LibroService;
+use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Validators\LibroRequestValidator;
+use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use Exception;
@@ -16,8 +19,10 @@ use JsonException;
 
 class LibroController
 {
-    public function __construct(private LibroService $service)
-    {
+    public function __construct(
+        private LibroService $libroService,
+        private ArticuloService $articuloService
+    ) {
     }
 
     /**
@@ -26,7 +31,7 @@ class LibroController
     public function getAll(): void
     {
         try {
-            $libros = $this->service->getAll();
+            $libros = $this->libroService->getAll();
 
             JsonHelper::jsonResponse([
                 'error' => false,
@@ -46,7 +51,7 @@ class LibroController
         try {
             LibroRequestValidator::validateId((int) $id);
 
-            $libro = $this->service->getById((int) $id);
+            $libro = $this->libroService->getById((int) $id);
 
             JsonHelper::jsonResponse([
                 'error' => false,
@@ -81,7 +86,36 @@ class LibroController
             $articuloData = $input['articulo'] ?? [];
             $libroData = $input['libro'] ?? [];
 
-            $libro = $this->service->create($articuloData, $libroData);
+            // Validar datos del artículo
+            ArticuloRequestValidator::validate($articuloData);
+
+            // Validar datos del libro
+            LibroRequestValidator::validate($libroData);
+
+            // 1. Crear artículo primero
+            $articuloRequest = new ArticuloRequest(
+                titulo: $articuloData['titulo'],
+                anioPublicacion: (int) $articuloData['anio_publicacion'],
+                tipoDocumentoId: (int) $articuloData['tipo_documento_id'],
+                idioma: $articuloData['idioma'] ?? 'es'
+            );
+
+            $articuloResponse = $this->articuloService->create($articuloRequest);
+
+            // 2. Crear LibroRequest con articuloId obtenido
+            $libroRequest = new LibroRequest(
+                articuloId: $articuloResponse->getId(),
+                isbn: $libroData['isbn'],
+                exportMarc: $libroData['export_marc'],
+                autor: $libroData['autor'] ?? null,
+                autores: $libroData['autores'] ?? null,
+                colaboradores: $libroData['colaboradores'] ?? null,
+                tituloInformativo: $libroData['titulo_informativo'] ?? null,
+                cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null
+            );
+
+            // 3. Crear libro con DTO tipado
+            $libro = $this->libroService->create($libroRequest);
 
             JsonHelper::jsonResponse([
                 'error' => false,
@@ -111,7 +145,7 @@ class LibroController
     }
 
     /**
-     * PUT /libros/{id}
+     * PUT/PATCH /libros/{id} - Actualización (completa o parcial)
      */
     public function updateLibro($id): void
     {
@@ -120,12 +154,14 @@ class LibroController
 
             $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
 
-            LibroRequestValidator::validate($input);
+            // Validar solo campos editables para PATCH/PUT
+            LibroRequestValidator::validatePatch($input);
 
+            // Crear LibroRequest solo con campos editables del input
             $request = new LibroRequest(
-                articuloId: (int) $input['articulo_id'],
-                isbn: $input['isbn'],
-                exportMarc: $input['export_marc'],
+                articuloId: 0, // Placeholder - el service lo reemplazará con el correcto
+                isbn: '', // Placeholder - el service lo reemplazará con el correcto
+                exportMarc: '', // Placeholder - el service lo reemplazará con el correcto
                 autor: $input['autor'] ?? null,
                 autores: $input['autores'] ?? null,
                 colaboradores: $input['colaboradores'] ?? null,
@@ -133,11 +169,11 @@ class LibroController
                 cdu: isset($input['cdu']) ? (int) $input['cdu'] : null
             );
 
-            $libro = $this->service->updateLibro((int) $id, $request);
+            $response = $this->libroService->updateLibro((int) $id, $request);
 
             JsonHelper::jsonResponse([
                 'error' => false,
-                'data' => $libro,
+                'data' => $response,
                 'message' => 'Libro actualizado exitosamente'
             ]);
         } catch (JsonException $e) {
@@ -175,7 +211,7 @@ class LibroController
         try {
             LibroRequestValidator::validateId((int) $id);
 
-            $this->service->deleteLibro((int) $id);
+            $this->libroService->deleteLibro((int) $id);
 
             JsonHelper::jsonResponse([
                 'error' => false,
@@ -206,7 +242,7 @@ class LibroController
         try {
             LibroRequestValidator::validateSearchParams($_GET);
 
-            $libros = $this->service->search($_GET);
+            $libros = $this->libroService->search($_GET);
 
             JsonHelper::jsonResponse([
                 'error' => false,
@@ -235,9 +271,8 @@ class LibroController
             $filters = array_filter($_GET, fn($key) => !in_array($key, ['page', 'per_page']), ARRAY_FILTER_USE_KEY);
 
             LibroRequestValidator::validateSearchParams($_GET);
-            LibroRequestValidator::validatePaginationParams($_GET);
 
-            $result = $this->service->searchPaginated($filters, $page, $perPage);
+            $result = $this->libroService->searchPaginated($filters, $page, $perPage);
 
             JsonHelper::jsonResponse([
                 'error' => false,

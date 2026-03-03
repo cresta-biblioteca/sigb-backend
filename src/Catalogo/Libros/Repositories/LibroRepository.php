@@ -87,7 +87,7 @@ class LibroRepository extends Repository
         return $stmt->rowCount() > 0;
     }
 
-    public function save(Libro $libro): void
+    public function insertLibro(Libro $libro): Libro
     {
         $sql = "INSERT INTO libro 
             (articulo_id, isbn, autor, autores, colaboradores, titulo_informativo, cdu, export_marc, created_at,
@@ -97,7 +97,7 @@ class LibroRepository extends Repository
              :export_marc, NOW(), NOW())";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
+        $success = $stmt->execute([
             'articulo_id' => $libro->getArticuloId(),
             'isbn' => $libro->getIsbn(),
             'autor' => $libro->getAutor(),
@@ -107,9 +107,15 @@ class LibroRepository extends Repository
             'cdu' => $libro->getCdu(),
             'export_marc' => $libro->getExportMarc(),
         ]);
+
+        if ($success === false || $stmt->rowCount() === 0) {
+            throw new \RuntimeException('Error al insertar el libro');
+        }
+
+        return $libro;
     }
 
-    public function update(Libro $libro): bool
+    public function updateLibro(int $id, Libro $libro): Libro
     {
         $sql = "UPDATE libro SET
             isbn = :isbn,
@@ -120,10 +126,10 @@ class LibroRepository extends Repository
             cdu = :cdu,
             export_marc = :export_marc,
             updated_at = NOW()
-            WHERE articulo_id = :articulo_id";
+            WHERE articulo_id = :id";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
+        $success = $stmt->execute([
             'isbn' => $libro->getIsbn(),
             'autor' => $libro->getAutor(),
             'autores' => $libro->getAutores(),
@@ -131,19 +137,14 @@ class LibroRepository extends Repository
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
             'export_marc' => $libro->getExportMarc(),
-            'articulo_id' => $libro->getArticuloId(),
+            'id' => $id,
         ]);
 
-        return $stmt->rowCount() > 0;
-    }
+        if (!$success || $stmt->rowCount() === 0) {
+            throw new \RuntimeException("No se pudo actualizar el libro con ID: {$id}");
+        }
 
-    public function findByIsbn(string $isbn): ?Libro
-    {
-        $sql = "SELECT * FROM libro WHERE isbn = :isbn LIMIT 1";
-
-        return $this->findOneByQuery($sql, [
-            'isbn' => $isbn
-        ]);
+        return $this->findById($id);
     }
 
     public function existsByIsbn(string $isbn, ?int $excludeArticuloId = null): bool
@@ -162,104 +163,6 @@ class LibroRepository extends Repository
         $stmt->execute($params);
 
         return $stmt->fetch() !== false;
-    }
-    public function findByAutor(string $autor): array
-    {
-        $sql = "SELECT * FROM libro WHERE autor = :autor";
-
-        return $this->findByQuery($sql, [
-            'autor' => $autor
-        ]);
-    }
-    public function searchByAutor(string $autor): array
-    {
-        $sql = "SELECT * FROM libro WHERE autor LIKE :autor";
-
-        return $this->findByQuery($sql, [
-            'autor' => '%' . $autor . '%'
-        ]);
-    }
-    public function searchByAutores(string $autores): array
-    {
-        $sql = "SELECT * FROM libro WHERE autores LIKE :autores";
-
-        return $this->findByQuery($sql, [
-            'autores' => '%' . $autores . '%'
-        ]);
-    }
-    public function searchByColaboradores(string $colaboradores): array
-    {
-        $sql = "SELECT * FROM libro WHERE colaboradores LIKE :colaboradores";
-
-        return $this->findByQuery($sql, [
-            'colaboradores' => '%' . $colaboradores . '%'
-        ]);
-    }
-    public function searchByTituloInformativo(string $titulo): array
-    {
-        $sql = "SELECT * FROM libro WHERE titulo_informativo LIKE :titulo";
-
-        return $this->findByQuery($sql, [
-            'titulo' => '%' . $titulo . '%'
-        ]);
-    }
-    public function findByCdu(int $cdu): array
-    {
-        $sql = "SELECT * FROM libro WHERE cdu = :cdu";
-
-        return $this->findByQuery($sql, [
-            'cdu' => $cdu
-        ]);
-    }
-    public function findByCduRange(int $min, int $max): array
-    {
-        $sql = "SELECT * FROM libro WHERE cdu BETWEEN :min AND :max";
-
-        return $this->findByQuery($sql, [
-            'min' => $min,
-            'max' => $max
-        ]);
-    }
-    public function findByArticuloId(int $articuloId): ?Libro
-    {
-        $sql = "SELECT * FROM libro WHERE articulo_id = :id LIMIT 1";
-
-        return $this->findOneByQuery($sql, [
-            'id' => $articuloId
-        ]);
-    }
-
-    public function existsByArticuloId(int $articuloId): bool
-    {
-        $sql = 'SELECT 1 FROM libro WHERE articulo_id = :articulo_id LIMIT 1';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'articulo_id' => $articuloId,
-        ]);
-
-        return $stmt->fetch() !== false;
-    }
-    public function findByCreatedBetween(string $from, string $to): array
-    {
-        $sql = "SELECT * FROM libro 
-            WHERE created_at BETWEEN :from AND :to";
-
-        return $this->findByQuery($sql, [
-            'from' => $from,
-            'to' => $to
-        ]);
-    }
-    public function findByAutorAndCdu(string $autor, int $cdu): array
-    {
-        $sql = "SELECT * FROM libro 
-            WHERE autor LIKE :autor
-            AND cdu = :cdu";
-
-        return $this->findByQuery($sql, [
-            'autor' => '%' . $autor . '%',
-            'cdu' => $cdu
-        ]);
     }
 
     public function search(array $filters): array

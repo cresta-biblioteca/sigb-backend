@@ -1,5 +1,6 @@
 <?php
 
+use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Controllers\LibroController;
 use App\Catalogo\Libros\Repositories\LibroRepository;
@@ -11,10 +12,11 @@ uses(TestCase::class);
 
 beforeEach(function () {
     $libroRepository = new LibroRepository($this->pdo);
-    $articuloService = new ArticuloService($this->pdo);
-    $service = new LibroService($libroRepository, $articuloService);
+    $articuloRepository = new ArticuloRepository($this->pdo);
+    $articuloService = new ArticuloService($articuloRepository);
+    $service = new LibroService($libroRepository);
 
-    $this->controller = new LibroController($service);
+    $this->controller = new LibroController($service, $articuloService);
 
     $_GET = [];
 });
@@ -79,7 +81,7 @@ test('create crea libro completo con articulo y datos del libro', function () {
         ->and($response['data']['cdu'])->toBe(004);
 
     // Verificar que tanto artículo como libro se crearon
-    $articuloId = $response['data']['articulo_id'];
+    $articuloId = $response['data']['id']; // id y articulo_id son lo mismo
     expect($this->recordExists('articulo', ['id' => $articuloId]))->toBeTrue();
     expect($this->recordExists('libro', ['articulo_id' => $articuloId]))->toBeTrue();
 });
@@ -160,9 +162,6 @@ test('update actualiza libro exitosamente', function () {
     ]);
 
     withJsonInputLibro([
-        'articulo_id' => $articuloId,
-        'isbn' => '9780137081073', // Nuevo ISBN
-        'export_marc' => 'MARC-ACTUALIZADO',
         'autor' => 'Autor Actualizado',
         'autores' => 'Autores Actualizados',
         'colaboradores' => 'Colaboradores Nuevos',
@@ -170,14 +169,14 @@ test('update actualiza libro exitosamente', function () {
         'cdu' => 123
     ], function () use ($articuloId) {
         ob_start();
-        $this->controller->update($articuloId);
+        $this->controller->updateLibro($articuloId);
         $this->output = ob_get_clean();
     });
 
     $response = json_decode($this->output, true);
 
     expect($response['error'])->toBe(false)
-        ->and($response['data']['isbn'])->toBe('9780137081073')
+        ->and($response['data']['isbn'])->toBe('9780132350884') // ISBN original (inmutable)
         ->and($response['data']['autor'])->toBe('Autor Actualizado')
         ->and($response['data']['autores'])->toBe('Autores Actualizados')
         ->and($response['data']['colaboradores'])->toBe('Colaboradores Nuevos')
@@ -212,7 +211,7 @@ test('delete elimina libro exitosamente', function () {
     ]);
 
     ob_start();
-    $this->controller->delete($articuloId);
+    $this->controller->deleteLibro($articuloId);
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
@@ -240,7 +239,7 @@ test('listAll filtra libros con paginacion y metadatos', function () {
 
         $this->insertInto('libro', [
             'articulo_id' => $articuloId,
-            'isbn' => '978013235088' . $i,
+            'isbn' => sprintf('978013235%03d', $i), // Genera ISBNs como 9780132350001, 9780132350002, etc.
             'autor' => "Autor $i",
             'autores' => "Autores $i",
             'colaboradores' => null,
@@ -253,19 +252,19 @@ test('listAll filtra libros con paginacion y metadatos', function () {
     $_GET = ['titulo' => 'Libro Test', 'page' => '1', 'per_page' => '5'];
 
     ob_start();
-    $this->controller->listAll();
+    $this->controller->searchPaginated();
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
 
     expect($response['error'])->toBe(false)
-        ->and($response['data']['items'])->toHaveCount(5) // 5 por página
-        ->and($response['data']['pagination']['page'])->toBe(1)
-        ->and($response['data']['pagination']['per_page'])->toBe(5)
-        ->and($response['data']['pagination']['total'])->toBeGreaterThan(10);
+        ->and($response['data'])->toHaveCount(5) // 5 por página
+        ->and($response['pagination']['page'])->toBe(1)
+        ->and($response['pagination']['per_page'])->toBe(5)
+        ->and($response['pagination']['total'])->toBeGreaterThan(10);
 
     // Verificar que los datos del libro incluyen todos los campos
-    $firstBook = $response['data']['items'][0];
+    $firstBook = $response['data'][0];
     expect($firstBook)->toHaveKey('isbn')
         ->and($firstBook)->toHaveKey('autor')
         ->and($firstBook)->toHaveKey('autores')
@@ -307,7 +306,7 @@ test('getById retorna libro con todos los campos', function () {
     $response = json_decode($output, true);
 
     expect($response['error'])->toBe(false)
-        ->and($response['data']['articulo_id'])->toBe($articuloId)
+        ->and($response['data']['id'])->toBe($articuloId) // id y articulo_id son lo mismo
         ->and($response['data']['isbn'])->toBe('9780132350884')
         ->and($response['data']['autor'])->toBe('Autor Completo')
         ->and($response['data']['autores'])->toBe('Autor Principal, Coautor')
