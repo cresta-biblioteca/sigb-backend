@@ -6,6 +6,7 @@ use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Shared\Exceptions\BusinessValidationException;
 
 beforeEach(function () {
     $this->repositoryMock = $this->createMock(ArticuloRepository::class);
@@ -30,10 +31,12 @@ test('crea un articulo exitosamente', function () {
 
     $result = $this->service->create($request);
 
+    $data = $result->jsonSerialize();
+
     expect($result)->toBeInstanceOf(ArticuloResponse::class);
-    expect($result->id)->toBe(10);
-    expect($result->titulo)->toBe('Articulo de prueba');
-    expect($result->tipoDocumentoId)->toBe(1);
+    expect($result->getId())->toBe(10);
+    expect($data['titulo'])->toBe('Articulo de prueba');
+    expect($data['tipo_documento_id'])->toBe(1);
 });
 
 test('obtiene articulo por id exitosamente', function () {
@@ -49,7 +52,7 @@ test('obtiene articulo por id exitosamente', function () {
     $result = $this->service->getById(55);
 
     expect($result)->toBeInstanceOf(ArticuloResponse::class);
-    expect($result->id)->toBe(55);
+    expect($result->getId())->toBe(55);
 });
 
 test('lanza excepcion al obtener articulo inexistente', function () {
@@ -63,19 +66,12 @@ test('lanza excepcion al obtener articulo inexistente', function () {
         ->toThrow(ArticuloNotFoundException::class);
 });
 
-test('actualiza articulo exitosamente', function () {
+test('actualiza articulo parcialmente exitosamente', function () {
     $existing = Articulo::create('Titulo viejo', 2019, 1, 'es');
     $existing->setId(12);
 
-    $updated = Articulo::create('Titulo nuevo', 2024, 1, 'es');
+    $updated = Articulo::create('Titulo nuevo', 2019, 1, 'es');
     $updated->setId(12);
-
-    $request = new ArticuloRequest(
-        titulo: 'Titulo nuevo',
-        anioPublicacion: 2024,
-        tipoDocumentoId: 1,
-        idioma: 'es'
-    );
 
     $this->repositoryMock
         ->expects($this->once())
@@ -89,10 +85,35 @@ test('actualiza articulo exitosamente', function () {
         ->with(12, $this->isInstanceOf(Articulo::class))
         ->willReturn($updated);
 
-    $result = $this->service->updateArticulo(12, $request);
+    $result = $this->service->patchArticulo(12, [
+        'titulo' => 'Titulo nuevo',
+    ]);
 
-    expect($result->id)->toBe(12);
-    expect($result->titulo)->toBe('Titulo nuevo');
+    $data = $result->jsonSerialize();
+
+    expect($result->getId())->toBe(12);
+    expect($data['titulo'])->toBe('Titulo nuevo');
+});
+
+test('lanza excepcion cuando intenta cambiar tipo_documento_id y esta vinculado a libro', function () {
+    $existing = Articulo::create('Titulo viejo', 2019, 1, 'es');
+    $existing->setId(12);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(12)
+        ->willReturn($existing);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('isLinkedToLibro')
+        ->with(12)
+        ->willReturn(true);
+
+    expect(fn () => $this->service->patchArticulo(12, [
+        'tipo_documento_id' => 2,
+    ]))->toThrow(BusinessValidationException::class);
 });
 
 test('elimina articulo exitosamente', function () {
@@ -124,7 +145,7 @@ test('obtiene lista completa de articulos', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('getAll')
+        ->method('findAll')
         ->willReturn([$articulo1, $articulo2]);
 
     $result = $this->service->getAll();

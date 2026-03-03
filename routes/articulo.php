@@ -22,8 +22,8 @@ $router->get('/articulos/{id}', function ($id) use ($articuloController) {
     $articuloController->getById($id);
 });
 
-$router->put('/articulos/{id}', function ($id) use ($articuloController) {
-    $articuloController->updateArticulo($id);
+$router->patch('/articulos/{id}', function ($id) use ($articuloController) {
+    $articuloController->patchArticulo($id);
 });
 
 $router->delete('/articulos/{id}', function ($id) use ($articuloController) {

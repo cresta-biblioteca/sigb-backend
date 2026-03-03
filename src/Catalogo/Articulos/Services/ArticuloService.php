@@ -10,6 +10,7 @@ use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Shared\Exceptions\BusinessValidationException;
 
 class ArticuloService
 {
@@ -17,7 +18,9 @@ class ArticuloService
     {
     }
 
-
+    /**
+     * @return ArticuloResponse[]
+     */
     public function getAll(): array
     {
         $articulos = $this->repository->findAll();
@@ -42,10 +45,10 @@ class ArticuloService
     public function create(ArticuloRequest $request): ArticuloResponse
     {
         $articulo = Articulo::create(
-            titulo: $request->titulo,
-            anioPublicacion: $request->anioPublicacion,
-            tipoDocumentoId: $request->tipoDocumentoId,
-            idioma: $request->idioma
+            titulo: $request->getTitulo(),
+            anioPublicacion: $request->getAnioPublicacion(),
+            tipoDocumentoId: $request->getTipoDocumentoId(),
+            idioma: $request->getIdioma()
         );
 
         $created = $this->repository->insertArticulo($articulo);
@@ -53,8 +56,10 @@ class ArticuloService
         return ArticuloMapper::toArticuloResponse($created);
     }
 
-
-    public function updateArticulo(int $id, ArticuloRequest $request): ArticuloResponse
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function patchArticulo(int $id, array $data): ArticuloResponse
     {
         $existing = $this->repository->findById($id);
 
@@ -62,11 +67,34 @@ class ArticuloService
             throw new ArticuloNotFoundException($id);
         }
 
+        /** @var Articulo $existing */
+
+        $newTipoDocumentoId = array_key_exists('tipo_documento_id', $data)
+            ? (int) $data['tipo_documento_id']
+            : $existing->getTipoDocumentoId();
+
+        if (
+            array_key_exists('tipo_documento_id', $data)
+            && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
+            && $this->repository->isLinkedToLibro($id)
+        ) {
+            throw BusinessValidationException::forField(
+                'tipo_documento_id',
+                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro'
+            );
+        }
+
         $articulo = Articulo::create(
-            titulo: $request->titulo,
-            anioPublicacion: $request->anioPublicacion,
-            tipoDocumentoId: $request->tipoDocumentoId,
-            idioma: $request->idioma
+            titulo: array_key_exists('titulo', $data)
+                ? trim((string) $data['titulo'])
+                : $existing->getTitulo(),
+            anioPublicacion: array_key_exists('anio_publicacion', $data)
+                ? (int) $data['anio_publicacion']
+                : $existing->getAnioPublicacion(),
+            tipoDocumentoId: $newTipoDocumentoId,
+            idioma: array_key_exists('idioma', $data)
+                ? strtolower((string) $data['idioma'])
+                : $existing->getIdioma()
         );
 
         $updated = $this->repository->updateArticulo($id, $articulo);
@@ -74,11 +102,18 @@ class ArticuloService
         return ArticuloMapper::toArticuloResponse($updated);
     }
 
-
     public function deleteArticulo(int $id): void
     {
         if ($this->repository->findById($id) === null) {
             throw new ArticuloNotFoundException($id);
+        }
+
+        $blockingRelation = $this->repository->getDeleteBlockingRelation($id);
+        if ($blockingRelation !== null) {
+            throw BusinessValidationException::forField(
+                'id',
+                "No se puede eliminar el artículo porque tiene {$blockingRelation}"
+            );
         }
 
         $this->repository->delete($id);

@@ -83,4 +83,35 @@ class ArticuloRepository extends Repository
             'titulo' => '%' . $titulo . '%',
         ]);
     }
+
+    public function isLinkedToLibro(int $articuloId): bool
+    {
+        $sql = 'SELECT COUNT(*) FROM libro WHERE articulo_id = :articulo_id';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['articulo_id' => $articuloId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function getDeleteBlockingRelation(int $articuloId): ?string
+    {
+        $relations = [
+            'libro' => 'libro asociado',
+            'ejemplar' => 'ejemplar asociado',
+            'articulo_tema' => 'tema asociado',
+            'materia_articulo' => 'materia asociada',
+        ];
+
+        foreach ($relations as $table => $label) {
+            $sql = "SELECT COUNT(*) FROM {$table} WHERE articulo_id = :articulo_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['articulo_id' => $articuloId]);
+
+            if ((int) $stmt->fetchColumn() > 0) {
+                return $label;
+            }
+        }
+
+        return null;
+    }
 }

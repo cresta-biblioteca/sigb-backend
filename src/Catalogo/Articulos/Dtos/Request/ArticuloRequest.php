@@ -7,10 +7,30 @@ namespace App\Catalogo\Articulos\Dtos\Request;
 readonly class ArticuloRequest
 {
     public function __construct(
-        public string $titulo,
-        public int $anioPublicacion,
-        public int $tipoDocumentoId,
-        public string $idioma = 'es'
+        private string $titulo,
+        private int $anioPublicacion,
+        private int $tipoDocumentoId,
+        private string $idioma = 'es'
     ) {
+    }
+
+    public function getTitulo(): string
+    {
+        return $this->titulo;
+    }
+
+    public function getAnioPublicacion(): int
+    {
+        return $this->anioPublicacion;
+    }
+
+    public function getTipoDocumentoId(): int
+    {
+        return $this->tipoDocumentoId;
+    }
+
+    public function getIdioma(): string
+    {
+        return $this->idioma;
     }
 }
