@@ -5,6 +5,7 @@ use App\Catalogo\Ejemplares\Dtos\Response\EjemplarResponse;
 use App\Catalogo\Ejemplares\Models\Ejemplar;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Catalogo\Ejemplares\Services\EjemplarService;
+use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\EntityAlreadyExistsException;
 use App\Shared\Exceptions\EntityNotFoundException;
 
@@ -36,10 +37,11 @@ test('crea un ejemplar exitosamente', function () {
         ->willReturn($ejemplar);
 
     $result = $this->service->createEjemplar($request);
+    $data = $result->jsonSerialize();
 
     expect($result)->toBeInstanceOf(EjemplarResponse::class);
-    expect($result->id)->toBe(1);
-    expect($result->articuloId)->toBe(1);
+    expect($data['id'])->toBe(1);
+    expect($data['articulo_id'])->toBe(1);
 });
 
 test('lanza excepcion si codigo de barras ya existe', function () {
@@ -70,9 +72,10 @@ test('obtiene ejemplar por id exitosamente', function () {
         ->willReturn($ejemplar);
 
     $result = $this->service->getById(44);
+    $data = $result->jsonSerialize();
 
     expect($result)->toBeInstanceOf(EjemplarResponse::class);
-    expect($result->id)->toBe(44);
+    expect($data['id'])->toBe(44);
 });
 
 test('lanza excepcion al obtener ejemplar inexistente', function () {
@@ -100,10 +103,10 @@ test('actualiza ejemplar exitosamente', function () {
     );
 
     $this->repositoryMock
-        ->expects($this->exactly(2))
+        ->expects($this->once())
         ->method('findById')
         ->with(8)
-        ->willReturnOnConsecutiveCalls($existing, $updated);
+        ->willReturn($existing);
 
     $this->repositoryMock
         ->expects($this->once())
@@ -118,9 +121,34 @@ test('actualiza ejemplar exitosamente', function () {
         ->willReturn(true);
 
     $result = $this->service->updateEjemplar(8, $request);
+    $data = $result->jsonSerialize();
 
-    expect($result->codigoBarras)->toBe('22222');
-    expect($result->habilitado)->toBeFalse();
+    expect($data['codigo_barras'])->toBe('22222');
+    expect($data['habilitado'])->toBeFalse();
+});
+
+test('lanza excepcion si intenta modificar articulo_id del ejemplar', function () {
+    $existing = Ejemplar::create(3, '11111', true);
+    $existing->setId(8);
+
+    $request = new EjemplarRequest(
+        articuloId: 99,
+        codigoBarras: '22222',
+        habilitado: false
+    );
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(8)
+        ->willReturn($existing);
+
+    $this->repositoryMock
+        ->expects($this->never())
+        ->method('updateEjemplar');
+
+    expect(fn () => $this->service->updateEjemplar(8, $request))
+        ->toThrow(BusinessValidationException::class);
 });
 
 test('deshabilita ejemplar exitosamente', function () {
@@ -140,8 +168,9 @@ test('deshabilita ejemplar exitosamente', function () {
         ->willReturn(true);
 
     $result = $this->service->deshabilitarEjemplar(9);
+    $data = $result->jsonSerialize();
 
-    expect($result->habilitado)->toBeFalse();
+    expect($data['habilitado'])->toBeFalse();
 });
 
 test('lista ejemplares por articulo', function () {

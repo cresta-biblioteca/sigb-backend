@@ -9,6 +9,7 @@ use App\Catalogo\Ejemplares\Dtos\Response\EjemplarResponse;
 use App\Catalogo\Ejemplares\Mappers\EjemplarMapper;
 use App\Catalogo\Ejemplares\Models\Ejemplar;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
+use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\EntityAlreadyExistsException;
 use App\Shared\Exceptions\EntityNotFoundException;
 
@@ -35,14 +36,14 @@ class EjemplarService
 
     public function createEjemplar(EjemplarRequest $request): EjemplarResponse
     {
-        if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->codigoBarras)) {
-            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->codigoBarras);
+        if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras())) {
+            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
         }
 
         $ejemplar = Ejemplar::create(
-            $request->articuloId,
-            $request->codigoBarras,
-            $request->habilitado
+            $request->getArticuloId(),
+            $request->getCodigoBarras(),
+            $request->isHabilitado()
         );
 
         $savedEjemplar = $this->ejemplarRepository->insertEjemplar($ejemplar);
@@ -54,13 +55,19 @@ class EjemplarService
     {
         $ejemplar = $this->findOrFail($id);
 
-        if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->codigoBarras, $id)) {
-            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->codigoBarras);
+        if ($request->getArticuloId() !== $ejemplar->getArticuloId()) {
+            throw BusinessValidationException::forField(
+                'articulo_id',
+                'El articulo_id del ejemplar no puede ser modificado'
+            );
         }
 
-        $ejemplar->setArticuloId($request->articuloId);
-        $ejemplar->setCodigoBarras($request->codigoBarras);
-        $ejemplar->setHabilitado($request->habilitado);
+        if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras(), $id)) {
+            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
+        }
+
+        $ejemplar->setCodigoBarras($request->getCodigoBarras());
+        $ejemplar->setHabilitado($request->isHabilitado());
 
         $this->ejemplarRepository->updateEjemplar($ejemplar);
 

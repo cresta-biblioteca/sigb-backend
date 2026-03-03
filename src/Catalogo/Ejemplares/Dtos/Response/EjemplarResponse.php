@@ -7,10 +7,10 @@ namespace App\Catalogo\Ejemplares\Dtos\Response;
 readonly class EjemplarResponse implements \JsonSerializable
 {
     public function __construct(
-        public int $id,
-        public string $codigoBarras,
-        public bool $habilitado,
-        public int $articuloId,
+        private int $id,
+        private string $codigoBarras,
+        private bool $habilitado,
+        private int $articuloId,
     ) {
     }
 
