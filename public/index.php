@@ -34,5 +34,6 @@ require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/materia.php';
 require_once __DIR__ . '/../routes/carrera.php';
 require_once __DIR__ . '/../routes/tema.php';
+require_once __DIR__ . '/../routes/tipoDocumento.php';
 
 $router->run();

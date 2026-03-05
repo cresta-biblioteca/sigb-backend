@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Dtos\Request;
 
-
-readonly class CreateTipoDocumentoRequest {
+readonly class CreateTipoDocumentoRequest
+{
     public string $codigo;
     public string $descripcion;
     public bool $renovable;
@@ -18,4 +18,4 @@ readonly class CreateTipoDocumentoRequest {
         $this->renovable = $renovable;
         $this->detalle = $detalle ?? null;
     }
-} 
+}

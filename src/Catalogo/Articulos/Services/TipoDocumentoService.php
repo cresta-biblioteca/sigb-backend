@@ -36,10 +36,13 @@ class TipoDocumentoService
         return TipoDocumentoMapper::toResponse($tipoDocumentoExistente);
     }
 
-    public function getByParams(array $params): array {
+    public function getByParams(array $params): array
+    {
         $tipoDocs = $this->repo->findByParams($params);
-        $response = array_map(fn($tipoDoc) => TipoDocumentoMapper::toResponse($tipoDoc), 
-                    $tipoDocs);
+        $response = array_map(
+            fn($tipoDoc) => TipoDocumentoMapper::toResponse($tipoDoc),
+            $tipoDocs
+        );
         return $response;
     }
 
@@ -59,32 +62,33 @@ class TipoDocumentoService
         return TipoDocumentoMapper::toResponse($docCreado);
     }
 
-    public function updateTipoDocumento(int $id, UpdateTipoDocumentoRequest $request): TipoDocumentoResponse {
+    public function updateTipoDocumento(int $id, UpdateTipoDocumentoRequest $request): TipoDocumentoResponse
+    {
 
         /** @var TipoDocumento $tipoDocExiste */
         $tipoDocExiste = $this->repo->findById($id);
-        if(!$tipoDocExiste) {
+        if (!$tipoDocExiste) {
             throw new TipoDocumentoNotFoundException($id);
         }
-        
-        if($request->codigo === null) {
+
+        if ($request->codigo === null) {
             $request->setCodigo($tipoDocExiste->getCodigo());
         }
-        if($request->descripcion === null) {
+        if ($request->descripcion === null) {
             $request->setDescripcion($tipoDocExiste->getDescripcion());
         }
-        if($request->renovable === null) {
+        if ($request->renovable === null) {
             $request->setRenovable($tipoDocExiste->isRenovable());
         }
-        if($request->detalle === null) {
+        if ($request->detalle === null) {
             $request->setDetalle($tipoDocExiste->getDetalle());
         }
 
         $tipoDoc = TipoDocumentoMapper::fromRequest($request);
 
         $coincidencia = $this->repo->findCoincidence($request->codigo, $request->descripcion, $id);
-        if($coincidencia) {
-            if($coincidencia->getCodigo() === strtoupper($request->codigo)) {
+        if ($coincidencia) {
+            if ($coincidencia->getCodigo() === strtoupper($request->codigo)) {
                 throw new TipoDocumentoAlreadyExistsException("Codigo", $request->codigo);
             }
             throw new TipoDocumentoAlreadyExistsException("Descripcion", $request->descripcion);
@@ -95,14 +99,15 @@ class TipoDocumentoService
         return TipoDocumentoMapper::toResponse($tipoDocActualizado);
     }
 
-    public function deleteTipoDocumento(int $id): void {
+    public function deleteTipoDocumento(int $id): void
+    {
         $tipoDocExistente = $this->repo->findById($id);
-        if(!$tipoDocExistente) {
+        if (!$tipoDocExistente) {
             throw new TipoDocumentoNotFoundException($id);
         }
 
         $borrado = $this->repo->delete($id);
-        if(!$borrado) {
+        if (!$borrado) {
             throw new TipoDocumentoNotFoundException($id);
         }
     }

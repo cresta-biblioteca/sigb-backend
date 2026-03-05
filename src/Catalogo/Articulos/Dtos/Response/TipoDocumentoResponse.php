@@ -8,17 +8,16 @@ use JsonSerializable;
 
 readonly class TipoDocumentoResponse implements JsonSerializable
 {
-
     public function __construct(
         private int $id,
-        private string $codigo, 
-        private string $descripcion, 
-        private bool $renovable, 
-        private ?string $detalle = null)
-    {
+        private string $codigo,
+        private string $descripcion,
+        private bool $renovable,
+        private ?string $detalle = null
+    ) {
     }
 
-    public function jsonSerialize(): array 
+    public function jsonSerialize(): array
     {
         return [
             "id" => $this->id,

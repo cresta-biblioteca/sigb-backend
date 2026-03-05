@@ -11,8 +11,12 @@ class UpdateTipoDocumentoRequest
     public ?bool $renovable;
     public ?string $detalle;
 
-    public function __construct(?string $codigo = null, ?string $descripcion = null, ?bool $renovable = null, ?string $detalle = null)
-    {
+    public function __construct(
+        ?string $codigo = null,
+        ?string $descripcion = null,
+        ?bool $renovable = null,
+        ?string $detalle = null
+    ) {
         $this->codigo = $codigo;
         $this->descripcion = $descripcion;
         $this->renovable = $renovable;

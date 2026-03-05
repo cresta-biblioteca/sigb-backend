@@ -62,7 +62,7 @@ class TipoDocumentoRequestValidator
     {
         $errors = [];
 
-        if(isset($input["codigo"])) {
+        if (isset($input["codigo"])) {
             if (!is_string($input["codigo"])) {
                 $errors["codigo"] = ["El codigo debe ser un string"];
             } elseif (!preg_match("/^[A-Za-z#&]+$/", trim($input["codigo"]))) {
@@ -70,7 +70,7 @@ class TipoDocumentoRequestValidator
             }
         }
 
-        if(isset($input["descripcion"])) {
+        if (isset($input["descripcion"])) {
             if (!is_string($input["descripcion"])) {
                 $errors["descripcion"] = ["La descripcion debe ser un string"];
             } elseif (!preg_match('/^[\p{L}\s -]+$/u', trim($input["descripcion"]))) {
@@ -97,48 +97,49 @@ class TipoDocumentoRequestValidator
         }
     }
 
-    public static function validateParams(array $params) {
+    public static function validateParams(array $params)
+    {
         $errors = [];
 
-        if(isset($params["codigo"])) {
-            if(!is_string($params["codigo"])) {
+        if (isset($params["codigo"])) {
+            if (!is_string($params["codigo"])) {
                 $errors["codigo"] = ["El codigo debe ser un string"];
             } elseif (!preg_match("/^[A-Za-z#&]+$/", $params["codigo"])) {
                 $errors["codigo"] = ["El codigo solo admite letras"];
             }
         }
 
-        if(isset($params["descripcion"])) {
-            if(!is_string($params["descripcion"])) {
+        if (isset($params["descripcion"])) {
+            if (!is_string($params["descripcion"])) {
                 $errors["descripcion"] = ["La descripcion debe ser un string"];
             } elseif (!preg_match('/^[\p{L}\s -]+$/u', $params["descripcion"])) {
                 $errors["descripcion"] = ["La descripcion solo admite letras y '-'"];
             }
         }
 
-        if(isset($params["renovable"])) {
-            if($params["renovable"] !== "true" && $params["renovable"] !== "false") {
+        if (isset($params["renovable"])) {
+            if ($params["renovable"] !== "true" && $params["renovable"] !== "false") {
                 $errors["renovable"] = ["Solo se admite true o false"];
             }
         }
 
-        if(isset($params["detalle"])) {
-            if(!is_string($params["detalle"])) {
+        if (isset($params["detalle"])) {
+            if (!is_string($params["detalle"])) {
                 $errors["detalle"] = ["El detalle debe ser un string"];
             } elseif (!preg_match('/^[\p{L}\s -]+$/u', $params["detalle"])) {
                 $errors["detalle"] = ["El detalle solo admite letras y '-'"];
             }
         }
 
-        if(isset($params["order"])) {
-            if(!is_string($params["order"])) {
+        if (isset($params["order"])) {
+            if (!is_string($params["order"])) {
                 $errors["order"] = ["El orden debe ser un string"];
-            } elseif(strtoupper($params["order"]) !== "ASC" && strtoupper($params["order"]) !== "DESC") {
+            } elseif (strtoupper($params["order"]) !== "ASC" && strtoupper($params["order"]) !== "DESC") {
                 $errors["order"] = ["Solo se admite ASC o DESC como forma de ordenamiento"];
             }
         }
 
-        if(!empty($errors)) {
+        if (!empty($errors)) {
             throw new ValidationException($errors);
         }
     }

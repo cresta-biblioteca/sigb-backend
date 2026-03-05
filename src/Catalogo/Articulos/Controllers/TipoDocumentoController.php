@@ -52,7 +52,8 @@ class TipoDocumentoController
         }
     }
 
-    private function getByParams(array $params): void {
+    private function getByParams(array $params): void
+    {
         try {
             TipoDocumentoRequestValidator::validateParams($params);
 
@@ -64,7 +65,7 @@ class TipoDocumentoController
             $this->exceptionResponse($e, "getByParams");
         }
     }
-    
+
     public function createTipoDocumento(): void
     {
         try {
@@ -86,7 +87,8 @@ class TipoDocumentoController
         }
     }
 
-    public function updateTipoDocumento(string $id): void {
+    public function updateTipoDocumento(string $id): void
+    {
         try {
             TipoDocumentoRequestValidator::validateId($id);
             $input = json_decode(file_get_contents("php://input"), true) ?? [];
@@ -108,10 +110,11 @@ class TipoDocumentoController
         }
     }
 
-    public function deleteTipoDocumento(string $id): void {
+    public function deleteTipoDocumento(string $id): void
+    {
         try {
             TipoDocumentoRequestValidator::validateId($id);
-            
+
             $this->service->deleteTipoDocumento((int) $id);
             http_response_code(204);
         } catch (TipoDocumentoNotFoundException $e) {
