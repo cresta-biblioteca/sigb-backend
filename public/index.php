@@ -24,17 +24,19 @@ $router->set404(function () {
 
 $jwtMiddleware = new JwtMiddleware(new JwtTokenProvider());
 
-$router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth\/login|auth\/register).*', function () use ($jwtMiddleware) {
-    if (!$jwtMiddleware->handle()) {
-        exit();
+$router->before(
+    'GET|POST|PUT|DELETE|PATCH',
+    '/(?!auth\/login|auth\/register|docs\/).*',
+    function () use ($jwtMiddleware) {
+        if (!$jwtMiddleware->handle()) {
+            exit();
+        }
     }
-});
+);
 
 require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/materia.php';
 require_once __DIR__ . '/../routes/carrera.php';
-require_once __DIR__ . '/../routes/articulo.php';
-require_once __DIR__ . '/../routes/libro.php';
-require_once __DIR__ . '/../routes/ejemplar.php';
+require_once __DIR__ . '/../routes/docs.php';
 
 $router->run();
