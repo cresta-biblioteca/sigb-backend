@@ -17,6 +17,7 @@ use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use DateTimeImmutable;
+use OpenApi\Attributes as OA;
 use Throwable;
 
 readonly class AuthController
@@ -25,6 +26,51 @@ readonly class AuthController
     {
     }
 
+    #[OA\Post(
+        path: '/auth/register',
+        description: 'Crea un nuevo usuario y su perfil de lector en el sistema',
+        summary: 'Registrar usuario',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/UserRegisterRequest')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Usuario creado exitosamente',
+                content: new OA\JsonContent(ref: '#/components/schemas/UserRegisterResponse')
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Datos de entrada no válidos',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'errors', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 409,
+                description: 'El usuario ya existe',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Error de validación de negocio',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'field', type: 'string'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
     public function createUser(): void
     {
         try {
@@ -65,6 +111,44 @@ readonly class AuthController
         }
     }
 
+    #[OA\Post(
+        path: '/auth/change-password',
+        description: 'Actualiza la contraseña del usuario autenticado. Requiere token JWT.',
+        summary: 'Cambiar contraseña',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/ChangePasswordRequest')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Contraseña actualizada correctamente',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Datos de entrada no válidos',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'errors', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado o contraseña actual incorrecta',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
     public function changePassword(): void
     {
         try {
@@ -94,6 +178,31 @@ readonly class AuthController
         }
     }
 
+    #[OA\Post(
+        path: '/auth/login',
+        description: 'Autentica un usuario con DNI y contraseña, retorna un token JWT',
+        summary: 'Iniciar sesión',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/UserLoginRequest')
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login exitoso',
+                content: new OA\JsonContent(ref: '#/components/schemas/UserLoginResponse')
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Credenciales inválidas',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
     public function login(): void
     {
         try {
