@@ -12,6 +12,7 @@ API REST para el Sistema de Gestión Bibliotecaria desarrollado como proyecto de
 - **Docker** - Contenedorización
 - **Git** - Control de versiones
 - **GitHub Actions** - CI/CD
+- **zircote/swagger-php** - Documentación de endpoints con OpenAPI 3.0
 
 ## Requisitos Previos
 
@@ -45,6 +46,7 @@ docker-compose exec web composer install
 ## Servicios Disponibles
 
 - **API**: http://localhost:8080
+- **Documentación (Swagger UI)**: http://localhost:8080/docs/index.html
 - **PHPMyAdmin**: http://localhost:8081
 - **MySQL**: localhost:3306
 
@@ -78,6 +80,17 @@ sigb-api-cresta/
 ├── Dockerfile        # Configuración de Docker
 └── docker-compose.yml # Orquestación de contenedores
 ```
+
+## Documentación de la API
+
+Los endpoints están documentados con **OpenAPI 3.0** usando la librería `zircote/swagger-php`. La documentación se genera automáticamente en runtime a partir de PHP Attributes declarados en los controllers y DTOs.
+
+- **Swagger UI**: http://localhost:8080/docs/index.html
+- **Spec JSON**: http://localhost:8080/api/v1/docs/openapi.json
+
+La documentación no requiere autenticación. Para probar endpoints protegidos desde Swagger UI, hacer login primero y pegar el token JWT en el botón **Authorize**.
+
+Para documentar un nuevo endpoint, agregar el atributo `#[OA\Get/Post/Put/Delete]` al método del controller y `#[OA\Schema]` a los DTOs de request/response correspondientes. El scanner detecta automáticamente todos los atributos en `src/`.
 
 ## Testing
 
@@ -212,6 +225,10 @@ El workflow se encuentra en `.github/workflows/php-cli.yml`
 - **PHPMyAdmin**: Interfaz web para administrar bases de datos MySQL/MariaDB, incluida para facilitar la gestión de datos en desarrollo.
 
 - **CI/CD**: Integración Continua y Entrega Continua. GitHub Actions ejecuta automáticamente validaciones y tests en cada push/PR.
+
+- **OpenAPI**: Especificación estándar para describir APIs REST. Define schemas de request/response, autenticación y códigos de estado en formato JSON o YAML.
+
+- **zircote/swagger-php**: Librería PHP que genera una especificación OpenAPI 3.0 a partir de PHP Attributes declarados en el código fuente. El spec se genera en runtime escaneando el directorio `src/`.
 
 ## Licencia
 
