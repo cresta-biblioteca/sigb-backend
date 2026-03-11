@@ -24,12 +24,15 @@ $router->set404(function () {
 
 $jwtMiddleware = new JwtMiddleware(new JwtTokenProvider());
 
-$router->before('GET|POST|PUT|DELETE|PATCH', '/(?!auth\/login|auth\/register|docs\/).*',
+$router->before(
+    'GET|POST|PUT|DELETE|PATCH',
+    '/(?!auth\/login|auth\/register|docs\/).*',
     function () use ($jwtMiddleware) {
         if (!$jwtMiddleware->handle()) {
             exit();
         }
-    });
+    }
+);
 
 require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/materia.php';
