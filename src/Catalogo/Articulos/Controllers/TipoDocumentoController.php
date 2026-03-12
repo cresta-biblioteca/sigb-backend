@@ -12,6 +12,7 @@ use App\Catalogo\Articulos\Validators\TipoDocumentoRequestValidator;
 use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
+use OpenApi\Attributes as OA;
 
 class TipoDocumentoController
 {
@@ -20,6 +21,73 @@ class TipoDocumentoController
     {
     }
 
+    #[OA\Get(
+        path: "/documentos",
+        description: "Listado de todos los tipos de documento registrados",
+        summary: "Lista de tipos de documento",
+        tags: ["Tipos de Documento"],
+        parameters: [
+            new OA\Parameter(
+                name: "codigo",
+                in: "query",
+                description: "Busqueda por codigo",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "descripcion",
+                in: "query",
+                description: "Busqueda por descripcion",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "detalle",
+                in: "query",
+                description: "Busqueda por detalle",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "renovable",
+                in: "query",
+                description: "Filtrar por renovable",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "order",
+                in: "query",
+                description: "Ordenamiento(ASC/DESC)",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Listado obtenido",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(ref: "#/components/schemas/TipoDocumentoResponse")
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos invalidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
     public function getAll(): void
     {
         $params = array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS));
@@ -36,6 +104,51 @@ class TipoDocumentoController
         }
     }
 
+    #[OA\Get(
+        path: "/documentos/{id}",
+        description: "Mostrar la informacion de un tipo de documento especifico",
+        summary: "Obtener un tipo de documento",
+        tags: ["Tipos de Documento"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "id del tipo de documento a buscar",
+                required: true,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Tipo de documento obtenido exitosamente",
+                content: new OA\JsonContent(ref: "#/components/schemas/TipoDocumentoResponse")
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada invalidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Tipo de documento no encontrado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
     public function getById(string $id): void
     {
         try {
@@ -66,6 +179,56 @@ class TipoDocumentoController
         }
     }
 
+    #[OA\Post(
+        path: "/documentos",
+        description: "Crear un nuevo tipo de documento",
+        summary: "Crear tipo de documento",
+        tags: ["Tipos de Documento"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: "#/components/schemas/CreateTipoDocumentoRequest")
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "Tipo de documento creado exitosamente",
+                content: new OA\JsonContent(ref: "#/components/schemas/TipoDocumentoResponse")
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada invalidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 409,
+                description: "El tipo de documento ya existe",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Error de validacion de negocio",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "field", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
     public function createTipoDocumento(): void
     {
         try {
@@ -87,6 +250,74 @@ class TipoDocumentoController
         }
     }
 
+    #[OA\Put(
+        path: "/documentos/{id}",
+        description: "Actualizar la informacion de un tipo de documento existente",
+        summary: "Actualizar tipo de documento",
+        tags: ["Tipos de Documento"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "id del tipo de documento a actualizar",
+                required: true,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: "#/components/schemas/UpdateTipoDocumentoRequest")
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Tipo de documento actualizado exitosamente",
+                content: new OA\JsonContent(ref: "#/components/schemas/TipoDocumentoResponse")
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada invalidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Tipo de documento no encontrado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 409,
+                description: "El tipo de documento ya existe",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Error de validacion de negocio",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "field", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
     public function updateTipoDocumento(string $id): void
     {
         try {
@@ -110,6 +341,50 @@ class TipoDocumentoController
         }
     }
 
+    #[OA\Delete(
+        path: "/documentos/{id}",
+        description: "Eliminar un tipo de documento existente",
+        summary: "Eliminar tipo de documento",
+        tags: ["Tipos de Documento"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "id del tipo de documento a eliminar",
+                required: true,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 204,
+                description: "Tipo de documento eliminado exitosamente"
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada invalidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Tipo de documento no encontrado",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
     public function deleteTipoDocumento(string $id): void
     {
         try {
