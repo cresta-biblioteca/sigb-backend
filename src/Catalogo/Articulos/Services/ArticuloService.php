@@ -7,6 +7,9 @@ namespace App\Catalogo\Articulos\Services;
 use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
 use App\Catalogo\Articulos\Dtos\Response\ArticuloResponse;
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
+use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
@@ -117,5 +120,57 @@ class ArticuloService
         }
 
         $this->repository->delete($id);
+    }
+
+    public function addTemaToArticulo(int $articuloId, int $temaId): void
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        if (!$this->repository->temaExists($temaId)) {
+            throw new TemaNotFoundException($temaId);
+        }
+
+        if ($this->repository->isTemaAdded($articuloId, $temaId)) {
+            throw new TemaAlreadyInArticuloException(
+                'tema',
+                "El tema(ID: {$temaId}) ya esta agregado a este articulo(ID: {$articuloId})"
+            );
+        }
+
+        $this->repository->addTemaToArticulo($articuloId, $temaId);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getTemaTitlesByArticuloId(int $articuloId): array
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        return $this->repository->findTemaTitlesByArticuloId($articuloId);
+    }
+
+    public function deleteTemaFromArticulo(int $articuloId, int $temaId): void
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        if (!$this->repository->temaExists($temaId)) {
+            throw new TemaNotFoundException($temaId);
+        }
+
+        if (!$this->repository->isTemaAdded($articuloId, $temaId)) {
+            throw new TemaAlreadyEliminatedException(
+                'tema',
+                "El tema(ID: {$temaId}) no pertenece al articulo(ID: {$articuloId})"
+            );
+        }
+
+        $this->repository->deleteTemaFromArticulo($articuloId, $temaId);
     }
 }

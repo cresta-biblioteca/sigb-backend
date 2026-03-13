@@ -158,3 +158,230 @@ test('deleteArticulo elimina articulo correctamente', function () {
 
     expect($this->recordExists('articulo', ['id' => $articuloId]))->toBeFalse();
 });
+
+test('addTemaToArticulo agrega tema al articulo correctamente', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo con tema',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Programacion',
+    ]);
+
+    ob_start();
+    $this->controller->addTemaToArticulo((string) $articuloId, (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toBe('El tema ha sido agregado al articulo');
+    expect($this->recordExists('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId,
+    ]))->toBeTrue();
+});
+
+test('addTemaToArticulo devuelve 409 cuando tema ya esta agregado', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo con tema repetido',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Arquitectura',
+    ]);
+
+    $this->insertInto('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId,
+    ]);
+
+    ob_start();
+    $this->controller->addTemaToArticulo((string) $articuloId, (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toContain('ya esta agregado');
+    expect(http_response_code())->toBe(409);
+});
+
+test('addTemaToArticulo devuelve 404 cuando tema no existe', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo sin tema existente',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    ob_start();
+    $this->controller->addTemaToArticulo((string) $articuloId, '99999');
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toContain('Tema');
+    expect(http_response_code())->toBe(404);
+});
+
+test('deleteTemaFromArticulo elimina tema del articulo correctamente', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo para eliminar tema',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Bases de Datos',
+    ]);
+
+    $this->insertInto('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId,
+    ]);
+
+    ob_start();
+    $this->controller->deleteTemaFromArticulo((string) $articuloId, (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toBe('El tema ha sido eliminado del articulo');
+    expect($this->recordExists('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId,
+    ]))->toBeFalse();
+});
+
+test('deleteTemaFromArticulo devuelve 409 cuando la relacion ya fue eliminada', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo sin relacion',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Redes',
+    ]);
+
+    ob_start();
+    $this->controller->deleteTemaFromArticulo((string) $articuloId, (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toContain('no pertenece al articulo');
+    expect(http_response_code())->toBe(409);
+});
+
+test('deleteTemaFromArticulo devuelve 404 cuando el articulo no existe', function () {
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Sistemas Operativos',
+    ]);
+
+    ob_start();
+    $this->controller->deleteTemaFromArticulo('99999', (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toContain('Articulo');
+    expect(http_response_code())->toBe(404);
+});
+
+test('getTemaTitlesByArticulo devuelve array de titulos de temas', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Articulo con multiples temas',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $temaId1 = $this->insertInto('tema', [
+        'titulo' => 'Algoritmos',
+    ]);
+
+    $temaId2 = $this->insertInto('tema', [
+        'titulo' => 'Estructuras de Datos',
+    ]);
+
+    $this->insertInto('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId1,
+    ]);
+
+    $this->insertInto('articulo_tema', [
+        'articulo_id' => $articuloId,
+        'tema_id' => $temaId2,
+    ]);
+
+    ob_start();
+    $this->controller->getTemaTitlesByArticulo((string) $articuloId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response)->toBeArray();
+    expect($response)->toContain('Algoritmos');
+    expect($response)->toContain('Estructuras de Datos');
+});
+
+test('getTemaTitlesByArticulo devuelve 404 para articulo inexistente', function () {
+    ob_start();
+    $this->controller->getTemaTitlesByArticulo('99999');
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toContain('Articulo');
+    expect(http_response_code())->toBe(404);
+});
