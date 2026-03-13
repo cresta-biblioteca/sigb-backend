@@ -212,7 +212,7 @@ class ArticuloController
             ], 201);
         } catch (ValidationException $e) {
             $errors = $e->getErrors();
-            if (array_key_exists('id', $errors) && !array_key_exists('idArticulo', $errors)) {
+            if (array_key_exists('id', $errors)) {
                 $errors['idTema'] = $errors['id'];
                 unset($errors['id']);
             }
@@ -395,7 +395,7 @@ class ArticuloController
             ], 200);
         } catch (ValidationException $e) {
             $errors = $e->getErrors();
-            if (array_key_exists('id', $errors) && !array_key_exists('idArticulo', $errors)) {
+            if (array_key_exists('id', $errors)) {
                 $errors['idTema'] = $errors['id'];
                 unset($errors['id']);
             }

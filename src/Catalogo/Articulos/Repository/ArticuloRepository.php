@@ -135,7 +135,7 @@ class ArticuloRepository extends Repository
         }
 
         if ($stmt->rowCount() === 0) {
-            throw new \RuntimeException('Error al agregar el tema al articulo');
+            throw new \RuntimeException('Error al agregar el tema al artículo');
         }
     }
 
@@ -149,7 +149,7 @@ class ArticuloRepository extends Repository
         ]);
 
         if ($stmt->rowCount() === 0) {
-            throw new \RuntimeException('Error al eliminar el tema del articulo');
+            throw new \RuntimeException('Error al eliminar el tema del artículo');
         }
     }
 
