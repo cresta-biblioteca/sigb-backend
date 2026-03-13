@@ -308,7 +308,10 @@ class ArticuloController
             ], 404);
         } catch (Exception $e) {
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            error_log(
+                "[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} "
+                . "in {$e->getFile()}: {$e->getLine()}"
+            );
         }
     }
 
@@ -411,7 +414,10 @@ class ArticuloController
             ], 409);
         } catch (Exception $e) {
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            error_log(
+                "[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} "
+                . "in {$e->getFile()}: {$e->getLine()}"
+            );
         }
     }
 }
