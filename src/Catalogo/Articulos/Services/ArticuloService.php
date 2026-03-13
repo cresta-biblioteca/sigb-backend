@@ -135,7 +135,7 @@ class ArticuloService
         if ($this->repository->isTemaAdded($articuloId, $temaId)) {
             throw new TemaAlreadyInArticuloException(
                 'tema',
-                "El tema(ID: {$temaId}) ya esta agregado a este articulo(ID: {$articuloId})"
+                "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
             );
         }
 
@@ -167,7 +167,7 @@ class ArticuloService
         if (!$this->repository->isTemaAdded($articuloId, $temaId)) {
             throw new TemaAlreadyEliminatedException(
                 'tema',
-                "El tema(ID: {$temaId}) no pertenece al articulo(ID: {$articuloId})"
+                "El tema (ID: {$temaId}) no pertenece al artículo (ID: {$articuloId})"
             );
         }
 

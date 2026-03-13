@@ -184,7 +184,7 @@ test('addTemaToArticulo agrega tema al articulo correctamente', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['message'])->toBe('El tema ha sido agregado al articulo');
+    expect($response['message'])->toBe('El tema ha sido agregado al artículo');
     expect($this->recordExists('articulo_tema', [
         'articulo_id' => $articuloId,
         'tema_id' => $temaId,
@@ -221,7 +221,7 @@ test('addTemaToArticulo devuelve 409 cuando tema ya esta agregado', function () 
 
     $response = json_decode($output, true);
 
-    expect($response['message'])->toContain('ya esta agregado');
+    expect($response['message'])->toContain('ya está agregado');
     expect(http_response_code())->toBe(409);
 });
 
@@ -280,7 +280,7 @@ test('deleteTemaFromArticulo elimina tema del articulo correctamente', function 
 
     $response = json_decode($output, true);
 
-    expect($response['message'])->toBe('El tema ha sido eliminado del articulo');
+    expect($response['message'])->toBe('El tema ha sido eliminado del artículo');
     expect($this->recordExists('articulo_tema', [
         'articulo_id' => $articuloId,
         'tema_id' => $temaId,
@@ -312,7 +312,7 @@ test('deleteTemaFromArticulo devuelve 409 cuando la relacion ya fue eliminada', 
 
     $response = json_decode($output, true);
 
-    expect($response['message'])->toContain('no pertenece al articulo');
+    expect($response['message'])->toContain('no pertenece al artículo');
     expect(http_response_code())->toBe(409);
 });
 

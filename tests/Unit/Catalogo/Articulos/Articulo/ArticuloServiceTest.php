@@ -135,8 +135,6 @@ test('elimina articulo exitosamente', function () {
         ->with(30);
 
     $this->service->deleteArticulo(30);
-
-    expect(true)->toBeTrue();
 });
 
 test('obtiene lista completa de articulos', function () {
@@ -187,7 +185,6 @@ test('agrega tema a articulo exitosamente', function () {
 
     $this->service->addTemaToArticulo(10, 5);
 
-    expect(true)->toBeTrue();
 });
 
 test('lanza excepcion al agregar tema a articulo inexistente', function () {
@@ -276,7 +273,6 @@ test('elimina tema de articulo exitosamente', function () {
 
     $this->service->deleteTemaFromArticulo(10, 5);
 
-    expect(true)->toBeTrue();
 });
 
 test('lanza excepcion al eliminar tema de articulo inexistente', function () {

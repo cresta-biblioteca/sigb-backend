@@ -208,12 +208,18 @@ class ArticuloController
             $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
 
             JsonHelper::jsonResponse([
-                'message' => 'El tema ha sido agregado al articulo'
+                'message' => 'El tema ha sido agregado al artículo'
             ], 201);
         } catch (ValidationException $e) {
+            $errors = $e->getErrors();
+            if (array_key_exists('id', $errors) && !array_key_exists('idArticulo', $errors)) {
+                $errors['idTema'] = $errors['id'];
+                unset($errors['id']);
+            }
+
             JsonHelper::jsonResponse([
                 'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
+                'errors' => $errors
             ], 400);
         } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
             JsonHelper::jsonResponse([
@@ -302,8 +308,7 @@ class ArticuloController
             ], 404);
         } catch (Exception $e) {
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} in {$e->getFile()}:
-             {$e->getLine()}");
+            error_log("[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
         }
     }
 
@@ -383,12 +388,18 @@ class ArticuloController
             $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
 
             JsonHelper::jsonResponse([
-                'message' => 'El tema ha sido eliminado del articulo'
+                'message' => 'El tema ha sido eliminado del artículo'
             ], 200);
         } catch (ValidationException $e) {
+            $errors = $e->getErrors();
+            if (array_key_exists('id', $errors) && !array_key_exists('idArticulo', $errors)) {
+                $errors['idTema'] = $errors['id'];
+                unset($errors['id']);
+            }
+
             JsonHelper::jsonResponse([
                 'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
+                'errors' => $errors
             ], 400);
         } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
             JsonHelper::jsonResponse([
@@ -400,8 +411,7 @@ class ArticuloController
             ], 409);
         } catch (Exception $e) {
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} in {$e->getFile()}: 
-            {$e->getLine()}");
+            error_log("[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
         }
     }
 }

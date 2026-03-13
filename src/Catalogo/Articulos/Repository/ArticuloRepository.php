@@ -6,6 +6,7 @@ namespace App\Catalogo\Articulos\Repository;
 
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Shared\Repository;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
 
 class ArticuloRepository extends Repository
 {
@@ -118,10 +119,20 @@ class ArticuloRepository extends Repository
     {
         $sql = 'INSERT INTO articulo_tema (articulo_id, tema_id) VALUES (:articulo_id, :tema_id)';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'articulo_id' => $articuloId,
-            'tema_id' => $temaId,
-        ]);
+        try {
+            $stmt->execute([
+                'articulo_id' => $articuloId,
+                'tema_id' => $temaId,
+            ]);
+        } catch (\PDOException $e) {
+            if ($e->getCode() === '23000') {
+                throw new TemaAlreadyInArticuloException(
+                    'tema',
+                    "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
+                );
+            }
+            throw $e;
+        }
 
         if ($stmt->rowCount() === 0) {
             throw new \RuntimeException('Error al agregar el tema al articulo');
