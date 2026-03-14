@@ -6,6 +6,7 @@ namespace App\Catalogo\Articulos\Repository;
 
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Shared\Repository;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
 
 class ArticuloRepository extends Repository
@@ -125,7 +126,7 @@ class ArticuloRepository extends Repository
                 'tema_id' => $temaId,
             ]);
         } catch (\PDOException $e) {
-            if ($e->getCode() === '23000') {
+            if ($this->isTemaAlreadyInArticuloViolation($e)) {
                 throw new TemaAlreadyInArticuloException(
                     'tema',
                     "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
@@ -139,6 +140,23 @@ class ArticuloRepository extends Repository
         }
     }
 
+    private function isTemaAlreadyInArticuloViolation(\PDOException $exception): bool
+    {
+        // SQLSTATE 23000 en MySQL cubre múltiples errores de integridad; solo mapeamos clave duplicada (1062).
+        if ($exception->getCode() !== '23000') {
+            return false;
+        }
+
+        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+        if ($driverCode !== 1062) {
+            return false;
+        }
+
+        $details = strtolower((string) ($exception->errorInfo[2] ?? $exception->getMessage()));
+
+        return str_contains($details, 'articulo_tema') || str_contains($details, 'primary');
+    }
+
     public function deleteTemaFromArticulo(int $articuloId, int $temaId): void
     {
         $sql = 'DELETE FROM articulo_tema WHERE articulo_id = :articulo_id AND tema_id = :tema_id';
@@ -149,7 +167,10 @@ class ArticuloRepository extends Repository
         ]);
 
         if ($stmt->rowCount() === 0) {
-            throw new \RuntimeException('Error al eliminar el tema del artículo');
+            throw new TemaAlreadyEliminatedException(
+                'tema',
+                "El tema (ID: {$temaId}) no pertenece al artículo (ID: {$articuloId})"
+            );
         }
     }
 

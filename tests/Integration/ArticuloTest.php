@@ -385,3 +385,31 @@ test('getTemaTitlesByArticulo devuelve 404 para articulo inexistente', function 
     expect($response['message'])->toContain('Articulo');
     expect(http_response_code())->toBe(404);
 });
+
+test('addTemaToArticulo devuelve 400 cuando idArticulo no es numerico valido', function () {
+    $temaId = $this->insertInto('tema', [
+        'titulo' => 'Programacion',
+    ]);
+
+    ob_start();
+    $this->controller->addTemaToArticulo('10foo', (string) $temaId);
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toBe('Datos de entrada no válidos');
+    expect($response['errors'])->toHaveKey('idArticulo');
+    expect(http_response_code())->toBe(400);
+});
+
+test('getTemaTitlesByArticulo devuelve 400 cuando idArticulo no es numerico', function () {
+    ob_start();
+    $this->controller->getTemaTitlesByArticulo('abc');
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['message'])->toBe('Datos de entrada no válidos');
+    expect($response['errors'])->toHaveKey('idArticulo');
+    expect(http_response_code())->toBe(400);
+});

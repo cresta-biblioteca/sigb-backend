@@ -202,10 +202,10 @@ class ArticuloController
     public function addTemaToArticulo($idArticulo, $idTema): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $idArticulo, 'idArticulo');
+            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
             TemaRequestValidator::validateId((string) $idTema);
 
-            $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
+            $this->service->addTemaToArticulo($validatedArticuloId, (int) $idTema);
 
             JsonHelper::jsonResponse([
                 'message' => 'El tema ha sido agregado al artículo'
@@ -292,9 +292,9 @@ class ArticuloController
     public function getTemaTitlesByArticulo($idArticulo): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $idArticulo, 'idArticulo');
+            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
 
-            $temas = $this->service->getTemaTitlesByArticuloId((int) $idArticulo);
+            $temas = $this->service->getTemaTitlesByArticuloId($validatedArticuloId);
 
             JsonHelper::jsonResponse($temas, 200);
         } catch (ValidationException $e) {
@@ -385,10 +385,10 @@ class ArticuloController
     public function deleteTemaFromArticulo($idArticulo, $idTema): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $idArticulo, 'idArticulo');
+            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
             TemaRequestValidator::validateId((string) $idTema);
 
-            $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
+            $this->service->deleteTemaFromArticulo($validatedArticuloId, (int) $idTema);
 
             JsonHelper::jsonResponse([
                 'message' => 'El tema ha sido eliminado del artículo'
@@ -419,5 +419,23 @@ class ArticuloController
                 . "in {$e->getFile()}: {$e->getLine()}"
             );
         }
+    }
+
+    private function validateRawArticuloId($idArticulo): int
+    {
+        if (is_int($idArticulo)) {
+            ArticuloRequestValidator::validateId($idArticulo, 'idArticulo');
+
+            return $idArticulo;
+        }
+
+        if (!is_string($idArticulo) || !ctype_digit($idArticulo)) {
+            throw ValidationException::forField('idArticulo', 'El campo idArticulo debe ser un entero positivo');
+        }
+
+        $parsedId = (int) $idArticulo;
+        ArticuloRequestValidator::validateId($parsedId, 'idArticulo');
+
+        return $parsedId;
     }
 }
