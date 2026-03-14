@@ -46,6 +46,7 @@ require_once __DIR__ . '/../routes/materia.php';
 require_once __DIR__ . '/../routes/carrera.php';
 require_once __DIR__ . '/../routes/tema.php';
 require_once __DIR__ . '/../routes/tipoDocumento.php';
+require_once __DIR__ . '/../routes/libro.php';
 require_once __DIR__ . '/../routes/docs.php';
 require_once __DIR__ . '/../routes/tipoPrestamo.php';
 

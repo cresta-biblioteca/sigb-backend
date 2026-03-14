@@ -29,5 +29,3 @@ docker-compose.override.yml
 
 # Agents
 CLAUDE.md
-
-.claude
