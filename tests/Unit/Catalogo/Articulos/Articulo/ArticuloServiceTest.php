@@ -3,6 +3,9 @@
 use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
 use App\Catalogo\Articulos\Dtos\Response\ArticuloResponse;
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
+use App\Catalogo\Articulos\Exceptions\MateriaAlreadyEliminatedException;
+use App\Catalogo\Articulos\Exceptions\MateriaAlreadyInArticuloException;
+use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
@@ -153,4 +156,210 @@ test('obtiene lista completa de articulos', function () {
     expect($result)->toHaveCount(2);
     expect($result[0])->toBeInstanceOf(ArticuloResponse::class);
     expect($result[1])->toBeInstanceOf(ArticuloResponse::class);
+});
+
+test('agrega materia a articulo exitosamente', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(5)
+        ->willReturn(true);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('isMateriaAdded')
+        ->with(10, 5)
+        ->willReturn(false);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('addMateriaToArticulo')
+        ->with(10, 5);
+
+    $this->service->addMateriaToArticulo(10, 5);
+});
+
+test('lanza excepcion al agregar materia a articulo inexistente', function () {
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(999)
+        ->willReturn(null);
+
+    expect(fn() => $this->service->addMateriaToArticulo(999, 5))
+        ->toThrow(ArticuloNotFoundException::class);
+});
+
+test('lanza excepcion al agregar materia inexistente', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(404)
+        ->willReturn(false);
+
+    expect(fn() => $this->service->addMateriaToArticulo(10, 404))
+        ->toThrow(MateriaNotFoundException::class);
+});
+
+test('lanza excepcion cuando materia ya esta agregada al articulo', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(5)
+        ->willReturn(true);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('isMateriaAdded')
+        ->with(10, 5)
+        ->willReturn(true);
+
+    expect(fn() => $this->service->addMateriaToArticulo(10, 5))
+        ->toThrow(MateriaAlreadyInArticuloException::class);
+});
+
+test('elimina materia de articulo exitosamente', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(5)
+        ->willReturn(true);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('isMateriaAdded')
+        ->with(10, 5)
+        ->willReturn(true);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('deleteMateriaFromArticulo')
+        ->with(10, 5);
+
+    $this->service->deleteMateriaFromArticulo(10, 5);
+});
+
+test('lanza excepcion cuando materia ya no pertenece al articulo', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(5)
+        ->willReturn(true);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('isMateriaAdded')
+        ->with(10, 5)
+        ->willReturn(false);
+
+    expect(fn() => $this->service->deleteMateriaFromArticulo(10, 5))
+        ->toThrow(MateriaAlreadyEliminatedException::class);
+});
+
+test('lanza excepcion al eliminar materia de articulo inexistente', function () {
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(999)
+        ->willReturn(null);
+
+    expect(fn() => $this->service->deleteMateriaFromArticulo(999, 5))
+        ->toThrow(ArticuloNotFoundException::class);
+});
+
+test('lanza excepcion al eliminar materia inexistente', function () {
+    $articulo = Articulo::create('Articulo con materia', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('materiaExists')
+        ->with(404)
+        ->willReturn(false);
+
+    expect(fn() => $this->service->deleteMateriaFromArticulo(10, 404))
+        ->toThrow(MateriaNotFoundException::class);
+});
+
+test('obtiene titulos de materias por articulo id', function () {
+    $articulo = Articulo::create('Articulo con materias', 2024, 1, 'es');
+    $articulo->setId(10);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(10)
+        ->willReturn($articulo);
+
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findMateriaTitlesByArticuloId')
+        ->with(10)
+        ->willReturn(['Contabilidad', 'Economia']);
+
+    $result = $this->service->getMateriaTitlesByArticuloId(10);
+
+    expect($result)->toBe(['Contabilidad', 'Economia']);
+});
+
+test('lanza excepcion al obtener materias de articulo inexistente', function () {
+    $this->repositoryMock
+        ->expects($this->once())
+        ->method('findById')
+        ->with(999)
+        ->willReturn(null);
+
+    expect(fn() => $this->service->getMateriaTitlesByArticuloId(999))
+        ->toThrow(ArticuloNotFoundException::class);
 });

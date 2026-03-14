@@ -20,6 +20,7 @@ Thumbs.db
 
 # Testing
 .phpunit.result.cache
+.phpunit.cache/
 .pest/
 coverage/
 
@@ -28,5 +29,3 @@ docker-compose.override.yml
 
 # Agents
 CLAUDE.md
-
-.claude
