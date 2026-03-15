@@ -7,9 +7,9 @@ namespace App\Shared\Middlewares;
 use App\Shared\Security\JwtTokenProvider;
 use Exception;
 
-class JwtMiddleware
+readonly class JwtMiddleware
 {
-    public function __construct(private readonly JwtTokenProvider $jwtTokenProvider)
+    public function __construct(private JwtTokenProvider $jwtTokenProvider)
     {
     }
 
