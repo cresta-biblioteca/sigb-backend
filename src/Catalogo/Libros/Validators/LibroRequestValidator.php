@@ -46,8 +46,10 @@ class LibroRequestValidator
         if (!is_string($data['export_marc'])) {
             $errors['export_marc'] = ['El campo export_marc debe ser un string'];
         } elseif (mb_strlen(trim($data['export_marc'])) > self::MAX_TEXT_LENGTH) {
-            $errors['export_marc'] = ['El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
-             ' caracteres'];
+            $errors['export_marc'] = [
+                'El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
+                ' caracteres'
+            ];
         }
 
         // Validaciones opcionales
@@ -63,8 +65,10 @@ class LibroRequestValidator
             if (!is_string($data['autores'])) {
                 $errors['autores'] = ['El campo autores debe ser un string'];
             } elseif (mb_strlen(trim($data['autores'])) > self::MAX_TEXT_LENGTH) {
-                $errors['autores'] = ['El campo autores no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                 ' caracteres'];
+                $errors['autores'] = [
+                    'El campo autores no puede tener más de ' . self::MAX_TEXT_LENGTH .
+                    ' caracteres'
+                ];
             }
         }
 
@@ -72,8 +76,10 @@ class LibroRequestValidator
             if (!is_string($data['colaboradores'])) {
                 $errors['colaboradores'] = ['El campo colaboradores debe ser un string'];
             } elseif (mb_strlen(trim($data['colaboradores'])) > self::MAX_TEXT_LENGTH) {
-                $errors['colaboradores'] = ['El campo colaboradores no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                 ' caracteres'];
+                $errors['colaboradores'] = [
+                    'El campo colaboradores no puede tener más de ' . self::MAX_TEXT_LENGTH .
+                    ' caracteres'
+                ];
             }
         }
 
@@ -81,8 +87,10 @@ class LibroRequestValidator
             if (!is_string($data['titulo_informativo'])) {
                 $errors['titulo_informativo'] = ['El campo titulo_informativo debe ser un string'];
             } elseif (mb_strlen(trim($data['titulo_informativo'])) > self::MAX_TEXT_LENGTH) {
-                $errors['titulo_informativo'] = ['El campo titulo_informativo no puede tener más de ' .
-                 self::MAX_TEXT_LENGTH . ' caracteres'];
+                $errors['titulo_informativo'] = [
+                    'El campo titulo_informativo no puede tener más de ' .
+                    self::MAX_TEXT_LENGTH . ' caracteres'
+                ];
             }
         }
 
@@ -330,8 +338,10 @@ class LibroRequestValidator
                 if (!is_string($data[$field])) {
                     $errors[$field] = ["El campo {$field} debe ser un string"];
                 } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH) {
-                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
-                     " caracteres"];
+                    $errors[$field] = [
+                        "El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                        " caracteres"
+                    ];
                 }
             }
         }
