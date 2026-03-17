@@ -127,7 +127,9 @@ class LibroRequestValidator
             'tipo_documento_id',
             'idioma',
             'tema_ids',
+            'temas',
             'materia_ids',
+            'materias',
             'page',
             'per_page'
         ];
@@ -219,6 +221,28 @@ class LibroRequestValidator
             }
         }
 
+        if (isset($params['temas'])) {
+            $temas = is_array($params['temas']) ? $params['temas'] : [$params['temas']];
+
+            if (count($temas) > 50) {
+                $errors['temas'] = ['El campo temas no puede tener más de 50 elementos'];
+            } else {
+                foreach ($temas as $tema) {
+                    if (!is_string($tema) || trim($tema) === '') {
+                        $errors['temas'] = ['Todos los elementos de temas deben ser strings no vacíos'];
+                        break;
+                    }
+
+                    if (mb_strlen(trim($tema)) > self::MAX_TEXT_LENGTH) {
+                        $errors['temas'] = [
+                            'Los elementos de temas no pueden superar ' . self::MAX_TEXT_LENGTH . ' caracteres'
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
         if (isset($params['materia_ids'])) {
             if (!is_array($params['materia_ids'])) {
                 $errors['materia_ids'] = ['El campo materia_ids debe ser un array'];
@@ -228,6 +252,28 @@ class LibroRequestValidator
                 foreach ($params['materia_ids'] as $id) {
                     if (!is_numeric($id) || (int) $id <= 0) {
                         $errors['materia_ids'] = ['Todos los elementos de materia_ids deben ser números positivos'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (isset($params['materias'])) {
+            $materias = is_array($params['materias']) ? $params['materias'] : [$params['materias']];
+
+            if (count($materias) > 50) {
+                $errors['materias'] = ['El campo materias no puede tener más de 50 elementos'];
+            } else {
+                foreach ($materias as $materia) {
+                    if (!is_string($materia) || trim($materia) === '') {
+                        $errors['materias'] = ['Todos los elementos de materias deben ser strings no vacíos'];
+                        break;
+                    }
+
+                    if (mb_strlen(trim($materia)) > self::MAX_TEXT_LENGTH) {
+                        $errors['materias'] = [
+                            'Los elementos de materias no pueden superar ' . self::MAX_TEXT_LENGTH . ' caracteres'
+                        ];
                         break;
                     }
                 }
