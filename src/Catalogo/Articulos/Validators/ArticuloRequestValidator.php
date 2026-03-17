@@ -73,10 +73,20 @@ class ArticuloRequestValidator
         }
     }
 
-    public static function validateId(int $id, string $field = 'id'): void
+    public static function validateId(string $id): void
     {
-        if ($id < 1) {
-            throw ValidationException::forField($field, sprintf('El campo %s debe ser un entero positivo', $field));
+        $errors = [];
+
+        if (!is_numeric($id)) {
+            $errors['id'] = ['El id debe ser un numero'];
+        } elseif ((int) $id < 1) {
+            $errors['id'] = ['ID inválido. El ID debe ser un entero positivo mayor que 0.'];
+        } elseif (!ctype_digit($id)) {
+            $errors['id'] = ['El id debe ser un numero válido'];
+        }
+
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
         }
     }
 

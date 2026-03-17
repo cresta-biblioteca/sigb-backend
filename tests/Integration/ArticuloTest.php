@@ -51,7 +51,7 @@ test('getById obtiene articulo por id correctamente', function () {
     ]);
 
     ob_start();
-    $this->controller->getById($articuloId);
+    $this->controller->getById((string) $articuloId);
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
@@ -95,7 +95,7 @@ test('getAll lista articulos correctamente', function () {
 
 test('getById devuelve 404 para articulo inexistente', function () {
     ob_start();
-    $this->controller->getById(99999);
+    $this->controller->getById('99999');
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
@@ -123,7 +123,7 @@ test('patchArticulo actualiza articulo correctamente', function () {
         'idioma' => 'en'
     ], function () use ($articuloId) {
         ob_start();
-        $this->controller->patchArticulo($articuloId);
+        $this->controller->patchArticulo((string) $articuloId);
         $this->output = ob_get_clean();
     });
 
@@ -150,7 +150,7 @@ test('deleteArticulo elimina articulo correctamente', function () {
     ]);
 
     ob_start();
-    $this->controller->deleteArticulo($articuloId);
+    $this->controller->deleteArticulo((string) $articuloId);
     $output = ob_get_clean();
 
     expect($output)->toBe('');

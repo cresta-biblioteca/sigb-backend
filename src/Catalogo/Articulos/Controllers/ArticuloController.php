@@ -44,7 +44,7 @@ class ArticuloController
     public function getById($id): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $id);
+            ArticuloRequestValidator::validateId($id);
 
             $articulo = $this->service->getById((int) $id);
             JsonHelper::jsonResponse($articulo, 200);
@@ -69,7 +69,7 @@ class ArticuloController
     public function patchArticulo($id): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $id);
+            ArticuloRequestValidator::validateId($id);
 
             $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
 
@@ -107,7 +107,7 @@ class ArticuloController
     public function deleteArticulo($id): void
     {
         try {
-            ArticuloRequestValidator::validateId((int) $id);
+            ArticuloRequestValidator::validateId($id);
 
             $this->service->deleteArticulo((int) $id);
 
@@ -202,10 +202,21 @@ class ArticuloController
     public function addTemaToArticulo($idArticulo, $idTema): void
     {
         try {
-            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
-            TemaRequestValidator::validateId((string) $idTema);
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
 
-            $this->service->addTemaToArticulo($validatedArticuloId, (int) $idTema);
+                throw new ValidationException($errors);
+            }
+
+            TemaRequestValidator::validateId($idTema);
+
+            $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
 
             JsonHelper::jsonResponse([
                 'message' => 'El tema ha sido agregado al artículo'
@@ -292,9 +303,19 @@ class ArticuloController
     public function getTemaTitlesByArticulo($idArticulo): void
     {
         try {
-            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
 
-            $temas = $this->service->getTemaTitlesByArticuloId($validatedArticuloId);
+                throw new ValidationException($errors);
+            }
+
+            $temas = $this->service->getTemaTitlesByArticuloId((int) $idArticulo);
 
             JsonHelper::jsonResponse($temas, 200);
         } catch (ValidationException $e) {
@@ -385,10 +406,21 @@ class ArticuloController
     public function deleteTemaFromArticulo($idArticulo, $idTema): void
     {
         try {
-            $validatedArticuloId = $this->validateRawArticuloId($idArticulo);
-            TemaRequestValidator::validateId((string) $idTema);
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
 
-            $this->service->deleteTemaFromArticulo($validatedArticuloId, (int) $idTema);
+                throw new ValidationException($errors);
+            }
+
+            TemaRequestValidator::validateId($idTema);
+
+            $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
 
             JsonHelper::jsonResponse([
                 'message' => 'El tema ha sido eliminado del artículo'
@@ -419,23 +451,5 @@ class ArticuloController
                 . "in {$e->getFile()}: {$e->getLine()}"
             );
         }
-    }
-
-    private function validateRawArticuloId($idArticulo): int
-    {
-        if (is_int($idArticulo)) {
-            ArticuloRequestValidator::validateId($idArticulo, 'idArticulo');
-
-            return $idArticulo;
-        }
-
-        if (!is_string($idArticulo) || !ctype_digit($idArticulo)) {
-            throw ValidationException::forField('idArticulo', 'El campo idArticulo debe ser un entero positivo');
-        }
-
-        $parsedId = (int) $idArticulo;
-        ArticuloRequestValidator::validateId($parsedId, 'idArticulo');
-
-        return $parsedId;
     }
 }
