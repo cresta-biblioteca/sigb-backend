@@ -73,7 +73,7 @@ class ArticuloRequestValidator
         }
     }
 
- public static function validateId(string $id): void
+    public static function validateId(string $id): void
     {
         $errors = [];
 
