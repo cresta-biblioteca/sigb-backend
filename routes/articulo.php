@@ -30,6 +30,18 @@ $router->delete('/articulos/{idArticulo}/materias/{idMateria}', function ($idArt
     $articuloController->deleteMateriaFromArticulo($idArticulo, $idMateria);
 });
 
+$router->get('/articulos/{idArticulo}/temas', function ($idArticulo) use ($articuloController) {
+    $articuloController->getTemaTitlesByArticulo($idArticulo);
+});
+
+$router->post('/articulos/{idArticulo}/temas/{idTema}', function ($idArticulo, $idTema) use ($articuloController) {
+    $articuloController->addTemaToArticulo($idArticulo, $idTema);
+});
+
+$router->delete('/articulos/{idArticulo}/temas/{idTema}', function ($idArticulo, $idTema) use ($articuloController) {
+    $articuloController->deleteTemaFromArticulo($idArticulo, $idTema);
+});
+
 $router->get('/articulos/{id}', function ($id) use ($articuloController) {
     $articuloController->getById($id);
 });

@@ -5,10 +5,14 @@
     # Bloquear acceso a carpetas sensibles si por error se exponen
     RewriteRule ^(vendor|composer\.json|composer\.lock|src) - [F,L]
 
+    # Pasar preflight OPTIONS directamente a PHP (CORS)
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^ index.php [QSA,L]
+
     # Si el archivo o carpeta solicitada no existe físicamente...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    
+
     # ...redireccionar todo al index.php
     RewriteRule ^ index.php [QSA,L]
 </IfModule>

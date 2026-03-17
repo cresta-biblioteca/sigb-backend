@@ -49,8 +49,10 @@ class ArticuloRequestValidator
             $anio = (int) $data['anio_publicacion'];
             $currentYear = (int) date('Y');
             if ($anio < self::MIN_ANIO_PUBLICACION || $anio > $currentYear) {
-                $errors['anio_publicacion'] = ["El año de publicación debe estar entre " . self::MIN_ANIO_PUBLICACION
-                . " y {$currentYear}"];
+                $errors['anio_publicacion'] = [
+                    "El año de publicación debe estar entre " . self::MIN_ANIO_PUBLICACION
+                    . " y {$currentYear}"
+                ];
             }
         }
 
@@ -78,13 +80,11 @@ class ArticuloRequestValidator
         $errors = [];
 
         if (!is_numeric($id)) {
-            $errors["id"] = ["El id debe ser un numero"];
+            $errors['id'] = ['El id debe ser un numero'];
         } elseif ((int) $id < 1) {
-            $errors["id"] = ["ID inválido. El ID debe ser un entero positivo mayor que 0."];
-        }
-
-        if (!ctype_digit($id)) {
-            $errors["id"] = ["El id debe ser un numero válido"];
+            $errors['id'] = ['ID inválido. El ID debe ser un entero positivo mayor que 0.'];
+        } elseif (!ctype_digit($id)) {
+            $errors['id'] = ['El id debe ser un numero válido'];
         }
 
         if (!empty($errors)) {
@@ -133,8 +133,10 @@ class ArticuloRequestValidator
                 $anio = (int) $data['anio_publicacion'];
                 $currentYear = (int) date('Y');
                 if ($anio < self::MIN_ANIO_PUBLICACION || $anio > $currentYear) {
-                    $errors['anio_publicacion'] = ["El año de publicación debe estar entre " .
-                        self::MIN_ANIO_PUBLICACION . " y {$currentYear}"];
+                    $errors['anio_publicacion'] = [
+                        "El año de publicación debe estar entre " .
+                        self::MIN_ANIO_PUBLICACION . " y {$currentYear}"
+                    ];
                 }
             }
         }

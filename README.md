@@ -43,6 +43,16 @@ docker-compose up -d --build
 docker-compose exec web composer install
 ```
 
+5. Ejecutar las migraciones de base de datos:
+```bash
+docker-compose exec web composer migrate
+```
+
+6. Ejecutar el seeder de permisos:
+```bash
+docker-compose exec web vendor/bin/phinx seed:run
+```
+
 ## Servicios Disponibles
 
 - **API**: http://localhost:8080
@@ -179,6 +189,12 @@ docker-compose exec web composer migrate:rollback
 
 # Crear nueva migración
 docker-compose exec web composer migrate:create NombreMigracion
+
+# Ejecutar seeders
+docker-compose exec web vendor/bin/phinx seed:run
+
+# Ejecutar un seeder específico
+docker-compose exec web vendor/bin/phinx seed:run -s NombreDelSeeder
 ```
 
 ## CI/CD

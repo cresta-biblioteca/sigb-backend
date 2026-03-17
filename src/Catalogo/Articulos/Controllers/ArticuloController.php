@@ -11,6 +11,10 @@ use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Catalogo\Articulos\Validators\MateriaRequestValidator;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
+use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
+use App\Catalogo\Articulos\Validators\TemaRequestValidator;
 use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
@@ -129,6 +133,327 @@ class ArticuloController
         } catch (Exception $e) {
             JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
             error_log("[ArticuloController::deleteArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        }
+    }
+
+    /**
+     * POST /articulos/{idArticulo}/temas/{idTema}
+     */
+    #[OA\Post(
+        path: '/articulos/{idArticulo}/temas/{idTema}',
+        description: 'Asocia un tema existente a un artículo existente',
+        summary: 'Agregar tema a artículo',
+        security: [['bearerAuth' => []]],
+        tags: ['Articulos'],
+        parameters: [
+            new OA\Parameter(
+                name: 'idArticulo',
+                in: 'path',
+                required: true,
+                description: 'ID del artículo',
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            ),
+            new OA\Parameter(
+                name: 'idTema',
+                in: 'path',
+                required: true,
+                description: 'ID del tema',
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Tema agregado al artículo',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Datos de entrada no válidos',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'errors', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Artículo o tema no encontrado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 409,
+                description: 'Tema ya asociado al artículo',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
+    public function addTemaToArticulo($idArticulo, $idTema): void
+    {
+        try {
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
+
+                throw new ValidationException($errors);
+            }
+
+            TemaRequestValidator::validateId($idTema);
+
+            $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
+
+            JsonHelper::jsonResponse([
+                'message' => 'El tema ha sido agregado al artículo'
+            ], 201);
+        } catch (ValidationException $e) {
+            $errors = $e->getErrors();
+            if (array_key_exists('id', $errors)) {
+                $errors['idTema'] = $errors['id'];
+                unset($errors['id']);
+            }
+
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
+                'errors' => $errors
+            ], 400);
+        } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (TemaAlreadyInArticuloException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log("[ArticuloController::addTemaToArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        }
+    }
+
+    /**
+     * GET /articulos/{idArticulo}/temas
+     */
+    #[OA\Get(
+        path: '/articulos/{idArticulo}/temas',
+        description: 'Obtiene los títulos de los temas asociados a un artículo',
+        summary: 'Listar temas de artículo',
+        security: [['bearerAuth' => []]],
+        tags: ['Articulos'],
+        parameters: [
+            new OA\Parameter(
+                name: 'idArticulo',
+                in: 'path',
+                required: true,
+                description: 'ID del artículo',
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Listado de títulos de temas',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(type: 'string')
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Datos de entrada no válidos',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'errors', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Artículo no encontrado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
+    public function getTemaTitlesByArticulo($idArticulo): void
+    {
+        try {
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
+
+                throw new ValidationException($errors);
+            }
+
+            $temas = $this->service->getTemaTitlesByArticuloId((int) $idArticulo);
+
+            JsonHelper::jsonResponse($temas, 200);
+        } catch (ValidationException $e) {
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
+                'errors' => $e->getErrors()
+            ], 400);
+        } catch (ArticuloNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log(
+                "[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} "
+                . "in {$e->getFile()}: {$e->getLine()}"
+            );
+        }
+    }
+
+    /**
+     * DELETE /articulos/{idArticulo}/temas/{idTema}
+     */
+    #[OA\Delete(
+        path: '/articulos/{idArticulo}/temas/{idTema}',
+        description: 'Desasocia un tema de un artículo',
+        summary: 'Eliminar tema de artículo',
+        security: [['bearerAuth' => []]],
+        tags: ['Articulos'],
+        parameters: [
+            new OA\Parameter(
+                name: 'idArticulo',
+                in: 'path',
+                required: true,
+                description: 'ID del artículo',
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            ),
+            new OA\Parameter(
+                name: 'idTema',
+                in: 'path',
+                required: true,
+                description: 'ID del tema',
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Tema eliminado del artículo',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Datos de entrada no válidos',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'errors', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Artículo o tema no encontrado',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(
+                response: 409,
+                description: 'El tema no estaba asociado al artículo',
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: 'message', type: 'string')]
+                )
+            ),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
+    public function deleteTemaFromArticulo($idArticulo, $idTema): void
+    {
+        try {
+            try {
+                ArticuloRequestValidator::validateId($idArticulo);
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+                if (array_key_exists('id', $errors)) {
+                    $errors['idArticulo'] = $errors['id'];
+                    unset($errors['id']);
+                }
+
+                throw new ValidationException($errors);
+            }
+
+            TemaRequestValidator::validateId($idTema);
+
+            $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
+
+            JsonHelper::jsonResponse([
+                'message' => 'El tema ha sido eliminado del artículo'
+            ], 200);
+        } catch (ValidationException $e) {
+            $errors = $e->getErrors();
+            if (array_key_exists('id', $errors)) {
+                $errors['idTema'] = $errors['id'];
+                unset($errors['id']);
+            }
+
+            JsonHelper::jsonResponse([
+                'message' => 'Datos de entrada no válidos',
+                'errors' => $errors
+            ], 400);
+        } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (TemaAlreadyEliminatedException $e) {
+            JsonHelper::jsonResponse([
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (Exception $e) {
+            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            error_log(
+                "[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} "
+                . "in {$e->getFile()}: {$e->getLine()}"
+            );
         }
     }
 

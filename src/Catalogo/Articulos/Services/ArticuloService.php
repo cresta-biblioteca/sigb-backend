@@ -10,6 +10,9 @@ use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Exceptions\MateriaAlreadyEliminatedException;
 use App\Catalogo\Articulos\Exceptions\MateriaAlreadyInArticuloException;
 use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
+use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
+use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
@@ -29,7 +32,7 @@ class ArticuloService
         $articulos = $this->repository->findAll();
 
         return array_map(
-            fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
+            fn(Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
             $articulos
         );
     }
@@ -89,15 +92,15 @@ class ArticuloService
 
         $articulo = Articulo::create(
             titulo: array_key_exists('titulo', $data)
-                ? trim((string) $data['titulo'])
-                : $existing->getTitulo(),
+            ? trim((string) $data['titulo'])
+            : $existing->getTitulo(),
             anioPublicacion: array_key_exists('anio_publicacion', $data)
-                ? (int) $data['anio_publicacion']
-                : $existing->getAnioPublicacion(),
+            ? (int) $data['anio_publicacion']
+            : $existing->getAnioPublicacion(),
             tipoDocumentoId: $newTipoDocumentoId,
             idioma: array_key_exists('idioma', $data)
-                ? strtolower((string) $data['idioma'])
-                : $existing->getIdioma()
+            ? strtolower((string) $data['idioma'])
+            : $existing->getIdioma()
         );
 
         $updated = $this->repository->updateArticulo($id, $articulo);
@@ -120,6 +123,58 @@ class ArticuloService
         }
 
         $this->repository->delete($id);
+    }
+
+    public function addTemaToArticulo(int $articuloId, int $temaId): void
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        if (!$this->repository->temaExists($temaId)) {
+            throw new TemaNotFoundException($temaId);
+        }
+
+        if ($this->repository->isTemaAdded($articuloId, $temaId)) {
+            throw new TemaAlreadyInArticuloException(
+                'tema',
+                "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
+            );
+        }
+
+        $this->repository->addTemaToArticulo($articuloId, $temaId);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getTemaTitlesByArticuloId(int $articuloId): array
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        return $this->repository->findTemaTitlesByArticuloId($articuloId);
+    }
+
+    public function deleteTemaFromArticulo(int $articuloId, int $temaId): void
+    {
+        if ($this->repository->findById($articuloId) === null) {
+            throw new ArticuloNotFoundException($articuloId);
+        }
+
+        if (!$this->repository->temaExists($temaId)) {
+            throw new TemaNotFoundException($temaId);
+        }
+
+        if (!$this->repository->isTemaAdded($articuloId, $temaId)) {
+            throw new TemaAlreadyEliminatedException(
+                'tema',
+                "El tema (ID: {$temaId}) no pertenece al artículo (ID: {$articuloId})"
+            );
+        }
+
+        $this->repository->deleteTemaFromArticulo($articuloId, $temaId);
     }
 
     public function addMateriaToArticulo(int $articuloId, int $materiaId): void

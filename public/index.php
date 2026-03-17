@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Shared\Middlewares\CorsMiddleware;
 use App\Shared\Middlewares\JwtMiddleware;
 use App\Shared\Security\JwtTokenProvider;
 use Bramus\Router\Router;
@@ -11,6 +12,9 @@ use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
+
+$corsMiddleware = new CorsMiddleware();
+$corsMiddleware->handle();
 
 $router = new Router();
 
@@ -36,11 +40,12 @@ $router->before(
 
 require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/articulo.php';
+require_once __DIR__ . '/../routes/libro.php';
+require_once __DIR__ . '/../routes/ejemplar.php';
 require_once __DIR__ . '/../routes/materia.php';
 require_once __DIR__ . '/../routes/carrera.php';
 require_once __DIR__ . '/../routes/tema.php';
 require_once __DIR__ . '/../routes/tipoDocumento.php';
-require_once __DIR__ . '/../routes/libro.php';
 require_once __DIR__ . '/../routes/docs.php';
 
 $router->run();
