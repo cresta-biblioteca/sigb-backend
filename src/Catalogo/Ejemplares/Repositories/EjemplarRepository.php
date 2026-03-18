@@ -9,6 +9,7 @@ use App\Shared\Repository;
 
 class EjemplarRepository extends Repository
 {
+
     protected function getTableName(): string
     {
         return 'ejemplar';
@@ -35,7 +36,7 @@ class EjemplarRepository extends Repository
             throw new \RuntimeException('Error al insertar el ejemplar');
         }
 
-        $ejemplar->setId((int) $this->pdo->lastInsertId());
+        $ejemplar->setId((int)$this->pdo->lastInsertId());
 
         return $ejemplar;
     }
@@ -69,6 +70,7 @@ class EjemplarRepository extends Repository
             'codigo_barras' => $codigoBarras,
         ]);
     }
+
     public function findEjemplaresByArticuloId(int $articuloId): array
     {
         $sql = 'SELECT * FROM ejemplar WHERE articulo_id = :articulo_id ORDER BY id DESC';
@@ -115,6 +117,31 @@ class EjemplarRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        return (int) $stmt->fetchColumn() > 0;
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Devuelve el primer ejemplar disponible (habilitado y sin préstamo activo) para un artículo dado
+     * @param int $articuloId
+     * @return Ejemplar|null
+     */
+    public function getEjemplarDisponibleByArticuloId(int $articuloId): ?Ejemplar
+    {
+        $sql = 'SELECT e.*
+                FROM ejemplar e
+                WHERE e.habilitado = 1
+                  AND e.articulo_id = :articulo_id
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM prestamo p
+                      WHERE p.ejemplar_id = e.id
+                        AND p.fecha_devolucion IS NULL
+                  )
+                LIMIT 1';
+
+        /** @var ?Ejemplar */
+        return $this->findOneByQuery($sql, [
+            'articulo_id' => $articuloId,
+        ]);
     }
 }

@@ -12,7 +12,8 @@ use DateTimeImmutable;
 class Prestamo extends Entity
 {
     private DateTimeImmutable $fechaPrestamo;
-    private DateTimeImmutable $fechaDevolucion;
+    private DateTimeImmutable $fechaVencimiento;
+    private ?DateTimeImmutable $fechaDevolucion = null;
     private EstadoPrestamo $estado;
     private int $tipoPrestamoId;
     private int $ejemplarId;
@@ -31,7 +32,7 @@ class Prestamo extends Entity
      */
     public static function create(
         DateTimeImmutable $fechaPrestamo,
-        DateTimeImmutable $fechaDevolucion,
+        DateTimeImmutable $fechaVencimiento,
         int $tipoPrestamoId,
         int $ejemplarId,
         int $lectorId,
@@ -39,7 +40,7 @@ class Prestamo extends Entity
     ): self {
         $prestamo = new self();
         $prestamo->setFechaPrestamo($fechaPrestamo);
-        $prestamo->setFechaDevolucion($fechaDevolucion);
+        $prestamo->setFechaVencimiento($fechaVencimiento);
         $prestamo->setTipoPrestamoId($tipoPrestamoId);
         $prestamo->setEjemplarId($ejemplarId);
         $prestamo->setLectorId($lectorId);
@@ -58,7 +59,10 @@ class Prestamo extends Entity
         $prestamo = new self();
         $prestamo->id = (int) $row['id'];
         $prestamo->fechaPrestamo = new DateTimeImmutable($row['fecha_prestamo']);
-        $prestamo->fechaDevolucion = new DateTimeImmutable($row['fecha_devolucion']);
+        $prestamo->fechaVencimiento = new DateTimeImmutable($row['fecha_vencimiento']);
+        $prestamo->fechaDevolucion = isset($row['fecha_devolucion'])
+            ? new DateTimeImmutable($row['fecha_devolucion'])
+            : null;
         $prestamo->estado = EstadoPrestamo::from($row['estado']);
         $prestamo->tipoPrestamoId = (int) $row['tipo_prestamo_id'];
         $prestamo->ejemplarId = (int) $row['ejemplar_id'];
@@ -81,14 +85,19 @@ class Prestamo extends Entity
         $this->fechaPrestamo = $fechaPrestamo;
     }
 
-    public function getFechaDevolucion(): DateTimeImmutable
+    public function getFechaVencimiento(): DateTimeImmutable
     {
-        return $this->fechaDevolucion;
+        return $this->fechaVencimiento;
     }
 
-    public function setFechaDevolucion(DateTimeImmutable $fechaDevolucion): void
+    public function setFechaVencimiento(DateTimeImmutable $fechaVencimiento): void
     {
-        $this->fechaDevolucion = $fechaDevolucion;
+        $this->fechaVencimiento = $fechaVencimiento;
+    }
+
+    public function getFechaDevolucion(): ?DateTimeImmutable
+    {
+        return $this->fechaDevolucion;
     }
 
     public function getEstado(): EstadoPrestamo
@@ -180,12 +189,13 @@ class Prestamo extends Entity
     public function isVencido(): bool
     {
         return $this->estado === EstadoPrestamo::VENCIDO
-            || ($this->isActivo() && $this->fechaDevolucion < new DateTimeImmutable());
+            || ($this->isActivo() && $this->fechaVencimiento < new DateTimeImmutable());
     }
 
     public function devolver(): void
     {
         $this->estado = EstadoPrestamo::DEVUELTO;
+        $this->fechaDevolucion = new DateTimeImmutable();
     }
 
     public function marcarVencido(): void
@@ -193,10 +203,10 @@ class Prestamo extends Entity
         $this->estado = EstadoPrestamo::VENCIDO;
     }
 
-    public function renovar(DateTimeImmutable $nuevaFechaDevolucion): void
+    public function renovar(DateTimeImmutable $nuevaFechaVencimiento): void
     {
         $this->estado = EstadoPrestamo::RENOVADO;
-        $this->fechaDevolucion = $nuevaFechaDevolucion;
+        $this->fechaVencimiento = $nuevaFechaVencimiento;
     }
 
     /**
@@ -207,7 +217,8 @@ class Prestamo extends Entity
         $data = [
             'id' => $this->id,
             'fecha_prestamo' => $this->fechaPrestamo->format('Y-m-d H:i:s'),
-            'fecha_devolucion' => $this->fechaDevolucion->format('Y-m-d H:i:s'),
+            'fecha_vencimiento' => $this->fechaVencimiento->format('Y-m-d H:i:s'),
+            'fecha_devolucion' => $this->fechaDevolucion?->format('Y-m-d H:i:s'),
             'estado' => $this->estado->value,
             'tipo_prestamo_id' => $this->tipoPrestamoId,
             'ejemplar_id' => $this->ejemplarId,
