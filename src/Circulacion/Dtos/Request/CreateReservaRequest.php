@@ -9,4 +9,12 @@ readonly class CreateReservaRequest
     )
     {
     }
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            lectorId: $data['lectorId'],
+            articuloId: $data['articuloId']
+        );
+    }
 }
