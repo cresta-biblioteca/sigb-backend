@@ -121,9 +121,12 @@ class EjemplarRepository extends Repository
     }
 
     /**
-     * Devuelve el primer ejemplar disponible (habilitado y sin préstamo activo) para un artículo dado
-     * @param int $articuloId
-     * @return Ejemplar|null
+     * Devuelve el primer ejemplar disponible para un artículo dado.
+     *
+     * Un ejemplar se considera disponible si cumple las tres condiciones:
+     *  - Está habilitado en el sistema
+     *  - No tiene un préstamo activo (fecha_devolucion IS NULL indica que aún no fue devuelto)
+     *  - No tiene una reserva pendiente con ejemplar asignado (evita asignar el mismo ejemplar a dos reservas)
      */
     public function getEjemplarDisponibleByArticuloId(int $articuloId): ?Ejemplar
     {
@@ -136,6 +139,12 @@ class EjemplarRepository extends Repository
                       FROM prestamo p
                       WHERE p.ejemplar_id = e.id
                         AND p.fecha_devolucion IS NULL
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM reserva r
+                      WHERE r.ejemplar_id = e.id
+                        AND r.estado = \'PENDIENTE\'
                   )
                 LIMIT 1';
 

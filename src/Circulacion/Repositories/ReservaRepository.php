@@ -19,6 +19,27 @@ class ReservaRepository extends Repository
         return Reserva::class;
     }
 
+    /**
+     * Indica si el lector tiene una reserva pendiente para el artículo dado.
+     */
+    public function lectorTieneReservaPendienteParaArticulo(int $lectorId, int $articuloId): bool
+    {
+        $sql = 'SELECT 1
+                FROM reserva
+                WHERE lector_id = :lector_id
+                  AND articulo_id = :articulo_id
+                  AND estado = \'PENDIENTE\'
+                LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'lector_id'   => $lectorId,
+            'articulo_id' => $articuloId,
+        ]);
+
+        return $stmt->fetch() !== false;
+    }
+
     public function save(Reserva $reserva): void
     {
         $sql = "

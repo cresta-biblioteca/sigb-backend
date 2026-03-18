@@ -15,6 +15,7 @@ class UserRegisterValidator
         'apellido',
         'fecha_nacimiento',
         'telefono',
+        'genero',
         'email',
     ];
 
@@ -71,10 +72,8 @@ class UserRegisterValidator
             }
         }
 
-        if (isset($data['genero']) && $data['genero'] !== null) {
-            if (!is_string($data['genero'])) {
-                $errors['genero'] = ['El campo genero debe ser un string'];
-            }
+        if (!is_string($data['genero'])) {
+            $errors['genero'] = ['El campo genero debe ser un string'];
         }
 
         if (!empty($errors)) {
