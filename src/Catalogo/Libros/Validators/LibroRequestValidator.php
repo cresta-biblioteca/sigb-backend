@@ -67,8 +67,10 @@ class LibroRequestValidator
         if (!is_string($data['export_marc'])) {
             $errors['export_marc'] = ['El campo export_marc debe ser un string'];
         } elseif (mb_strlen(trim($data['export_marc'])) > self::MAX_TEXT_LENGTH) {
-            $errors['export_marc'] = ['El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
-             ' caracteres'];
+            $errors['export_marc'] = [
+                'El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
+                ' caracteres'
+            ];
         }
 
         // Validar paginas (opcional)
@@ -389,8 +391,10 @@ class LibroRequestValidator
                 if (!is_string($data[$field])) {
                     $errors[$field] = ["El campo {$field} debe ser un string"];
                 } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH) {
-                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
-                     " caracteres"];
+                    $errors[$field] = [
+                        "El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                        " caracteres"
+                    ];
                 }
             }
         }

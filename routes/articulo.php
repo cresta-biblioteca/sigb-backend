@@ -18,6 +18,18 @@ $router->get('/articulos', function () use ($articuloController) {
     $articuloController->getAll();
 });
 
+$router->get('/articulos/{idArticulo}/materias', function ($idArticulo) use ($articuloController) {
+    $articuloController->getMateriaTitlesByArticulo($idArticulo);
+});
+
+$router->post('/articulos/{idArticulo}/materias/{idMateria}', function ($idArticulo, $idMateria) use ($articuloController) {
+    $articuloController->addMateriaToArticulo($idArticulo, $idMateria);
+});
+
+$router->delete('/articulos/{idArticulo}/materias/{idMateria}', function ($idArticulo, $idMateria) use ($articuloController) {
+    $articuloController->deleteMateriaFromArticulo($idArticulo, $idMateria);
+});
+
 $router->get('/articulos/{idArticulo}/temas', function ($idArticulo) use ($articuloController) {
     $articuloController->getTemaTitlesByArticulo($idArticulo);
 });

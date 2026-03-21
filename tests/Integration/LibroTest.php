@@ -470,3 +470,158 @@ test('searchPaginated filtra libros por multiples temas', function () {
         ->and($response['data'])->toHaveCount(2)
         ->and($response['pagination']['total'])->toBe(2);
 });
+
+test('search filtra libros por titulos de materias', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $materiaContabilidadId = $this->insertInto('materia', [
+        'titulo' => 'Contabilidad',
+    ]);
+
+    $materiaFisicaId = $this->insertInto('materia', [
+        'titulo' => 'Fisica',
+    ]);
+
+    $articuloContabilidadId = $this->insertInto('articulo', [
+        'titulo' => 'Libro de Contabilidad',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloContabilidadId,
+        'isbn' => '9780132351001',
+        'autor' => 'Autor Contabilidad',
+        'autores' => null,
+        'colaboradores' => null,
+        'titulo_informativo' => null,
+        'cdu' => null,
+        'export_marc' => 'MARC-CONTA',
+    ]);
+
+    $this->insertInto('materia_articulo', [
+        'articulo_id' => $articuloContabilidadId,
+        'materia_id' => $materiaContabilidadId,
+    ]);
+
+    $articuloFisicaId = $this->insertInto('articulo', [
+        'titulo' => 'Libro de Fisica',
+        'anio_publicacion' => 2023,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloFisicaId,
+        'isbn' => '9780132351002',
+        'autor' => 'Autor Fisica',
+        'autores' => null,
+        'colaboradores' => null,
+        'titulo_informativo' => null,
+        'cdu' => null,
+        'export_marc' => 'MARC-FISICA',
+    ]);
+
+    $this->insertInto('materia_articulo', [
+        'articulo_id' => $articuloFisicaId,
+        'materia_id' => $materiaFisicaId,
+    ]);
+
+    $_GET = ['materias' => 'Contabilidad'];
+
+    ob_start();
+    $this->controller->search();
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['error'])->toBe(false)
+        ->and($response['data'])->toHaveCount(1)
+        ->and($response['data'][0]['id'])->toBe($articuloContabilidadId)
+        ->and($response['data'][0]['articulo']['titulo'])->toBe('Libro de Contabilidad');
+});
+
+test('searchPaginated filtra libros por multiples materias', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $materiaUnoId = $this->insertInto('materia', [
+        'titulo' => 'Economia',
+    ]);
+
+    $materiaDosId = $this->insertInto('materia', [
+        'titulo' => 'Administracion',
+    ]);
+
+    $articuloUnoId = $this->insertInto('articulo', [
+        'titulo' => 'Libro Uno Materias',
+        'anio_publicacion' => 2024,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloUnoId,
+        'isbn' => '9780132351003',
+        'autor' => 'Autor Uno',
+        'autores' => null,
+        'colaboradores' => null,
+        'titulo_informativo' => null,
+        'cdu' => null,
+        'export_marc' => 'MARC-UNO-MAT',
+    ]);
+
+    $this->insertInto('materia_articulo', [
+        'articulo_id' => $articuloUnoId,
+        'materia_id' => $materiaUnoId,
+    ]);
+
+    $articuloDosId = $this->insertInto('articulo', [
+        'titulo' => 'Libro Dos Materias',
+        'anio_publicacion' => 2022,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'es',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloDosId,
+        'isbn' => '9780132351004',
+        'autor' => 'Autor Dos',
+        'autores' => null,
+        'colaboradores' => null,
+        'titulo_informativo' => null,
+        'cdu' => null,
+        'export_marc' => 'MARC-DOS-MAT',
+    ]);
+
+    $this->insertInto('materia_articulo', [
+        'articulo_id' => $articuloDosId,
+        'materia_id' => $materiaDosId,
+    ]);
+
+    $_GET = [
+        'materias' => ['Economia', 'Administracion'],
+        'page' => '1',
+        'per_page' => '10',
+    ];
+
+    ob_start();
+    $this->controller->searchPaginated();
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response['error'])->toBe(false)
+        ->and($response['data'])->toHaveCount(2)
+        ->and($response['pagination']['total'])->toBe(2);
+});
