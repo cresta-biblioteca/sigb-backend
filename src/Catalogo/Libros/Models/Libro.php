@@ -83,7 +83,7 @@ class Libro extends Entity
         $libro->colaboradores = $row['colaboradores'];
         $libro->tituloInformativo = $row['titulo_informativo'];
         $libro->cdu = $row['cdu'] !== null ? (int) $row['cdu'] : null;
-        $libro->exportMarc = $row['export_marc'];
+        $libro->exportMarc = $row['export_marc'] ?? '';
         $libro->editorial = $row['editorial'] ?? null;
         $libro->lugarDePublicacion = $row['lugar_de_publicacion'] ?? null;
         $libro->setTimestamps(

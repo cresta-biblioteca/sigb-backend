@@ -64,9 +64,7 @@ class LibroRepository extends Repository
                 a.anio_publicacion AS a_anio_publicacion,
                 a.tipo_documento_id AS a_tipo_documento_id,
                 a.idioma AS a_idioma,
-                a.descripcion AS a_descripcion,
-                a.created_at AS a_created_at,
-                a.updated_at AS a_updated_at
+                a.descripcion AS a_descripcion
             FROM libro l
             INNER JOIN articulo a ON a.id = l.articulo_id";
 
@@ -598,9 +596,7 @@ class LibroRepository extends Repository
             'anio_publicacion' => $row['a_anio_publicacion'],
             'tipo_documento_id' => $row['a_tipo_documento_id'],
             'idioma' => $row['a_idioma'],
-            'descripcion' => $row['a_descripcion'] ?? null,
-            'created_at' => $row['a_created_at'],
-            'updated_at' => $row['a_updated_at'],
+            'descripcion' => $row['a_descripcion'] ?? null
         ]);
 
         $libro->setArticulo($articulo);

@@ -51,7 +51,12 @@ docker-compose exec web composer migrate
 6. Ejecutar el seeder de permisos:
 ```bash
 docker-compose exec web vendor/bin/phinx seed:run
+
+7. Crear un usuario para realizar las pruebas
+
+8. Ejecutar el seeder de informacion de catalogo para realizar pruebas
 ```
+docker-compose exec web php vendor/bin/phinx seed:run -s CatalogoTestDataSeeder
 
 ## Servicios Disponibles
 
