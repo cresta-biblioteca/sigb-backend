@@ -126,6 +126,7 @@ final class CreateInitialSchema extends AbstractMigration
                 anio_publicacion INT NOT NULL,
                 tipo_documento_id BIGINT NOT NULL,
                 idioma VARCHAR(2) NOT NULL DEFAULT 'es',
+                descripcion VARCHAR(255) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 CONSTRAINT articulo_pk PRIMARY KEY (id)
@@ -135,13 +136,17 @@ final class CreateInitialSchema extends AbstractMigration
         $this->execute("
             CREATE TABLE libro (
                 articulo_id BIGINT NOT NULL,
-                isbn VARCHAR(13) NOT NULL,
+                isbn VARCHAR(13) NULL,
+                issn VARCHAR(8) NULL,
+                paginas INT NULL,
                 autor VARCHAR(255) NULL,
                 autores VARCHAR(255) NULL,
                 colaboradores VARCHAR(255) NULL,
                 titulo_informativo VARCHAR(255) NULL,
                 cdu INT NULL,
-                export_marc TEXT NOT NULL,
+                export_marc TEXT NULL,
+                editorial VARCHAR(200) NULL,
+                lugar_de_publicacion VARCHAR(200) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE INDEX uq_libro_isbn (isbn),
@@ -155,6 +160,7 @@ final class CreateInitialSchema extends AbstractMigration
                 codigo_barras VARCHAR(13) NULL,
                 habilitado BOOL NOT NULL DEFAULT 1,
                 articulo_id BIGINT NOT NULL,
+                signatura_topografica VARCHAR(200) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE INDEX uq_ejemplar_codigo_barras (codigo_barras),
@@ -227,7 +233,8 @@ final class CreateInitialSchema extends AbstractMigration
             CREATE TABLE prestamo (
                 id BIGINT NOT NULL AUTO_INCREMENT,
                 fecha_prestamo DATETIME NOT NULL,
-                fecha_devolucion DATETIME NOT NULL,
+                fecha_vencimiento DATETIME NOT NULL,
+                fecha_devolucion DATETIME NULL DEFAULT NULL,
                 estado VARCHAR(50) NOT NULL,
                 tipo_prestamo_id BIGINT NOT NULL,
                 ejemplar_id BIGINT NOT NULL,
@@ -242,10 +249,11 @@ final class CreateInitialSchema extends AbstractMigration
             CREATE TABLE reserva (
                 id BIGINT NOT NULL AUTO_INCREMENT,
                 fecha_reserva DATETIME NOT NULL,
-                fecha_vencimiento DATETIME NOT NULL,
+                fecha_vencimiento DATETIME NULL DEFAULT NULL,
                 estado VARCHAR(50) NOT NULL,
                 lector_id BIGINT NOT NULL,
-                ejemplar_id BIGINT NOT NULL,
+                articulo_id BIGINT NOT NULL,
+                ejemplar_id BIGINT NULL DEFAULT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 CONSTRAINT reserva_pk PRIMARY KEY (id)
@@ -350,14 +358,18 @@ final class CreateInitialSchema extends AbstractMigration
                 FOREIGN KEY (tipo_prestamo_id) REFERENCES tipo_prestamo (id);
         ");
 
-        // reserva -> ejemplar, lector
+        // reserva -> articulo, lector, ejemplar
         $this->execute("
-            ALTER TABLE reserva ADD CONSTRAINT fk_reserva_ejemplar
-                FOREIGN KEY (ejemplar_id) REFERENCES ejemplar (id);
+            ALTER TABLE reserva ADD CONSTRAINT fk_reserva_articulo
+                FOREIGN KEY (articulo_id) REFERENCES articulo (id);
         ");
         $this->execute("
             ALTER TABLE reserva ADD CONSTRAINT fk_reserva_lector
                 FOREIGN KEY (lector_id) REFERENCES lector (id);
+        ");
+        $this->execute("
+            ALTER TABLE reserva ADD CONSTRAINT fk_reserva_ejemplar
+                FOREIGN KEY (ejemplar_id) REFERENCES ejemplar (id);
         ");
 
         // ============================================================
@@ -366,11 +378,12 @@ final class CreateInitialSchema extends AbstractMigration
 
         $this->execute("CREATE INDEX idx_prestamo_lector_estado ON prestamo (lector_id, estado);");
         $this->execute("CREATE INDEX idx_prestamo_ejemplar_estado ON prestamo (ejemplar_id, estado);");
-        $this->execute("CREATE INDEX idx_prestamo_fecha_devolucion ON prestamo (fecha_devolucion);");
+        $this->execute("CREATE INDEX idx_prestamo_fecha_vencimiento ON prestamo (fecha_vencimiento);");
 
         $this->execute("CREATE INDEX idx_reserva_lector_estado ON reserva (lector_id, estado);");
         $this->execute("CREATE INDEX idx_reserva_ejemplar_estado ON reserva (ejemplar_id, estado);");
         $this->execute("CREATE INDEX idx_reserva_fecha_vencimiento ON reserva (fecha_vencimiento);");
+        $this->execute("CREATE INDEX idx_reserva_articulo_estado_fecha ON reserva (articulo_id, estado, fecha_reserva);");
 
         $this->execute("CREATE INDEX idx_ejemplar_articulo ON ejemplar (articulo_id);");
 

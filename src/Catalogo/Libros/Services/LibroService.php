@@ -4,28 +4,26 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Services;
 
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
+use App\Catalogo\Articulos\Models\Articulo;
+use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Libros\Dtos\Request\CreateLibroRequest;
+use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
+use App\Shared\Exceptions\BusinessRuleException;
+use PDO;
 
-class LibroService
+readonly class LibroService
 {
     public function __construct(
-        private LibroRepository $repository
+        private LibroRepository $repository,
+        private ArticuloRepository $articuloRepository,
+        private PDO $pdo
     ) {
-    }
-
-    /**
-     * @return LibroResponse[]
-     */
-    public function getAll(): array
-    {
-        $libros = $this->repository->findAll();
-        return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
     }
 
     public function getById(int $id): LibroResponse
@@ -40,52 +38,89 @@ class LibroService
     }
 
     /**
-     * Crea un nuevo libro
+     * Crea un nuevo libro junto con su artículo en una sola transacción
      */
-    public function create(LibroRequest $request): LibroResponse
+    public function create(CreateLibroRequest $request): LibroResponse
     {
-        if ($this->repository->existsByIsbn($request->getIsbn())) {
-            throw new LibroAlreadyExistsException($request->getIsbn(), 'isbn');
+        $this->validateIsbnIssnExclusivity($request->isbn, $request->issn);
+
+        if ($request->isbn !== null && $this->repository->existsByIsbn($request->isbn)) {
+            throw new LibroAlreadyExistsException($request->isbn, 'isbn');
         }
 
-        $libro = Libro::create(
-            $request->getArticuloId(),
-            $request->getIsbn(),
-            $request->getExportMarc(),
-            $request->getAutor(),
-            $request->getAutores(),
-            $request->getColaboradores(),
-            $request->getTituloInformativo(),
-            $request->getCdu()
-        );
+        if ($request->issn !== null && $this->repository->existsByIssn($request->issn)) {
+            throw new LibroAlreadyExistsException($request->issn, 'issn');
+        }
 
-        $savedLibro = $this->repository->insertLibro($libro);
+        $this->pdo->beginTransaction();
+
+        try {
+            $articulo = Articulo::create(
+                titulo: $request->titulo,
+                anioPublicacion: $request->anioPublicacion,
+                tipoDocumentoId: $request->tipoDocumentoId,
+                idioma: $request->idioma,
+                descripcion: $request->descripcion
+            );
+
+            $savedArticulo = $this->articuloRepository->insertArticulo($articulo);
+
+            $libro = Libro::create(
+                articuloId: $savedArticulo->getId(),
+                isbn: $request->isbn,
+                issn: $request->issn,
+                paginas: $request->paginas,
+                autor: $request->autor,
+                autores: $request->autores,
+                colaboradores: $request->colaboradores,
+                tituloInformativo: $request->tituloInformativo,
+                cdu: $request->cdu,
+                editorial: $request->editorial,
+                lugarDePublicacion: $request->lugarDePublicacion
+            );
+
+            $mark21 = 'archivo en mark 21';
+            $libro->setExportMarc($mark21);
+
+            $savedLibro = $this->repository->insertLibro($libro);
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
 
         return LibroMapper::toLibroResponse($savedLibro);
     }
 
-    public function updateLibro(int $id, LibroRequest $request): LibroResponse
+    public function updateLibro(int $id, PatchLibroRequest $request): LibroResponse
     {
-        // Obtener libro existente para verificar que existe y preservar inmutables
         $existing = $this->repository->findById($id);
 
         if ($existing === null) {
             throw new LibroNotFoundException($id);
         }
 
-        // Preservar campos inmutables del libro existente, usar campos editables del request
-        $libro = Libro::create(
-            $existing->getArticuloId(), // Inmutable - del existente
-            $existing->getIsbn(), // Inmutable - del existente
-            $existing->getExportMarc(), // Inmutable - del existente
-            $request->getAutor() ?? $existing->getAutor(), // Editable - del request o existente si no se proporciona
-            $request->getAutores() ?? $existing->getAutores(),
-            $request->getColaboradores() ?? $existing->getColaboradores(),
-            $request->getTituloInformativo() ?? $existing->getTituloInformativo(),
-            $request->getCdu() ?? $existing->getCdu()
-        );
+        $apply = [
+            'isbn' => fn() => $existing->setIsbn($request->isbn),
+            'issn' => fn() => $existing->setIssn($request->issn),
+            'paginas' => fn() => $existing->setPaginas($request->paginas),
+            'autor' => fn() => $existing->setAutor($request->autor),
+            'autores' => fn() => $existing->setAutores($request->autores),
+            'colaboradores' => fn() => $existing->setColaboradores($request->colaboradores),
+            'titulo_informativo' => fn() => $existing->setTituloInformativo($request->tituloInformativo),
+            'cdu' => fn() => $existing->setCdu($request->cdu),
+            'editorial' => fn() => $existing->setEditorial($request->editorial),
+            'lugar_de_publicacion' => fn() => $existing->setLugarDePublicacion($request->lugarDePublicacion),
+        ];
 
-        $updated = $this->repository->updateLibro($id, $libro);
+        foreach ($request->provided as $field) {
+            if (isset($apply[$field])) {
+                $apply[$field]();
+            }
+        }
+
+        $updated = $this->repository->updateLibro($id, $existing);
 
         return LibroMapper::toLibroResponse($updated);
     }
@@ -99,24 +134,29 @@ class LibroService
         $this->repository->delete($id);
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     * @return LibroResponse[]
-     */
-    public function search(array $filters): array
+    private function validateIsbnIssnExclusivity(?string $isbn, ?string $issn): void
     {
-        $libros = $this->repository->search($filters);
-        return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
+        if ($isbn !== null && $issn !== null) {
+            throw new BusinessRuleException(
+                'BUSINESS_RULE_VIOLATION',
+                'Un libro no puede tener ISBN y ISSN a la vez',
+                field: 'isbn'
+            );
+        }
     }
 
-
-    public function searchPaginated(array $filters, int $page, int $perPage): array
-    {
+    public function searchPaginated(
+        array $filters,
+        int $page,
+        int $perPage,
+        string $sortBy = 'titulo',
+        string $sortDir = 'asc'
+    ): array {
         $page = max(1, $page);
         $perPage = max(1, min($perPage, 100));
 
         $total = $this->repository->countSearch($filters);
-        $libros = $this->repository->searchPaginated($filters, $page, $perPage);
+        $libros = $this->repository->searchPaginated($filters, $page, $perPage, $sortBy, $sortDir);
 
         $items = array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
 
@@ -126,7 +166,7 @@ class LibroService
                 'page' => $page,
                 'per_page' => $perPage,
                 'total' => $total,
-                'total_pages' => $total > 0 ? (int) ceil($total / $perPage) : 1,
+                'total_pages' => $total > 0 ? (int)ceil($total / $perPage) : 1,
             ],
         ];
     }

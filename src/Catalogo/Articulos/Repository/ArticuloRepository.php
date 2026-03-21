@@ -28,8 +28,9 @@ class ArticuloRepository extends Repository
 
     public function insertArticulo(Articulo $articulo): Articulo
     {
-        $sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, created_at, updated_at)
-				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, NOW(), NOW())';
+        $sql = 'INSERT INTO articulo
+				(titulo, anio_publicacion, tipo_documento_id, idioma, descripcion, created_at, updated_at)
+				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, :descripcion, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
@@ -37,13 +38,14 @@ class ArticuloRepository extends Repository
             'anio_publicacion' => $articulo->getAnioPublicacion(),
             'tipo_documento_id' => $articulo->getTipoDocumentoId(),
             'idioma' => $articulo->getIdioma(),
+            'descripcion' => $articulo->getDescripcion(),
         ]);
 
         if ($success === false || $stmt->rowCount() === 0) {
             throw new \RuntimeException('Error al insertar el artículo');
         }
 
-        $articulo->setId((int) $this->pdo->lastInsertId());
+        $articulo->setId((int)$this->pdo->lastInsertId());
 
         return $articulo;
     }
@@ -55,6 +57,7 @@ class ArticuloRepository extends Repository
 					anio_publicacion = :anio_publicacion,
 					tipo_documento_id = :tipo_documento_id,
 					idioma = :idioma,
+					descripcion = :descripcion,
 					updated_at = NOW()
 				WHERE id = :id';
 
@@ -64,6 +67,7 @@ class ArticuloRepository extends Repository
             'anio_publicacion' => $articulo->getAnioPublicacion(),
             'tipo_documento_id' => $articulo->getTipoDocumentoId(),
             'idioma' => $articulo->getIdioma(),
+            'descripcion' => $articulo->getDescripcion(),
             'id' => $id,
         ]);
 
@@ -94,7 +98,7 @@ class ArticuloRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['articulo_id' => $articuloId]);
 
-        return (int) $stmt->fetchColumn() > 0;
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     public function temaExists(int $temaId): bool
@@ -149,12 +153,12 @@ class ArticuloRepository extends Repository
             return false;
         }
 
-        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+        $driverCode = (int)($exception->errorInfo[1] ?? 0);
         if ($driverCode !== 1062) {
             return false;
         }
 
-        $details = strtolower((string) ($exception->errorInfo[2] ?? $exception->getMessage()));
+        $details = strtolower((string)($exception->errorInfo[2] ?? $exception->getMessage()));
 
         return str_contains($details, 'articulo_tema') || str_contains($details, 'primary');
     }
@@ -306,7 +310,7 @@ class ArticuloRepository extends Repository
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(['articulo_id' => $articuloId]);
 
-            if ((int) $stmt->fetchColumn() > 0) {
+            if ((int)$stmt->fetchColumn() > 0) {
                 return $label;
             }
         }

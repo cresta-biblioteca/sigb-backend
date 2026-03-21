@@ -7,7 +7,7 @@ use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Models\Materia;
 use App\Catalogo\Articulos\Repository\MateriaRepository;
 use App\Catalogo\Articulos\Services\MateriaService;
-use App\Shared\Exceptions\ValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 use Mockery\MockInterface;
 
 // Variables de prueba (compartidas entre tests)
@@ -66,19 +66,19 @@ test('lanza MateriaAlreadyExistsException si ya existe', function () {
         ->toThrow(MateriaAlreadyExistsException::class);
 });
 
-test('lanza ValidationException si el título está vacío', function () {
+test('lanza BusinessRuleException si el título está vacío', function () {
     $request = new MateriaRequest(titulo: '');
 
     expect(fn() => $this->service->createMateria($request))
-        ->toThrow(ValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
-test('lanza ValidationException si el título excede 100 caracteres', function () {
+test('lanza BusinessRuleException si el título excede 100 caracteres', function () {
     $tituloLargo = str_repeat('A', 101);
     $request = new MateriaRequest(titulo: $tituloLargo);
 
     expect(fn() => $this->service->createMateria($request))
-        ->toThrow(ValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
 test('convierte correctamente titulo con espacios', function () {

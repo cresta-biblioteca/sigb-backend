@@ -4,43 +4,20 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Controllers;
 
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
-use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
-use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
-use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
-use App\Catalogo\Libros\Services\LibroService;
-use App\Catalogo\Articulos\Services\ArticuloService;
-use App\Catalogo\Libros\Validators\LibroRequestValidator;
 use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
-use App\Shared\Exceptions\ValidationException;
+use App\Catalogo\Libros\Dtos\Request\CreateLibroRequest;
+use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
+use App\Catalogo\Libros\Services\LibroService;
+use App\Catalogo\Libros\Validators\LibroRequestValidator;
+use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
-use Exception;
-use JsonException;
+use Throwable;
 
-class LibroController
+readonly class LibroController
 {
     public function __construct(
-        private LibroService $libroService,
-        private ArticuloService $articuloService
+        private LibroService $libroService
     ) {
-    }
-
-    /**
-     * GET /libros
-     */
-    public function getAll(): void
-    {
-        try {
-            $libros = $this->libroService->getAll();
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'data' => $libros,
-            ]);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::getAll] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
-        }
     }
 
     /**
@@ -49,34 +26,17 @@ class LibroController
     public function getById($id): void
     {
         try {
-            LibroRequestValidator::validateId((int) $id);
-
-            $libro = $this->libroService->getById((int) $id);
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'data' => $libro,
-            ]);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (LibroNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::getById] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            LibroRequestValidator::validateId((int)$id);
+            $libro = $this->libroService->getById((int)$id);
+            JsonHelper::jsonResponse(['data' => $libro]);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'LibroController::getById');
         }
     }
 
     /**
      * POST /libros
-     * Crea un libro completo con artículo y libro en una sola operación
+     * Crea un libro completo con artículo y libro en una sola transacción
      */
     public function create(): void
     {
@@ -86,120 +46,37 @@ class LibroController
             $articuloData = $input['articulo'] ?? [];
             $libroData = $input['libro'] ?? [];
 
-            // Validar datos del artículo
             ArticuloRequestValidator::validate($articuloData);
-
-            // Validar datos del libro
             LibroRequestValidator::validate($libroData);
 
-            // 1. Crear artículo primero
-            $articuloRequest = new ArticuloRequest(
-                titulo: $articuloData['titulo'],
-                anioPublicacion: (int) $articuloData['anio_publicacion'],
-                tipoDocumentoId: (int) $articuloData['tipo_documento_id'],
-                idioma: $articuloData['idioma'] ?? 'es'
-            );
+            $request = CreateLibroRequest::fromArray($articuloData, $libroData);
 
-            $articuloResponse = $this->articuloService->create($articuloRequest);
+            $libro = $this->libroService->create($request);
 
-            // 2. Crear LibroRequest con articuloId obtenido
-            $libroRequest = new LibroRequest(
-                articuloId: $articuloResponse->getId(),
-                isbn: $libroData['isbn'],
-                exportMarc: $libroData['export_marc'],
-                autor: $libroData['autor'] ?? null,
-                autores: $libroData['autores'] ?? null,
-                colaboradores: $libroData['colaboradores'] ?? null,
-                tituloInformativo: $libroData['titulo_informativo'] ?? null,
-                cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null
-            );
-
-            // 3. Crear libro con DTO tipado
-            $libro = $this->libroService->create($libroRequest);
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'data' => $libro,
-                'message' => 'Libro creado exitosamente'
-            ], 201);
-        } catch (JsonException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => 'El formato JSON es inválido'
-            ], 400);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (LibroAlreadyExistsException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 409);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::create] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            JsonHelper::jsonResponse(['data' => $libro, 'message' => 'Libro creado exitosamente'], 201);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'LibroController::create');
         }
     }
 
     /**
-     * PUT/PATCH /libros/{id} - Actualización (completa o parcial)
+     * PUT/PATCH /libros/{id}
      */
     public function updateLibro($id): void
     {
         try {
-            LibroRequestValidator::validateId((int) $id);
+            LibroRequestValidator::validateId((int)$id);
 
-            $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+            LibroRequestValidator::validatePatch($data);
 
-            // Validar solo campos editables para PATCH/PUT
-            LibroRequestValidator::validatePatch($input);
+            $request = PatchLibroRequest::fromRequest($data);
 
-            // Crear LibroRequest solo con campos editables del input
-            $request = new LibroRequest(
-                articuloId: 0, // Placeholder - el service lo reemplazará con el correcto
-                isbn: '', // Placeholder - el service lo reemplazará con el correcto
-                exportMarc: '', // Placeholder - el service lo reemplazará con el correcto
-                autor: $input['autor'] ?? null,
-                autores: $input['autores'] ?? null,
-                colaboradores: $input['colaboradores'] ?? null,
-                tituloInformativo: $input['titulo_informativo'] ?? null,
-                cdu: isset($input['cdu']) ? (int) $input['cdu'] : null
-            );
+            $response = $this->libroService->updateLibro((int)$id, $request);
 
-            $response = $this->libroService->updateLibro((int) $id, $request);
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'data' => $response,
-                'message' => 'Libro actualizado exitosamente'
-            ]);
-        } catch (JsonException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => 'El formato JSON es inválido'
-            ], 400);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (LibroNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (LibroAlreadyExistsException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 409);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::updateLibro] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            JsonHelper::jsonResponse(['data' => $response, 'message' => 'Libro actualizado exitosamente']);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'LibroController::updateLibro');
         }
     }
 
@@ -209,85 +86,41 @@ class LibroController
     public function deleteLibro($id): void
     {
         try {
-            LibroRequestValidator::validateId((int) $id);
-
-            $this->libroService->deleteLibro((int) $id);
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'message' => 'Libro eliminado exitosamente'
-            ]);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (LibroNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::deleteLibro] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            LibroRequestValidator::validateId((int)$id);
+            $this->libroService->deleteLibro((int)$id);
+            JsonHelper::jsonResponse(['message' => 'Libro eliminado exitosamente']);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'LibroController::deleteLibro');
         }
     }
 
     /**
-     * GET /libros/search
-     */
-    public function search(): void
-    {
-        try {
-            LibroRequestValidator::validateSearchParams($_GET);
-
-            $libros = $this->libroService->search($_GET);
-
-            JsonHelper::jsonResponse([
-                'error' => false,
-                'data' => $libros,
-            ]);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::search] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
-        }
-    }
-
-    /**
-     * GET /libros/search/paginated
+     * GET /libros
      */
     public function searchPaginated(): void
     {
         try {
-            $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-            $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 10;
-            $filters = array_filter($_GET, fn($key) => !in_array($key, ['page', 'per_page']), ARRAY_FILTER_USE_KEY);
+            // Aplica valores por defecto ante la ausencia de paginacion y filtros de sorting
+            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+            $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
+            $sortBy = $_GET['sort_by'] ?? 'titulo';
+            $sortDir = $_GET['sort_dir'] ?? 'asc';
+            $filters = array_filter(
+                $_GET,
+                fn($key) => !in_array($key, ['page', 'per_page', 'sort_by', 'sort_dir'], true),
+                ARRAY_FILTER_USE_KEY
+            );
 
             LibroRequestValidator::validateSearchParams($_GET);
 
-            $result = $this->libroService->searchPaginated($filters, $page, $perPage);
+            $result = $this->libroService->searchPaginated($filters, $page, $perPage, $sortBy, $sortDir);
 
             JsonHelper::jsonResponse([
-                'error' => false,
                 'data' => $result['items'],
                 'pagination' => $result['pagination'],
             ]);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], 422);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[LibroController::searchPaginated] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'LibroController::searchPaginated');
         }
     }
 }

@@ -5,9 +5,9 @@ use App\Catalogo\Ejemplares\Dtos\Response\EjemplarResponse;
 use App\Catalogo\Ejemplares\Models\Ejemplar;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Catalogo\Ejemplares\Services\EjemplarService;
-use App\Shared\Exceptions\BusinessValidationException;
-use App\Shared\Exceptions\EntityAlreadyExistsException;
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\AlreadyExistsException;
+use App\Shared\Exceptions\BusinessRuleException;
+use App\Shared\Exceptions\NotFoundException;
 
 beforeEach(function () {
     $this->repositoryMock = $this->createMock(EjemplarRepository::class);
@@ -58,7 +58,7 @@ test('lanza excepcion si codigo de barras ya existe', function () {
         ->willReturn(true);
 
     expect(fn () => $this->service->createEjemplar($request))
-        ->toThrow(EntityAlreadyExistsException::class);
+        ->toThrow(AlreadyExistsException::class);
 });
 
 test('obtiene ejemplar por id exitosamente', function () {
@@ -86,7 +86,7 @@ test('lanza excepcion al obtener ejemplar inexistente', function () {
         ->willReturn(null);
 
     expect(fn () => $this->service->getById(999))
-        ->toThrow(EntityNotFoundException::class);
+        ->toThrow(NotFoundException::class);
 });
 
 test('actualiza ejemplar exitosamente', function () {
@@ -148,7 +148,7 @@ test('lanza excepcion si intenta modificar articulo_id del ejemplar', function (
         ->method('updateEjemplar');
 
     expect(fn () => $this->service->updateEjemplar(8, $request))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
 test('deshabilita ejemplar exitosamente', function () {

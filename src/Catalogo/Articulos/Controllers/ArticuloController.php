@@ -15,12 +15,11 @@ use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
 use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Validators\TemaRequestValidator;
-use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
+use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
-use Exception;
-use JsonException;
 use OpenApi\Attributes as OA;
+use Throwable;
 
 class ArticuloController
 {
@@ -36,9 +35,8 @@ class ArticuloController
         try {
             $articulos = $this->service->getAll();
             JsonHelper::jsonResponse($articulos, 200);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::getAll] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::getAll');
         }
     }
 
@@ -49,21 +47,10 @@ class ArticuloController
     {
         try {
             ArticuloRequestValidator::validateId($id);
-
             $articulo = $this->service->getById((int) $id);
             JsonHelper::jsonResponse($articulo, 200);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                "message" => $e->getMessage(),
-                "errors" => $e->getErrors()
-            ], 400);
-        } catch (ArticuloNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                "message" => $e->getMessage(),
-            ], 404);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::getById] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::getById');
         }
     }
 
@@ -74,34 +61,12 @@ class ArticuloController
     {
         try {
             ArticuloRequestValidator::validateId($id);
-
             $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
-
             ArticuloRequestValidator::validatePatch($input);
-
             $articulo = $this->service->patchArticulo((int) $id, $input);
             JsonHelper::jsonResponse($articulo, 200);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
-            ], 400);
-        } catch (BusinessValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-                'field' => $e->getField()
-            ], 422);
-        } catch (ArticuloNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (JsonException) {
-            JsonHelper::jsonResponse([
-                'message' => 'JSON inválido',
-            ], 400);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::patchArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::patchArticulo');
         }
     }
 
@@ -112,33 +77,14 @@ class ArticuloController
     {
         try {
             ArticuloRequestValidator::validateId($id);
-
             $this->service->deleteArticulo((int) $id);
-
             http_response_code(204);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
-            ], 400);
-        } catch (ArticuloNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (BusinessValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-                'field' => $e->getField()
-            ], 409);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::deleteArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::deleteArticulo');
         }
     }
 
-    /**
-     * POST /articulos/{idArticulo}/temas/{idTema}
-     */
+
     #[OA\Post(
         path: '/articulos/{idArticulo}/temas/{idTema}',
         description: 'Asocia un tema existente a un artículo existente',
@@ -214,7 +160,6 @@ class ArticuloController
                     $errors['idArticulo'] = $errors['id'];
                     unset($errors['id']);
                 }
-
                 throw new ValidationException($errors);
             }
 
@@ -222,37 +167,12 @@ class ArticuloController
 
             $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
 
-            JsonHelper::jsonResponse([
-                'message' => 'El tema ha sido agregado al artículo'
-            ], 201);
-        } catch (ValidationException $e) {
-            $errors = $e->getErrors();
-            if (array_key_exists('id', $errors)) {
-                $errors['idTema'] = $errors['id'];
-                unset($errors['id']);
-            }
-
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $errors
-            ], 400);
-        } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (TemaAlreadyInArticuloException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 409);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log("[ArticuloController::addTemaToArticulo] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
+            JsonHelper::jsonResponse(['message' => 'El tema ha sido agregado al artículo'], 201);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::addTemaToArticulo');
         }
     }
 
-    /**
-     * GET /articulos/{idArticulo}/temas
-     */
     #[OA\Get(
         path: '/articulos/{idArticulo}/temas',
         description: 'Obtiene los títulos de los temas asociados a un artículo',
@@ -315,34 +235,16 @@ class ArticuloController
                     $errors['idArticulo'] = $errors['id'];
                     unset($errors['id']);
                 }
-
                 throw new ValidationException($errors);
             }
 
             $temas = $this->service->getTemaTitlesByArticuloId((int) $idArticulo);
-
             JsonHelper::jsonResponse($temas, 200);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
-            ], 400);
-        } catch (ArticuloNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log(
-                "[ArticuloController::getTemaTitlesByArticulo] {$e->getMessage()} "
-                . "in {$e->getFile()}: {$e->getLine()}"
-            );
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::getTemaTitlesByArticulo');
         }
     }
 
-    /**
-     * DELETE /articulos/{idArticulo}/temas/{idTema}
-     */
     #[OA\Delete(
         path: '/articulos/{idArticulo}/temas/{idTema}',
         description: 'Desasocia un tema de un artículo',
@@ -418,7 +320,6 @@ class ArticuloController
                     $errors['idArticulo'] = $errors['id'];
                     unset($errors['id']);
                 }
-
                 throw new ValidationException($errors);
             }
 
@@ -426,34 +327,9 @@ class ArticuloController
 
             $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
 
-            JsonHelper::jsonResponse([
-                'message' => 'El tema ha sido eliminado del artículo'
-            ], 200);
-        } catch (ValidationException $e) {
-            $errors = $e->getErrors();
-            if (array_key_exists('id', $errors)) {
-                $errors['idTema'] = $errors['id'];
-                unset($errors['id']);
-            }
-
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $errors
-            ], 400);
-        } catch (ArticuloNotFoundException | TemaNotFoundException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 404);
-        } catch (TemaAlreadyEliminatedException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-            ], 409);
-        } catch (Exception $e) {
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
-            error_log(
-                "[ArticuloController::deleteTemaFromArticulo] {$e->getMessage()} "
-                . "in {$e->getFile()}: {$e->getLine()}"
-            );
+            JsonHelper::jsonResponse(['message' => 'El tema ha sido eliminado del artículo'], 200);
+        } catch (Throwable $e) {
+            ExceptionHandler::handle($e, 'ArticuloController::deleteTemaFromArticulo');
         }
     }
 

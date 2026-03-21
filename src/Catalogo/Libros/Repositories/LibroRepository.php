@@ -25,13 +25,14 @@ class LibroRepository extends Repository
      **/
     public function findById(int $id): ?Libro
     {
-        $sql = "SELECT 
+        $sql = "SELECT
             l.*,
             a.id AS a_id,
             a.titulo AS a_titulo,
             a.anio_publicacion AS a_anio_publicacion,
             a.tipo_documento_id AS a_tipo_documento_id,
             a.idioma AS a_idioma,
+            a.descripcion AS a_descripcion,
             a.created_at AS a_created_at,
             a.updated_at AS a_updated_at
             FROM libro l
@@ -51,33 +52,6 @@ class LibroRepository extends Repository
         return $this->hydrateLibroWithArticulo($row);
     }
 
-    /**
-     * @return Libro[]
-     */
-    public function findAll(): array
-    {
-        $sql = "SELECT 
-                l.*,
-                a.id AS a_id,
-                a.titulo AS a_titulo,
-                a.anio_publicacion AS a_anio_publicacion,
-                a.tipo_documento_id AS a_tipo_documento_id,
-                a.idioma AS a_idioma,
-                a.created_at AS a_created_at,
-                a.updated_at AS a_updated_at
-            FROM libro l
-            INNER JOIN articulo a ON a.id = l.articulo_id";
-
-        $stmt = $this->pdo->query($sql);
-        $libros = [];
-
-        while ($row = $stmt->fetch()) {
-            $libros[] = $this->hydrateLibroWithArticulo($row);
-        }
-
-        return $libros;
-    }
-
     public function delete(int $id): bool
     {
         $sql = "DELETE FROM libro WHERE articulo_id = :id";
@@ -89,23 +63,27 @@ class LibroRepository extends Repository
 
     public function insertLibro(Libro $libro): Libro
     {
-        $sql = "INSERT INTO libro 
-            (articulo_id, isbn, autor, autores, colaboradores, titulo_informativo, cdu, export_marc, created_at,
-             updated_at)
+        $sql = "INSERT INTO libro
+            (articulo_id, isbn, issn, paginas, autor, autores, colaboradores, titulo_informativo, cdu,
+             export_marc, editorial, lugar_de_publicacion, created_at, updated_at)
             VALUES
-            (:articulo_id, :isbn, :autor, :autores, :colaboradores, :titulo_informativo, :cdu,
-             :export_marc, NOW(), NOW())";
+            (:articulo_id, :isbn, :issn, :paginas, :autor, :autores, :colaboradores, :titulo_informativo, :cdu,
+             :export_marc, :editorial, :lugar_de_publicacion, NOW(), NOW())";
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
             'articulo_id' => $libro->getArticuloId(),
             'isbn' => $libro->getIsbn(),
+            'issn' => $libro->getIssn(),
+            'paginas' => $libro->getPaginas(),
             'autor' => $libro->getAutor(),
             'autores' => $libro->getAutores(),
             'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
             'export_marc' => $libro->getExportMarc(),
+            'editorial' => $libro->getEditorial(),
+            'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
         ]);
 
         if ($success === false || $stmt->rowCount() === 0) {
@@ -119,24 +97,32 @@ class LibroRepository extends Repository
     {
         $sql = "UPDATE libro SET
             isbn = :isbn,
+            issn = :issn,
+            paginas = :paginas,
             autor = :autor,
             autores = :autores,
             colaboradores = :colaboradores,
             titulo_informativo = :titulo_informativo,
             cdu = :cdu,
             export_marc = :export_marc,
+            editorial = :editorial,
+            lugar_de_publicacion = :lugar_de_publicacion,
             updated_at = NOW()
             WHERE articulo_id = :id";
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
             'isbn' => $libro->getIsbn(),
+            'issn' => $libro->getIssn(),
+            'paginas' => $libro->getPaginas(),
             'autor' => $libro->getAutor(),
             'autores' => $libro->getAutores(),
             'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
             'export_marc' => $libro->getExportMarc(),
+            'editorial' => $libro->getEditorial(),
+            'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
             'id' => $id,
         ]);
 
@@ -165,58 +151,59 @@ class LibroRepository extends Repository
         return $stmt->fetch() !== false;
     }
 
-    public function search(array $filters): array
+    public function existsByIssn(string $issn, ?int $excludeArticuloId = null): bool
     {
-        [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
+        $sql = 'SELECT 1 FROM libro WHERE issn = :issn';
+        $params = ['issn' => $issn];
 
-        $sql = "SELECT 
-                l.*,
-                a.id AS a_id,
-                a.titulo AS a_titulo,
-                a.anio_publicacion AS a_anio_publicacion,
-                a.tipo_documento_id AS a_tipo_documento_id,
-                a.idioma AS a_idioma,
-                a.created_at AS a_created_at,
-                a.updated_at AS a_updated_at
-            FROM libro l
-            INNER JOIN articulo a ON a.id = l.articulo_id";
-
-        if ($conditions) {
-            $sql .= " WHERE " . implode(' AND ', $conditions);
+        if ($excludeArticuloId !== null) {
+            $sql .= ' AND articulo_id <> :exclude_articulo_id';
+            $params['exclude_articulo_id'] = $excludeArticuloId;
         }
 
-        $sql .= " ORDER BY a.titulo, l.articulo_id";
+        $sql .= ' LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        $libros = [];
-        while ($row = $stmt->fetch()) {
-            $libros[] = $this->hydrateLibroWithArticulo($row);
-        }
-
-        return $libros;
+        return $stmt->fetch() !== false;
     }
+
+    private const SORTABLE_COLUMNS = [
+        'titulo'           => 'a.titulo',
+        'autor'            => 'l.autor',
+        'anio_publicacion' => 'a.anio_publicacion',
+        'editorial'        => 'l.editorial',
+        'isbn'             => 'l.isbn',
+        'idioma'           => 'a.idioma',
+        'id'               => 'l.articulo_id',
+    ];
 
     /**
      * @param array<string, mixed> $filters
      * @return Libro[]
      */
-    public function searchPaginated(array $filters, int $page, int $perPage): array
-    {
+    public function searchPaginated(
+        array $filters,
+        int $page,
+        int $perPage,
+        string $sortBy = 'titulo',
+        string $sortDir = 'asc'
+    ): array {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
         $offset = ($page - 1) * $perPage;
 
         [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
 
-        $sql = "SELECT 
+        $sql = "SELECT
                 l.*,
                 a.id AS a_id,
                 a.titulo AS a_titulo,
                 a.anio_publicacion AS a_anio_publicacion,
                 a.tipo_documento_id AS a_tipo_documento_id,
                 a.idioma AS a_idioma,
+                a.descripcion AS a_descripcion,
                 a.created_at AS a_created_at,
                 a.updated_at AS a_updated_at
             FROM libro l
@@ -226,7 +213,9 @@ class LibroRepository extends Repository
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        $sql .= " ORDER BY a.titulo, l.articulo_id LIMIT :limit OFFSET :offset";
+        $column    = self::SORTABLE_COLUMNS[$sortBy] ?? 'a.titulo';
+        $direction = strtoupper($sortDir) === 'DESC' ? 'DESC' : 'ASC';
+        $sql .= " ORDER BY {$column} {$direction}, l.articulo_id {$direction} LIMIT :limit OFFSET :offset";
 
         $stmt = $this->pdo->prepare($sql);
 
@@ -253,6 +242,7 @@ class LibroRepository extends Repository
     {
         [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
 
+        // La query hacer el INNER JOIN debido a que para las conditions es necesario obtener info de articulo
         $sql = "SELECT COUNT(*)
             FROM libro l
             INNER JOIN articulo a ON a.id = l.articulo_id";
@@ -320,9 +310,24 @@ class LibroRepository extends Repository
             $params['isbn'] = $filters['isbn'];
         }
 
+        if (!empty($filters['issn'])) {
+            $conditions[] = 'l.issn = :issn';
+            $params['issn'] = $filters['issn'];
+        }
+
         if (!empty($filters['cdu'])) {
             $conditions[] = 'l.cdu = :cdu';
             $params['cdu'] = $filters['cdu'];
+        }
+
+        if (!empty($filters['editorial'])) {
+            $conditions[] = 'l.editorial LIKE :editorial';
+            $params['editorial'] = '%' . $filters['editorial'] . '%';
+        }
+
+        if (!empty($filters['lugar_de_publicacion'])) {
+            $conditions[] = 'l.lugar_de_publicacion LIKE :lugar_de_publicacion';
+            $params['lugar_de_publicacion'] = '%' . $filters['lugar_de_publicacion'] . '%';
         }
 
         if (!empty($filters['export_marc'])) {
@@ -551,8 +556,7 @@ class LibroRepository extends Repository
             'anio_publicacion' => $row['a_anio_publicacion'],
             'tipo_documento_id' => $row['a_tipo_documento_id'],
             'idioma' => $row['a_idioma'],
-            'created_at' => $row['a_created_at'],
-            'updated_at' => $row['a_updated_at'],
+            'descripcion' => $row['a_descripcion'] ?? null
         ]);
 
         $libro->setArticulo($articulo);

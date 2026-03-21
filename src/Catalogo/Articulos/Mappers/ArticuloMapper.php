@@ -17,6 +17,7 @@ class ArticuloMapper
             anioPublicacion: $articulo->getAnioPublicacion(),
             tipoDocumentoId: $articulo->getTipoDocumentoId(),
             idioma: $articulo->getIdioma(),
+            descripcion: $articulo->getDescripcion(),
             tipoDocumento: $articulo->getTipoDocumento()?->toArray(),
             temas: array_map(
                 fn($tema) => $tema->toArray(),

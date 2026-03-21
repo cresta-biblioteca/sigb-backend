@@ -7,7 +7,7 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Models\Tema;
 use App\Catalogo\Articulos\Repository\TemaRepository;
 use App\Catalogo\Articulos\Services\TemaService;
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 
 beforeEach(function () {
     $this->repositoryMock = Mockery::mock(TemaRepository::class);
@@ -179,17 +179,17 @@ test('createTema lanza TemaAlreadyExistsException si ya existe', function () {
         ->toThrow(TemaAlreadyExistsException::class);
 });
 
-test('createTema lanza BusinessValidationException si el título está vacío', function () {
+test('createTema lanza BusinessRuleException si el título está vacío', function () {
     $request = new TemaRequest(titulo: '');
 
     $this->repositoryMock->shouldNotReceive('findCoincidence');
     $this->repositoryMock->shouldNotReceive('insertTema');
 
     expect(fn() => $this->service->createTema($request))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
-test('createTema lanza BusinessValidationException si el título excede 100 caracteres', function () {
+test('createTema lanza BusinessRuleException si el título excede 100 caracteres', function () {
     $tituloLargo = str_repeat('A', 101);
     $request = new TemaRequest(titulo: $tituloLargo);
 
@@ -197,7 +197,7 @@ test('createTema lanza BusinessValidationException si el título excede 100 cara
     $this->repositoryMock->shouldNotReceive('insertTema');
 
     expect(fn() => $this->service->createTema($request))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
 test('createTema con título de espacios y caracteres válidos', function () {
@@ -325,7 +325,7 @@ test('updateTema lanza TemaAlreadyExistsException si el nuevo título ya existe'
         ->toThrow(TemaAlreadyExistsException::class);
 });
 
-test('updateTema lanza BusinessValidationException si el título está vacío', function () {
+test('updateTema lanza BusinessRuleException si el título está vacío', function () {
     $request = new TemaRequest(titulo: '');
 
     $this->repositoryMock->shouldNotReceive('findById');
@@ -333,10 +333,10 @@ test('updateTema lanza BusinessValidationException si el título está vacío', 
     $this->repositoryMock->shouldNotReceive('updateTema');
 
     expect(fn() => $this->service->updateTema(1, $request))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
-test('updateTema lanza BusinessValidationException si el título excede 100 caracteres', function () {
+test('updateTema lanza BusinessRuleException si el título excede 100 caracteres', function () {
     $tituloLargo = str_repeat('B', 101);
     $request = new TemaRequest(titulo: $tituloLargo);
 
@@ -345,7 +345,7 @@ test('updateTema lanza BusinessValidationException si el título excede 100 cara
     $this->repositoryMock->shouldNotReceive('updateTema');
 
     expect(fn() => $this->service->updateTema(1, $request))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
 // ─── deleteTema ──────────────────────────────────────────────────────

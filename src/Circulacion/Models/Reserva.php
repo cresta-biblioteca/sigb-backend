@@ -12,10 +12,11 @@ use DateTimeImmutable;
 class Reserva extends Entity
 {
     private DateTimeImmutable $fechaReserva;
-    private DateTimeImmutable $fechaVencimiento;
+    private ?DateTimeImmutable $fechaVencimiento;
     private EstadoReserva $estado;
     private int $lectorId;
-    private int $ejemplarId;
+    private int $articuloId;
+    private ?int $ejemplarId;
 
     private ?Lector $lector = null;
     private ?Ejemplar $ejemplar = null;
@@ -28,16 +29,17 @@ class Reserva extends Entity
      * Crea una nueva Reserva (valida datos)
      */
     public static function create(
-        DateTimeImmutable $fechaReserva,
-        DateTimeImmutable $fechaVencimiento,
         int $lectorId,
-        int $ejemplarId,
+        int $articuloId,
+        ?int $ejemplarId = null,
+        ?DateTimeImmutable $fechaVencimiento = null,
         EstadoReserva $estado = EstadoReserva::PENDIENTE
     ): self {
         $reserva = new self();
-        $reserva->setFechaReserva($fechaReserva);
+        $reserva->setFechaReserva(new DateTimeImmutable());
         $reserva->setFechaVencimiento($fechaVencimiento);
         $reserva->setLectorId($lectorId);
+        $reserva->setArticuloId($articuloId);
         $reserva->setEjemplarId($ejemplarId);
         $reserva->setEstado($estado);
 
@@ -54,10 +56,13 @@ class Reserva extends Entity
         $reserva = new self();
         $reserva->id = (int) $row['id'];
         $reserva->fechaReserva = new DateTimeImmutable($row['fecha_reserva']);
-        $reserva->fechaVencimiento = new DateTimeImmutable($row['fecha_vencimiento']);
+        $reserva->fechaVencimiento = isset($row['fecha_vencimiento'])
+            ? new DateTimeImmutable($row['fecha_vencimiento'])
+            : null;
         $reserva->estado = EstadoReserva::from($row['estado']);
         $reserva->lectorId = (int) $row['lector_id'];
-        $reserva->ejemplarId = (int) $row['ejemplar_id'];
+        $reserva->articuloId = (int) $row['articulo_id'];
+        $reserva->ejemplarId = isset($row['ejemplar_id']) ? (int) $row['ejemplar_id'] : null;
         $reserva->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -76,12 +81,12 @@ class Reserva extends Entity
         $this->fechaReserva = $fechaReserva;
     }
 
-    public function getFechaVencimiento(): DateTimeImmutable
+    public function getFechaVencimiento(): ?DateTimeImmutable
     {
         return $this->fechaVencimiento;
     }
 
-    public function setFechaVencimiento(DateTimeImmutable $fechaVencimiento): void
+    public function setFechaVencimiento(?DateTimeImmutable $fechaVencimiento): void
     {
         $this->fechaVencimiento = $fechaVencimiento;
     }
@@ -107,14 +112,27 @@ class Reserva extends Entity
         $this->lectorId = $lectorId;
     }
 
-    public function getEjemplarId(): int
+    public function getArticuloId(): int
+    {
+        return $this->articuloId;
+    }
+
+    public function setArticuloId(int $articuloId): void
+    {
+        $this->assertPositive($articuloId, 'articulo_id');
+        $this->articuloId = $articuloId;
+    }
+
+    public function getEjemplarId(): ?int
     {
         return $this->ejemplarId;
     }
 
-    public function setEjemplarId(int $ejemplarId): void
+    public function setEjemplarId(?int $ejemplarId): void
     {
-        $this->assertPositive($ejemplarId, 'ejemplar_id');
+        if ($ejemplarId !== null) {
+            $this->assertPositive($ejemplarId, 'ejemplar_id');
+        }
         $this->ejemplarId = $ejemplarId;
     }
 
@@ -153,7 +171,9 @@ class Reserva extends Entity
     public function isVencida(): bool
     {
         return $this->estado === EstadoReserva::VENCIDA
-            || ($this->isPendiente() && $this->fechaVencimiento < new DateTimeImmutable());
+            || ($this->isPendiente()
+                && $this->fechaVencimiento !== null
+                && $this->fechaVencimiento < new DateTimeImmutable());
     }
 
     public function completar(): void
@@ -179,9 +199,10 @@ class Reserva extends Entity
         $data = [
             'id' => $this->id,
             'fecha_reserva' => $this->fechaReserva->format('Y-m-d H:i:s'),
-            'fecha_vencimiento' => $this->fechaVencimiento->format('Y-m-d H:i:s'),
+            'fecha_vencimiento' => $this->fechaVencimiento?->format('Y-m-d H:i:s'),
             'estado' => $this->estado->value,
             'lector_id' => $this->lectorId,
+            'articulo_id' => $this->articuloId,
             'ejemplar_id' => $this->ejemplarId,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),

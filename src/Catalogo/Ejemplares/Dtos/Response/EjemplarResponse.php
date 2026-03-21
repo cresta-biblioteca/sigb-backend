@@ -11,6 +11,7 @@ readonly class EjemplarResponse implements \JsonSerializable
         private string $codigoBarras,
         private bool $habilitado,
         private int $articuloId,
+        private ?string $signaturaTopografica = null,
     ) {
     }
 
@@ -21,6 +22,7 @@ readonly class EjemplarResponse implements \JsonSerializable
             'codigo_barras' => $this->codigoBarras,
             'habilitado' => $this->habilitado,
             'articulo_id' => $this->articuloId,
+            'signatura_topografica' => $this->signaturaTopografica,
         ];
     }
 }

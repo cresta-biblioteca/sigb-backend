@@ -16,17 +16,22 @@ class LibroMapper
         return new LibroResponse(
             id: $libro->getId() ?? 0,
             isbn: $libro->getIsbn(),
+            issn: $libro->getIssn(),
+            paginas: $libro->getPaginas(),
             autor: $libro->getAutor(),
             autores: $libro->getAutores(),
             colaboradores: $libro->getColaboradores(),
             tituloInformativo: $libro->getTituloInformativo(),
             cdu: $libro->getCdu(),
             exportMarc: $libro->getExportMarc(),
+            editorial: $libro->getEditorial(),
+            lugarDePublicacion: $libro->getLugarDePublicacion(),
             // Información del artículo (si está disponible)
             titulo: $articulo?->getTitulo(),
             anioPublicacion: $articulo?->getAnioPublicacion(),
             tipoDocumentoId: $articulo?->getTipoDocumentoId(),
-            idioma: $articulo?->getIdioma()
+            idioma: $articulo?->getIdioma(),
+            descripcion: $articulo?->getDescripcion()
         );
     }
 }
