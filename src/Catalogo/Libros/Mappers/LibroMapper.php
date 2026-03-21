@@ -26,7 +26,6 @@ class LibroMapper
             exportMarc: $libro->getExportMarc(),
             editorial: $libro->getEditorial(),
             lugarDePublicacion: $libro->getLugarDePublicacion(),
-
             // Información del artículo (si está disponible)
             titulo: $articulo?->getTitulo(),
             anioPublicacion: $articulo?->getAnioPublicacion(),

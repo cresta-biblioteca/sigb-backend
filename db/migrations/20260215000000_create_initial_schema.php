@@ -144,7 +144,7 @@ final class CreateInitialSchema extends AbstractMigration
                 colaboradores VARCHAR(255) NULL,
                 titulo_informativo VARCHAR(255) NULL,
                 cdu INT NULL,
-                export_marc TEXT NOT NULL,
+                export_marc TEXT NULL,
                 editorial VARCHAR(200) NULL,
                 lugar_de_publicacion VARCHAR(200) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
