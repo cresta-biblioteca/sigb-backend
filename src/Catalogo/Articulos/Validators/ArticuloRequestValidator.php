@@ -68,6 +68,14 @@ class ArticuloRequestValidator
             }
         }
 
+        if (isset($data['descripcion']) && $data['descripcion'] !== null) {
+            if (!is_string($data['descripcion'])) {
+                $errors['descripcion'] = ['El campo descripcion debe ser un string'];
+            } elseif (mb_strlen(trim($data['descripcion'])) > 255) {
+                $errors['descripcion'] = ['El campo descripcion no puede tener más de 255 caracteres'];
+            }
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
@@ -103,7 +111,7 @@ class ArticuloRequestValidator
             }
         }
 
-        $allowedFields = ['titulo', 'anio_publicacion', 'tipo_documento_id', 'idioma'];
+        $allowedFields = ['titulo', 'anio_publicacion', 'tipo_documento_id', 'idioma', 'descripcion'];
         foreach (array_keys($data) as $field) {
             if (!in_array($field, $allowedFields, true)) {
                 $errors[$field] = ["El campo {$field} no es válido para PATCH"];
@@ -150,6 +158,14 @@ class ArticuloRequestValidator
                 $errors['idioma'] = ['El campo idioma debe ser un string'];
             } elseif (!in_array(strtolower($data['idioma']), self::IDIOMAS_VALIDOS, true)) {
                 $errors['idioma'] = ['El idioma debe ser uno de: ' . implode(', ', self::IDIOMAS_VALIDOS)];
+            }
+        }
+
+        if (array_key_exists('descripcion', $data) && $data['descripcion'] !== null) {
+            if (!is_string($data['descripcion'])) {
+                $errors['descripcion'] = ['El campo descripcion debe ser un string'];
+            } elseif (mb_strlen(trim($data['descripcion'])) > 255) {
+                $errors['descripcion'] = ['El campo descripcion no puede tener más de 255 caracteres'];
             }
         }
 

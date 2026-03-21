@@ -51,7 +51,8 @@ class ArticuloService
             titulo: $request->getTitulo(),
             anioPublicacion: $request->getAnioPublicacion(),
             tipoDocumentoId: $request->getTipoDocumentoId(),
-            idioma: $request->getIdioma()
+            idioma: $request->getIdioma(),
+            descripcion: $request->getDescripcion()
         );
 
         $created = $this->repository->insertArticulo($articulo);
@@ -98,7 +99,10 @@ class ArticuloService
             tipoDocumentoId: $newTipoDocumentoId,
             idioma: array_key_exists('idioma', $data)
                 ? strtolower((string) $data['idioma'])
-                : $existing->getIdioma()
+                : $existing->getIdioma(),
+            descripcion: array_key_exists('descripcion', $data)
+                ? ($data['descripcion'] !== null ? trim((string) $data['descripcion']) : null)
+                : $existing->getDescripcion()
         );
 
         $updated = $this->repository->updateArticulo($id, $articulo);

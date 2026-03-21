@@ -15,6 +15,7 @@ class Articulo extends Entity
     private int $anioPublicacion;
     private int $tipoDocumentoId;
     private string $idioma;
+    private ?string $descripcion = null;
 
     private ?TipoDocumento $tipoDocumento = null;
 
@@ -35,13 +36,15 @@ class Articulo extends Entity
         string $titulo,
         int $anioPublicacion,
         int $tipoDocumentoId,
-        string $idioma = 'es'
+        string $idioma = 'es',
+        ?string $descripcion = null
     ): self {
         $articulo = new self();
         $articulo->setTitulo($titulo);
         $articulo->setAnioPublicacion($anioPublicacion);
         $articulo->setTipoDocumentoId($tipoDocumentoId);
         $articulo->setIdioma($idioma);
+        $articulo->setDescripcion($descripcion);
 
         return $articulo;
     }
@@ -59,6 +62,7 @@ class Articulo extends Entity
         $articulo->anioPublicacion = (int) $row['anio_publicacion'];
         $articulo->tipoDocumentoId = (int) $row['tipo_documento_id'];
         $articulo->idioma = $row['idioma'];
+        $articulo->descripcion = $row['descripcion'] ?? null;
         $articulo->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -119,6 +123,19 @@ class Articulo extends Entity
         $this->assertExactLength($idioma, 2, 'idioma');
         $this->assertInArray($idioma, self::IDIOMAS_VALIDOS, 'idioma');
         $this->idioma = strtolower($idioma);
+    }
+
+    public function getDescripcion(): ?string
+    {
+        return $this->descripcion;
+    }
+
+    public function setDescripcion(?string $descripcion): void
+    {
+        if ($descripcion !== null) {
+            $this->assertMaxLength($descripcion, 255, 'descripcion');
+        }
+        $this->descripcion = $descripcion;
     }
 
     public function getTipoDocumento(): ?TipoDocumento
@@ -185,6 +202,7 @@ class Articulo extends Entity
             'anio_publicacion' => $this->anioPublicacion,
             'tipo_documento_id' => $this->tipoDocumentoId,
             'idioma' => $this->idioma,
+            'descripcion' => $this->descripcion,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];

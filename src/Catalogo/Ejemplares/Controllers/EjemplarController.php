@@ -94,7 +94,8 @@ class EjemplarController
             $request = new EjemplarRequest(
                 (int) $input['articulo_id'],
                 trim((string) $input['codigo_barras']),
-                (bool) $input['habilitado']
+                (bool) $input['habilitado'],
+                isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
             );
 
             JsonHelper::jsonResponse(['data' => $this->ejemplarService->createEjemplar($request)], 201);
@@ -119,7 +120,8 @@ class EjemplarController
             $request = new EjemplarRequest(
                 (int) $input['articulo_id'],
                 trim((string) $input['codigo_barras']),
-                (bool) $input['habilitado']
+                (bool) $input['habilitado'],
+                isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
             );
 
             JsonHelper::jsonResponse(['data' => $this->ejemplarService->updateEjemplar($id, $request)]);

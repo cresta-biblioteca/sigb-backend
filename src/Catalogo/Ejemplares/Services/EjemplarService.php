@@ -43,7 +43,8 @@ class EjemplarService
         $ejemplar = Ejemplar::create(
             $request->getArticuloId(),
             $request->getCodigoBarras(),
-            $request->isHabilitado()
+            $request->isHabilitado(),
+            $request->getSignaturaTopografica()
         );
 
         $savedEjemplar = $this->ejemplarRepository->insertEjemplar($ejemplar);
@@ -69,6 +70,7 @@ class EjemplarService
 
         $ejemplar->setCodigoBarras($request->getCodigoBarras());
         $ejemplar->setHabilitado($request->isHabilitado());
+        $ejemplar->setSignaturaTopografica($request->getSignaturaTopografica());
 
         $this->ejemplarRepository->updateEjemplar($ejemplar);
 

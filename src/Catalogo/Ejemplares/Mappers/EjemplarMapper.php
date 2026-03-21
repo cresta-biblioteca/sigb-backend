@@ -15,7 +15,8 @@ class EjemplarMapper
             $ejemplar->getId() ?? 0,
             $ejemplar->getCodigoBarras() ?? '',
             $ejemplar->isHabilitado(),
-            $ejemplar->getArticuloId()
+            $ejemplar->getArticuloId(),
+            $ejemplar->getSignaturaTopografica()
         );
     }
 }

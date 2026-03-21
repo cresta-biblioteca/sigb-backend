@@ -9,7 +9,8 @@ readonly class EjemplarRequest
     public function __construct(
         private int $articuloId,
         private string $codigoBarras,
-        private bool $habilitado = true
+        private bool $habilitado = true,
+        private ?string $signaturaTopografica = null
     ) {
     }
 
@@ -26,5 +27,10 @@ readonly class EjemplarRequest
     public function isHabilitado(): bool
     {
         return $this->habilitado;
+    }
+
+    public function getSignaturaTopografica(): ?string
+    {
+        return $this->signaturaTopografica;
     }
 }

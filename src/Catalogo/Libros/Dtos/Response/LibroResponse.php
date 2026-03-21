@@ -10,18 +10,23 @@ readonly class LibroResponse implements JsonSerializable
 {
     public function __construct(
         private int $id,
-        private string $isbn,
+        private ?string $isbn,
+        private ?string $issn,
+        private ?int $paginas,
         private ?string $autor,
         private ?string $autores,
         private ?string $colaboradores,
         private ?string $tituloInformativo,
         private ?int $cdu,
         private string $exportMarc,
+        private ?string $editorial,
+        private ?string $lugarDePublicacion,
         // Información del artículo asociado
         private ?string $titulo = null,
         private ?int $anioPublicacion = null,
         private ?int $tipoDocumentoId = null,
-        private ?string $idioma = null
+        private ?string $idioma = null,
+        private ?string $descripcion = null
     ) {
     }
 
@@ -30,12 +35,16 @@ readonly class LibroResponse implements JsonSerializable
         $data = [
             'id' => $this->id,
             'isbn' => $this->isbn,
+            'issn' => $this->issn,
+            'paginas' => $this->paginas,
             'autor' => $this->autor,
             'autores' => $this->autores,
             'colaboradores' => $this->colaboradores,
             'titulo_informativo' => $this->tituloInformativo,
             'cdu' => $this->cdu,
             'export_marc' => $this->exportMarc,
+            'editorial' => $this->editorial,
+            'lugar_de_publicacion' => $this->lugarDePublicacion,
         ];
 
         // Agregar información del artículo si está disponible
@@ -45,6 +54,7 @@ readonly class LibroResponse implements JsonSerializable
                 'anio_publicacion' => $this->anioPublicacion,
                 'tipo_documento_id' => $this->tipoDocumentoId,
                 'idioma' => $this->idioma,
+                'descripcion' => $this->descripcion,
             ];
         }
 

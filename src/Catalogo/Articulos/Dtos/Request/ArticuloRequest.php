@@ -10,7 +10,8 @@ readonly class ArticuloRequest
         private string $titulo,
         private int $anioPublicacion,
         private int $tipoDocumentoId,
-        private string $idioma = 'es'
+        private string $idioma = 'es',
+        private ?string $descripcion = null
     ) {
     }
 
@@ -32,5 +33,10 @@ readonly class ArticuloRequest
     public function getIdioma(): string
     {
         return $this->idioma;
+    }
+
+    public function getDescripcion(): ?string
+    {
+        return $this->descripcion;
     }
 }
