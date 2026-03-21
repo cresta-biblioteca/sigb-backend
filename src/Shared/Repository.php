@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Shared;
 
 use App\Shared\Database\Connection;
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 use PDO;
 
 abstract class Repository
@@ -55,14 +55,14 @@ abstract class Repository
     /**
      * Busca una entidad por ID o lanza excepción
      *
-     * @throws EntityNotFoundException
+     * @throws NotFoundException
      */
     public function findByIdOrFail(int $id): Entity
     {
         $entity = $this->findById($id);
 
         if ($entity === null) {
-            throw new EntityNotFoundException($this->getEntityClass(), $id);
+            throw new NotFoundException($this->getEntityClass(), $id);
         }
 
         return $entity;

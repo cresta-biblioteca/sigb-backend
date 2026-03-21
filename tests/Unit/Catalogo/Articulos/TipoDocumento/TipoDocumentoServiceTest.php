@@ -8,7 +8,7 @@ use App\Catalogo\Articulos\Exceptions\TipoDocumentoNotFoundException;
 use App\Catalogo\Articulos\Models\TipoDocumento;
 use App\Catalogo\Articulos\Repository\TipoDocumentoRepository;
 use App\Catalogo\Articulos\Services\TipoDocumentoService;
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 
 beforeEach(function () {
     $this->repositoryMock = Mockery::mock(TipoDocumentoRepository::class);
@@ -161,7 +161,7 @@ test("createTipoDocumento lanza TipoDocumentoAlreadyExistsException cuando ya ex
         ->toThrow(TipoDocumentoAlreadyExistsException::class, 'TipoDocumento con Codigo "MAP" ya existe');
 });
 
-test("createTipoDocumento lanza BusinessValidationException si el codigo excede 3 caracteres", function() {
+test("createTipoDocumento lanza BusinessRuleException si el codigo excede 3 caracteres", function() {
     $codLargo = "ASDD";
     $tipoDocRequest = new CreateTipoDocumentoRequest(
         $codLargo,
@@ -174,10 +174,10 @@ test("createTipoDocumento lanza BusinessValidationException si el codigo excede 
     $this->repositoryMock->shouldNotReceive("insertTipoDocumento");
 
     expect(fn() => $this->service->createTipoDocumento($tipoDocRequest))
-        ->toThrow(BusinessValidationException::class, "El campo codigo no debe exceder 3 caracteres");
+        ->toThrow(BusinessRuleException::class, "El campo codigo no debe exceder 3 caracteres");
 });
 
-test("createTipoDocumento lanza BusinessValidationException si el codigo esta vacio", function() {
+test("createTipoDocumento lanza BusinessRuleException si el codigo esta vacio", function() {
     $codVacio = "";
     $tipoDocRequest = new CreateTipoDocumentoRequest(
         $codVacio,
@@ -190,10 +190,10 @@ test("createTipoDocumento lanza BusinessValidationException si el codigo esta va
     $this->repositoryMock->shouldNotReceive("insertTipoDocumento");
 
     expect(fn() => $this->service->createTipoDocumento($tipoDocRequest))
-        ->toThrow(BusinessValidationException::class, "El campo codigo es requerido");
+        ->toThrow(BusinessRuleException::class, "El campo codigo es requerido");
 });
 
-test("createTipoDocumento lanza BusinessValidationException si la descripcion excede los 100 caracteres", function() {
+test("createTipoDocumento lanza BusinessRuleException si la descripcion excede los 100 caracteres", function() {
     $descripcionLarga = str_repeat("a", 101);
     $tipoDocRequest = new CreateTipoDocumentoRequest(
         "asd",
@@ -204,10 +204,10 @@ test("createTipoDocumento lanza BusinessValidationException si la descripcion ex
     $this->repositoryMock->shouldNotReceive("insertTipoDocumento");
 
     expect(fn() => $this->service->createTipoDocumento($tipoDocRequest))
-        ->toThrow(BusinessValidationException::class, "El campo descripcion no debe exceder 100 caracteres");
+        ->toThrow(BusinessRuleException::class, "El campo descripcion no debe exceder 100 caracteres");
 });
 
-test("createTipoDocumento lanza BusinessValidationException si la descripcion esta vacia", function() {
+test("createTipoDocumento lanza BusinessRuleException si la descripcion esta vacia", function() {
     $tipoDocRequest = new CreateTipoDocumentoRequest(
         "asd",
         ""
@@ -217,10 +217,10 @@ test("createTipoDocumento lanza BusinessValidationException si la descripcion es
     $this->repositoryMock->shouldNotReceive("insertTipoDocumento");
 
     expect(fn() => $this->service->createTipoDocumento($tipoDocRequest))
-        ->toThrow(BusinessValidationException::class, "El campo descripcion es requerido");
+        ->toThrow(BusinessRuleException::class, "El campo descripcion es requerido");
 });
 
-test("createTipoDocumento lanza BusinessValidationException si el detalle supera los 100 caracteres", function() {
+test("createTipoDocumento lanza BusinessRuleException si el detalle supera los 100 caracteres", function() {
     $detalleLargo = str_repeat("a", 101);
     $tipoDocRequest = new CreateTipoDocumentoRequest(
         "asd",
@@ -232,7 +232,7 @@ test("createTipoDocumento lanza BusinessValidationException si el detalle supera
     $this->repositoryMock->shouldNotReceive("insertTipoDocumento");
 
     expect(fn() => $this->service->createTipoDocumento($tipoDocRequest))
-        ->toThrow(BusinessValidationException::class, "El campo detalle no debe exceder 100 caracteres");
+        ->toThrow(BusinessRuleException::class, "El campo detalle no debe exceder 100 caracteres");
 });
 
 test("updateTipoDocumento retorna TipoDocumentoResponse cuando el documento es actualizado correctamente", function() {
@@ -284,7 +284,7 @@ test("updateTipoDocumento retorna TipoDocumentoResponse cuando el documento es a
         ->toMatchArray(["id" => 1, "codigo" => "LBS", "descripcion" => "Libros", "renovable" => true, "detalle" => "Libros actualizados"]);
 });
 
-test("updateTipoDocumento lanza BusinessValidationException cuando el codigo supera los 3 caracteres", function() {
+test("updateTipoDocumento lanza BusinessRuleException cuando el codigo supera los 3 caracteres", function() {
     $request = new UpdateTipoDocumentoRequest(
         "ASDF",
         "Descripcion"
@@ -305,10 +305,10 @@ test("updateTipoDocumento lanza BusinessValidationException cuando el codigo sup
     $this->repositoryMock->shouldNotReceive("updateTipoDocumento");
 
     expect(fn() => $this->service->updateTipoDocumento(1, $request))
-        ->toThrow(BusinessValidationException::class, "El campo codigo no debe exceder 3 caracteres");
+        ->toThrow(BusinessRuleException::class, "El campo codigo no debe exceder 3 caracteres");
 });
 
-test("updateTipoDocumento lanza BusinessValidationException cuando el codigo esta vacio", function() {
+test("updateTipoDocumento lanza BusinessRuleException cuando el codigo esta vacio", function() {
     $request = new UpdateTipoDocumentoRequest(
         "",
         "Descripcion"
@@ -329,10 +329,10 @@ test("updateTipoDocumento lanza BusinessValidationException cuando el codigo est
     $this->repositoryMock->shouldNotReceive("updateTipoDocumento");
 
     expect(fn() => $this->service->updateTipoDocumento(1, $request))
-        ->toThrow(BusinessValidationException::class, "El campo codigo es requerido");
+        ->toThrow(BusinessRuleException::class, "El campo codigo es requerido");
 });
 
-test("updateTipoDocumento lanza BusinessValidationException cuando la descripcion supera los 100 caracteres", function() {
+test("updateTipoDocumento lanza BusinessRuleException cuando la descripcion supera los 100 caracteres", function() {
     $descripcionLarga = str_repeat("a", 101);
     $request = new UpdateTipoDocumentoRequest(
         "asd",
@@ -355,10 +355,10 @@ test("updateTipoDocumento lanza BusinessValidationException cuando la descripcio
     $this->repositoryMock->shouldNotReceive("updateTipoDocumento");
 
     expect(fn() => $this->service->updateTipoDocumento(1, $request))
-        ->toThrow(BusinessValidationException::class, "El campo descripcion no debe exceder 100 caracteres");
+        ->toThrow(BusinessRuleException::class, "El campo descripcion no debe exceder 100 caracteres");
 });
 
-test("updateTipoDocumento lanza BusinessValidationException cuando la descripcion esta vacia", function() {
+test("updateTipoDocumento lanza BusinessRuleException cuando la descripcion esta vacia", function() {
     $request = new UpdateTipoDocumentoRequest(
         "asd",
         ""
@@ -379,10 +379,10 @@ test("updateTipoDocumento lanza BusinessValidationException cuando la descripcio
     $this->repositoryMock->shouldNotReceive("updateTipoDocumento");
 
     expect(fn() => $this->service->updateTipoDocumento(1, $request))
-        ->toThrow(BusinessValidationException::class, "El campo descripcion es requerido");
+        ->toThrow(BusinessRuleException::class, "El campo descripcion es requerido");
 });
 
-test("updateTipoDocumento lanza BusinessValidationException cuando el detalle supera los 100 caracteres", function() {
+test("updateTipoDocumento lanza BusinessRuleException cuando el detalle supera los 100 caracteres", function() {
     $detalleLargo = str_repeat("a", 101);
     $request = new UpdateTipoDocumentoRequest(
         "asd",
@@ -405,7 +405,7 @@ test("updateTipoDocumento lanza BusinessValidationException cuando el detalle su
     $this->repositoryMock->shouldNotReceive("updateTipoDocumento");
 
     expect(fn() => $this->service->updateTipoDocumento(1, $request))
-        ->toThrow(BusinessValidationException::class, 'El campo detalle no debe exceder 100 caracteres');
+        ->toThrow(BusinessRuleException::class, 'El campo detalle no debe exceder 100 caracteres');
 });
 
 test("updateTipoDocumento lanza TipoDocumentoNotFoundException cuando no existe el documento a actualizar", function() {

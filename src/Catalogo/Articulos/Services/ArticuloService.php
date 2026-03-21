@@ -13,7 +13,7 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 
 class ArticuloService
 {
@@ -81,9 +81,10 @@ class ArticuloService
             && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
             && $this->repository->isLinkedToLibro($id)
         ) {
-            throw BusinessValidationException::forField(
-                'tipo_documento_id',
-                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro'
+            throw new BusinessRuleException(
+                'BUSINESS_RULE_VIOLATION',
+                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro',
+                field: 'tipo_documento_id'
             );
         }
 
@@ -113,9 +114,10 @@ class ArticuloService
 
         $blockingRelation = $this->repository->getDeleteBlockingRelation($id);
         if ($blockingRelation !== null) {
-            throw BusinessValidationException::forField(
-                'id',
-                "No se puede eliminar el artículo porque tiene {$blockingRelation}"
+            throw new BusinessRuleException(
+                'BUSINESS_RULE_VIOLATION',
+                "No se puede eliminar el artículo porque tiene {$blockingRelation}",
+                field: 'id'
             );
         }
 
@@ -133,10 +135,7 @@ class ArticuloService
         }
 
         if ($this->repository->isTemaAdded($articuloId, $temaId)) {
-            throw new TemaAlreadyInArticuloException(
-                'tema',
-                "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
-            );
+            throw new TemaAlreadyInArticuloException($temaId, $articuloId);
         }
 
         $this->repository->addTemaToArticulo($articuloId, $temaId);
@@ -165,10 +164,7 @@ class ArticuloService
         }
 
         if (!$this->repository->isTemaAdded($articuloId, $temaId)) {
-            throw new TemaAlreadyEliminatedException(
-                'tema',
-                "El tema (ID: {$temaId}) no pertenece al artículo (ID: {$articuloId})"
-            );
+            throw new TemaAlreadyEliminatedException($temaId, $articuloId);
         }
 
         $this->repository->deleteTemaFromArticulo($articuloId, $temaId);

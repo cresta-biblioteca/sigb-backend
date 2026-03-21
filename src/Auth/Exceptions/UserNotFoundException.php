@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Auth\Exception;
+namespace App\Auth\Exceptions;
 
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 
-class UserNotFoundException extends EntityNotFoundException
+class UserNotFoundException extends NotFoundException
 {
     public function __construct(mixed $identifier)
     {

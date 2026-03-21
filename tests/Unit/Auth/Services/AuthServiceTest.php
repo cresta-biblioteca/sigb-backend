@@ -5,9 +5,9 @@ use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
-use App\Auth\Exception\UserAlreadyExistsException;
-use App\Auth\Exception\UserNotFoundException;
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Auth\Exceptions\UserAlreadyExistsException;
+use App\Auth\Exceptions\UserNotFoundException;
+use App\Shared\Exceptions\BusinessRuleException;
 use App\Auth\Models\Role;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -385,7 +385,7 @@ test('registro lanza RuntimeException y hace rollback si se superan los 10 inten
         ->toThrow(\RuntimeException::class);
 });
 
-test('registro hace rollback y lanza BusinessValidationException cuando el dominio rechaza los datos', function (): void {
+test('registro hace rollback y lanza BusinessRuleException cuando el dominio rechaza los datos', function (): void {
     $requestConDniInvalido = new UserRegisterRequest(
         'INVALIDO',
         $this->password,
@@ -426,7 +426,7 @@ test('registro hace rollback y lanza BusinessValidationException cuando el domin
         ->once();
 
     expect(fn() => $this->service->register($requestConDniInvalido))
-        ->toThrow(BusinessValidationException::class);
+        ->toThrow(BusinessRuleException::class);
 });
 
 test('cambio de contraseña exitoso cuando las credenciales son válidas', function (): void {

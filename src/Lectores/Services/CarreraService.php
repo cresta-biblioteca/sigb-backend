@@ -139,10 +139,7 @@ class CarreraService
         }
         $estaAgregada = $this->repo->isMateriaAdded($idCarrera, $idMateria);
         if ($estaAgregada) {
-            throw new MateriaAlreadyInCarreraException(
-                "materia",
-                "La materia(ID: {$idMateria}) ya esta agregada a esta carrera(ID: {$idCarrera})"
-            );
+            throw new MateriaAlreadyInCarreraException($idMateria, $idCarrera);
         }
 
         $this->repo->addMateriaToCarrera($idCarrera, $idMateria);
@@ -160,10 +157,7 @@ class CarreraService
         }
         $existe = $this->repo->isMateriaAdded($idCarrera, $idMateria);
         if (!$existe) {
-            throw new MateriaAlreadyEliminatedException(
-                "materia",
-                "La materia(ID: {$idMateria}) no pertenece a la carrera(ID: {$idCarrera})"
-            );
+            throw new MateriaAlreadyEliminatedException($idMateria, $idCarrera);
         }
         $this->repo->deleteMateriaFromCarrera($idCarrera, $idMateria);
     }

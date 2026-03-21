@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Exceptions;
 
-use App\Shared\Exceptions\EntityAlreadyExistsException;
+use App\Shared\Exceptions\AlreadyExistsException;
 
-class LibroAlreadyExistsException extends EntityAlreadyExistsException
+class LibroAlreadyExistsException extends AlreadyExistsException
 {
     public function __construct(int|string $value, string $field = 'articulo_id')
     {

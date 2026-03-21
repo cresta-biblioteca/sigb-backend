@@ -9,7 +9,7 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 
 beforeEach(function () {
     $this->repositoryMock = $this->createMock(ArticuloRepository::class);
@@ -116,7 +116,7 @@ test('lanza excepcion cuando intenta cambiar tipo_documento_id y esta vinculado 
 
     expect(fn () => $this->service->patchArticulo(12, [
         'tipo_documento_id' => 2,
-    ]))->toThrow(BusinessValidationException::class);
+    ]))->toThrow(BusinessRuleException::class);
 });
 
 test('elimina articulo exitosamente', function () {

@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Circulacion\Exceptions;
 
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 
-class ReservaNotFoundException extends EntityNotFoundException
+class ReservaNotFoundException extends NotFoundException
 {
     public function __construct(mixed $identifier)
     {

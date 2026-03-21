@@ -9,8 +9,8 @@ use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
-use App\Auth\Exception\UserAlreadyExistsException;
-use App\Auth\Exception\UserNotFoundException;
+use App\Auth\Exceptions\UserAlreadyExistsException;
+use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -41,11 +41,11 @@ class AuthService
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
         if ($this->authRepository->findByDni($request->getDni()) !== null) {
-            throw new UserAlreadyExistsException("User with DNI already exists");
+            throw new UserAlreadyExistsException('dni', $request->getDni());
         }
 
         if ($this->lectorRepository->existsByEmail($request->getEmail())) {
-            throw new UserAlreadyExistsException("User with email already exists");
+            throw new UserAlreadyExistsException('email', $request->getEmail());
         }
 
         $this->pdo->beginTransaction();
@@ -118,10 +118,10 @@ class AuthService
     {
         $user = $this->authRepository->findByDni($request->getDni());
         if ($user === null) {
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException($request->getDni());
         }
         if (!$this->passwordEncoder->verify($request->getPassword(), $user->getPassword())) {
-            throw new UserNotFoundException("Invalid credentials");
+            throw new UserNotFoundException($request->getDni());
         }
 
         $role = $this->roleRepository->findById($user->getRoleId());
@@ -148,17 +148,18 @@ class AuthService
     {
         $user = $this->authRepository->findById($userId);
         if ($user === null) {
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException($userId);
         }
 
         if (!$this->passwordEncoder->verify($request->getCurrentPassword(), $user->getPassword())) {
-            throw new UserNotFoundException("Current password is incorrect");
+            throw new UserNotFoundException($userId);
         }
 
         $newHashedPassword = $this->passwordEncoder->hash($request->getNewPassword());
         $this->authRepository->updatePassword($userId, $newHashedPassword);
     }
 
+    // TODO: re-implementar logica de generacion de tarjeta
     private function generarTarjetaId(): string
     {
         $maxIntentos = 10;

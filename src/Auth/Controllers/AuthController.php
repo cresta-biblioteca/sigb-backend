@@ -7,14 +7,12 @@ namespace App\Auth\Controllers;
 use App\Auth\Dtos\Request\ChangePasswordRequest;
 use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
-use App\Auth\Exception\UserAlreadyExistsException;
-use App\Auth\Exception\UserNotFoundException;
+use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Services\AuthService;
 use App\Auth\Validators\UserChangePasswordValidator;
 use App\Auth\Validators\UserLoginValidator;
 use App\Auth\Validators\UserRegisterValidator;
-use App\Shared\Exceptions\BusinessValidationException;
-use App\Shared\Exceptions\ValidationException;
+use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use DateTimeImmutable;
 use OpenApi\Attributes as OA;
@@ -74,7 +72,7 @@ readonly class AuthController
     public function createUser(): void
     {
         try {
-            $data = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR) ?? [];
 
             UserRegisterValidator::validate($data);
 
@@ -93,21 +91,8 @@ readonly class AuthController
 
             $response = $this->authService->register($request);
             JsonHelper::jsonResponse($response, 201);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
-            ], 400);
-        } catch (BusinessValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => $e->getMessage(),
-                'field' => $e->getField()
-            ], 422);
-        } catch (UserAlreadyExistsException $e) {
-            JsonHelper::jsonResponse(['message' => 'El usuario ya existe'], 409);
         } catch (Throwable $e) {
-            error_log('[AuthController::register] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            ExceptionHandler::handle($e, 'AuthController::createUser');
         }
     }
 
@@ -152,7 +137,7 @@ readonly class AuthController
     public function changePassword(): void
     {
         try {
-            $data = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR) ?? [];
             UserChangePasswordValidator::validate($data);
 
             $request = new ChangePasswordRequest(
@@ -162,19 +147,13 @@ readonly class AuthController
 
             $this->authService->changePassword($request, $_SERVER['USER_ID']);
             JsonHelper::jsonResponse(['message' => 'Contraseña actualizada correctamente'], 200);
-        } catch (ValidationException $e) {
-            JsonHelper::jsonResponse([
-                'message' => 'Datos de entrada no válidos',
-                'errors' => $e->getErrors()
-            ], 400);
         } catch (UserNotFoundException $e) {
-            JsonHelper::jsonResponse(['message' => 'Credenciales inválidas'], 401);
+            // 401 intencional: no confirmamos si el usuario existe o no
+            JsonHelper::jsonResponse([
+                'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'Credenciales inválidas'],
+            ], 401);
         } catch (Throwable $e) {
-            error_log('[AuthController::changePassword] '
-                . $e->getMessage()
-                . ' in ' . $e->getFile()
-                . ':' . $e->getLine());
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            ExceptionHandler::handle($e, 'AuthController::changePassword');
         }
     }
 
@@ -206,7 +185,7 @@ readonly class AuthController
     public function login(): void
     {
         try {
-            $data = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR) ?? [];
 
             UserLoginValidator::validate($data);
 
@@ -218,10 +197,12 @@ readonly class AuthController
             $response = $this->authService->login($request);
             JsonHelper::jsonResponse($response, 200);
         } catch (UserNotFoundException $e) {
-            JsonHelper::jsonResponse(['message' => 'Credenciales inválidas'], 401);
+            // 401 intencional: no confirmamos si el usuario existe o no
+            JsonHelper::jsonResponse([
+                'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'Credenciales inválidas'],
+            ], 401);
         } catch (Throwable $e) {
-            error_log('[AuthController::login] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            JsonHelper::jsonResponse(['message' => 'Error interno del servidor'], 500);
+            ExceptionHandler::handle($e, 'AuthController::login');
         }
     }
 }
