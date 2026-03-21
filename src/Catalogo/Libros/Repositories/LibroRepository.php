@@ -183,8 +183,13 @@ class LibroRepository extends Repository
      * @param array<string, mixed> $filters
      * @return Libro[]
      */
-    public function searchPaginated(array $filters, int $page, int $perPage, string $sortBy = 'titulo', string $sortDir = 'asc'): array
-    {
+    public function searchPaginated(
+        array $filters,
+        int $page,
+        int $perPage,
+        string $sortBy = 'titulo',
+        string $sortDir = 'asc'
+    ): array {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
         $offset = ($page - 1) * $perPage;

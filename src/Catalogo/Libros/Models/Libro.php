@@ -35,19 +35,18 @@ class Libro extends Entity
      * Crea un nuevo Libro (valida datos)
      */
     public static function create(
-        int     $articuloId,
+        int $articuloId,
         ?string $isbn = null,
         ?string $issn = null,
-        ?int    $paginas = null,
+        ?int $paginas = null,
         ?string $autor = null,
         ?string $autores = null,
         ?string $colaboradores = null,
         ?string $tituloInformativo = null,
-        ?int    $cdu = null,
+        ?int $cdu = null,
         ?string $editorial = null,
         ?string $lugarDePublicacion = null
-    ): self
-    {
+    ): self {
         $libro = new self();
         $libro->setArticuloId($articuloId);
         $libro->setIsbn($isbn);

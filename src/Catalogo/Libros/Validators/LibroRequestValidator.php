@@ -328,7 +328,9 @@ class LibroRequestValidator
         // Validar ordenamiento
         $allowedSortBy = ['titulo', 'autor', 'anio_publicacion', 'editorial', 'isbn', 'idioma', 'id'];
         if (isset($params['sort_by']) && !in_array($params['sort_by'], $allowedSortBy, true)) {
-            $errors['sort_by'] = ['El valor de sort_by no es válido. Valores permitidos: ' . implode(', ', $allowedSortBy)];
+            $errors['sort_by'] = [
+                'El valor de sort_by no es válido. Valores permitidos: ' . implode(', ', $allowedSortBy),
+            ];
         }
 
         if (isset($params['sort_dir']) && !in_array(strtolower((string) $params['sort_dir']), ['asc', 'desc'], true)) {
@@ -362,7 +364,8 @@ class LibroRequestValidator
 
     /**
      * Valida datos para operaciones PATCH (actualización parcial)
-     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo, cdu, paginas, editorial, lugar_de_publicacion
+     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo,
+     * cdu, paginas, editorial, lugar_de_publicacion
      * ISBN, ISSN y export_marc NO son modificables via PATCH
      * @param array<string, mixed> $data
      */

@@ -20,11 +20,10 @@ use PDO;
 readonly class LibroService
 {
     public function __construct(
-        private LibroRepository    $repository,
+        private LibroRepository $repository,
         private ArticuloRepository $articuloRepository,
-        private PDO                $pdo
-    )
-    {
+        private PDO $pdo
+    ) {
     }
 
     public function getById(int $id): LibroResponse
@@ -146,8 +145,13 @@ readonly class LibroService
         }
     }
 
-    public function searchPaginated(array $filters, int $page, int $perPage, string $sortBy = 'titulo', string $sortDir = 'asc'): array
-    {
+    public function searchPaginated(
+        array $filters,
+        int $page,
+        int $perPage,
+        string $sortBy = 'titulo',
+        string $sortDir = 'asc'
+    ): array {
         $page = max(1, $page);
         $perPage = max(1, min($perPage, 100));
 

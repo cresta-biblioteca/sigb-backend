@@ -28,7 +28,8 @@ class ArticuloRepository extends Repository
 
     public function insertArticulo(Articulo $articulo): Articulo
     {
-        $sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, descripcion, created_at, updated_at)
+        $sql = 'INSERT INTO articulo
+				(titulo, anio_publicacion, tipo_documento_id, idioma, descripcion, created_at, updated_at)
 				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, :descripcion, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Dtos\Request;
@@ -10,17 +11,16 @@ class PatchLibroRequest
     public function __construct(
         public readonly ?string $isbn = null,
         public readonly ?string $issn = null,
-        public readonly ?int    $paginas = null,
+        public readonly ?int $paginas = null,
         public readonly ?string $autor = null,
-        public readonly ?array  $autores = null,
-        public readonly ?array  $colaboradores = null,
+        public readonly ?array $autores = null,
+        public readonly ?array $colaboradores = null,
         public readonly ?string $tituloInformativo = null,
         public readonly ?string $cdu = null,
         public readonly ?string $editorial = null,
         public readonly ?string $lugarDePublicacion = null,
-        public array            $provided
-    )
-    {
+        public array $provided
+    ) {
         $this->provided = $provided;
     }
 
@@ -41,7 +41,8 @@ class PatchLibroRequest
         );
     }
 
-    // Para usar este metodo hacer: paginas: $request->isProvided('paginas') ? $request->getPaginas() : $existing->getPaginas()
+    // Para usar este metodo hacer:
+    // paginas: $request->isProvided('paginas') ? $request->getPaginas() : $existing->getPaginas()
     public function isProvided(string $field): bool
     {
         return in_array($field, $this->provided);
