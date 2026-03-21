@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Exceptions;
 
-use App\Shared\Exceptions\EntityAlreadyExistsException;
+use App\Shared\Exceptions\AlreadyExistsException;
 
-class ArticuloAlreadyExistsException extends EntityAlreadyExistsException
+class ArticuloAlreadyExistsException extends AlreadyExistsException
 {
     public function __construct(string $field, mixed $value)
     {

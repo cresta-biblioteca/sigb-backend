@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Exceptions;
 
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 
-class MateriaNotFoundException extends EntityNotFoundException
+class MateriaNotFoundException extends NotFoundException
 {
     public function __construct(mixed $identifier)
     {

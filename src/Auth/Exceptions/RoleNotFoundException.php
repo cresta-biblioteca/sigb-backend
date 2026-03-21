@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Lectores\Exceptions;
+namespace App\Auth\Exceptions;
 
 use App\Shared\Exceptions\NotFoundException;
 
-class CarreraNotFoundException extends NotFoundException
+class RoleNotFoundException extends NotFoundException
 {
     public function __construct(mixed $identifier)
     {
-        parent::__construct("Carrera", $identifier);
+        parent::__construct('Role', $identifier);
     }
 }

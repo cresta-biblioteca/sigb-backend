@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Exceptions;
 
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 
-class LibroNotFoundException extends EntityNotFoundException
+class LibroNotFoundException extends NotFoundException
 {
     public function __construct(int $articuloId)
     {

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Shared\Exceptions;
 
-use Exception;
-
-class ValidationException extends Exception
+/**
+ * Excepcion utilizada para errores de validación de campos en los requests.
+ *
+ * Se deben mapear los campos de error al array $errors y devolver la informacion al cliente
+ */
+class ValidationException extends AppException
 {
     /** @var array<string, string[]> */
     private array $errors;
@@ -18,6 +21,21 @@ class ValidationException extends Exception
     {
         parent::__construct($message);
         $this->errors = $errors;
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'VALIDATION_ERROR';
+    }
+
+    public function getHttpStatus(): int
+    {
+        return 400;
+    }
+
+    public function getSafeMessage(): string
+    {
+        return 'Los datos ingresados no son válidos';
     }
 
     /**

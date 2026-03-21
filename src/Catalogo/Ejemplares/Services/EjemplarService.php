@@ -9,9 +9,9 @@ use App\Catalogo\Ejemplares\Dtos\Response\EjemplarResponse;
 use App\Catalogo\Ejemplares\Mappers\EjemplarMapper;
 use App\Catalogo\Ejemplares\Models\Ejemplar;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
-use App\Shared\Exceptions\BusinessValidationException;
-use App\Shared\Exceptions\EntityAlreadyExistsException;
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\AlreadyExistsException;
+use App\Shared\Exceptions\BusinessRuleException;
+use App\Shared\Exceptions\NotFoundException;
 
 class EjemplarService
 {
@@ -37,7 +37,7 @@ class EjemplarService
     public function createEjemplar(EjemplarRequest $request): EjemplarResponse
     {
         if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras())) {
-            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
+            throw new AlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
         }
 
         $ejemplar = Ejemplar::create(
@@ -56,14 +56,15 @@ class EjemplarService
         $ejemplar = $this->findOrFail($id);
 
         if ($request->getArticuloId() !== $ejemplar->getArticuloId()) {
-            throw BusinessValidationException::forField(
-                'articulo_id',
-                'El articulo_id del ejemplar no puede ser modificado'
+            throw new BusinessRuleException(
+                'BUSINESS_RULE_VIOLATION',
+                'El articulo_id del ejemplar no puede ser modificado',
+                field: 'articulo_id'
             );
         }
 
         if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras(), $id)) {
-            throw new EntityAlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
+            throw new AlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
         }
 
         $ejemplar->setCodigoBarras($request->getCodigoBarras());
@@ -138,7 +139,7 @@ class EjemplarService
         $ejemplar = $this->ejemplarRepository->findById($id);
 
         if ($ejemplar === null) {
-            throw new EntityNotFoundException('Ejemplar', $id);
+            throw new NotFoundException('Ejemplar', $id);
         }
 
         return $ejemplar;
