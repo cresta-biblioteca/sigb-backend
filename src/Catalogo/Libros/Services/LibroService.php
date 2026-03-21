@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Services;
 
-use App\Catalogo\Libros\Dtos\Request\CrearLibroRequest;
+use App\Catalogo\Articulos\Models\Articulo;
+use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Libros\Dtos\Request\CreateLibroRequest;
 use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
@@ -13,11 +15,14 @@ use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Shared\Exceptions\BusinessRuleException;
+use PDO;
 
-class LibroService
+readonly class LibroService
 {
     public function __construct(
-        private readonly LibroRepository $repository
+        private LibroRepository    $repository,
+        private ArticuloRepository $articuloRepository,
+        private PDO                $pdo
     )
     {
     }
@@ -34,36 +39,57 @@ class LibroService
     }
 
     /**
-     * Crea un nuevo libro
+     * Crea un nuevo libro junto con su artículo en una sola transacción
      */
-    public function create(CrearLibroRequest $request): LibroResponse
+    public function create(CreateLibroRequest $request): LibroResponse
     {
-        $this->validateIsbnIssnExclusivity($request->getIsbn(), $request->getIssn());
+        $this->validateIsbnIssnExclusivity($request->isbn, $request->issn);
 
-        if ($request->getIsbn() !== null && $this->repository->existsByIsbn($request->getIsbn())) {
-            throw new LibroAlreadyExistsException($request->getIsbn(), 'isbn');
+        if ($request->isbn !== null && $this->repository->existsByIsbn($request->isbn)) {
+            throw new LibroAlreadyExistsException($request->isbn, 'isbn');
         }
 
-        if ($request->getIssn() !== null && $this->repository->existsByIssn($request->getIssn())) {
-            throw new LibroAlreadyExistsException($request->getIssn(), 'issn');
+        if ($request->issn !== null && $this->repository->existsByIssn($request->issn)) {
+            throw new LibroAlreadyExistsException($request->issn, 'issn');
         }
 
-        $libro = Libro::create(
-            articuloId: $request->getArticuloId(),
-            exportMarc: $request->getExportMarc(),
-            isbn: $request->getIsbn(),
-            issn: $request->getIssn(),
-            paginas: $request->getPaginas(),
-            autor: $request->getAutor(),
-            autores: $request->getAutores(),
-            colaboradores: $request->getColaboradores(),
-            tituloInformativo: $request->getTituloInformativo(),
-            cdu: $request->getCdu(),
-            editorial: $request->getEditorial(),
-            lugarDePublicacion: $request->getLugarDePublicacion()
-        );
+        $this->pdo->beginTransaction();
 
-        $savedLibro = $this->repository->insertLibro($libro);
+        try {
+            $articulo = Articulo::create(
+                titulo: $request->titulo,
+                anioPublicacion: $request->anioPublicacion,
+                tipoDocumentoId: $request->tipoDocumentoId,
+                idioma: $request->idioma,
+                descripcion: $request->descripcion
+            );
+
+            $savedArticulo = $this->articuloRepository->insertArticulo($articulo);
+
+            $libro = Libro::create(
+                articuloId: $savedArticulo->getId(),
+                isbn: $request->isbn,
+                issn: $request->issn,
+                paginas: $request->paginas,
+                autor: $request->autor,
+                autores: $request->autores,
+                colaboradores: $request->colaboradores,
+                tituloInformativo: $request->tituloInformativo,
+                cdu: $request->cdu,
+                editorial: $request->editorial,
+                lugarDePublicacion: $request->lugarDePublicacion
+            );
+
+            $mark21 = 'archivo en mark 21';
+            $libro->setExportMarc($mark21);
+
+            $savedLibro = $this->repository->insertLibro($libro);
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
 
         return LibroMapper::toLibroResponse($savedLibro);
     }

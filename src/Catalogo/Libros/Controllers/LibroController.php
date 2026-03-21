@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Controllers;
 
-use App\Catalogo\Libros\Dtos\Request\CrearLibroRequest;
-use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
+use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
+use App\Catalogo\Libros\Dtos\Request\CreateLibroRequest;
 use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
 use App\Catalogo\Libros\Services\LibroService;
-use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Validators\LibroRequestValidator;
-use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use Throwable;
 
-class LibroController
+readonly class LibroController
 {
     public function __construct(
-        private LibroService    $libroService,
-        private ArticuloService $articuloService
+        private LibroService $libroService
     )
     {
     }
@@ -40,7 +37,7 @@ class LibroController
 
     /**
      * POST /libros
-     * Crea un libro completo con artículo y libro en una sola operación
+     * Crea un libro completo con artículo y libro en una sola transacción
      */
     public function create(): void
     {
@@ -53,32 +50,9 @@ class LibroController
             ArticuloRequestValidator::validate($articuloData);
             LibroRequestValidator::validate($libroData);
 
-            $articuloRequest = new ArticuloRequest(
-                titulo: $articuloData['titulo'],
-                anioPublicacion: (int)$articuloData['anio_publicacion'],
-                tipoDocumentoId: (int)$articuloData['tipo_documento_id'],
-                idioma: $articuloData['idioma'] ?? 'es',
-                descripcion: $articuloData['descripcion'] ?? null
-            );
+            $request = CreateLibroRequest::fromArray($articuloData, $libroData);
 
-            $articuloResponse = $this->articuloService->create($articuloRequest);
-
-            $libroRequest = new CrearLibroRequest(
-                articuloId: $articuloResponse->getId(),
-                exportMarc: $libroData['export_marc'],
-                isbn: $libroData['isbn'] ?? null,
-                issn: $libroData['issn'] ?? null,
-                paginas: isset($libroData['paginas']) ? (int)$libroData['paginas'] : null,
-                autor: $libroData['autor'] ?? null,
-                autores: $libroData['autores'] ?? null,
-                colaboradores: $libroData['colaboradores'] ?? null,
-                tituloInformativo: $libroData['titulo_informativo'] ?? null,
-                cdu: isset($libroData['cdu']) ? (int)$libroData['cdu'] : null,
-                editorial: $libroData['editorial'] ?? null,
-                lugarDePublicacion: $libroData['lugar_de_publicacion'] ?? null
-            );
-
-            $libro = $this->libroService->create($libroRequest);
+            $libro = $this->libroService->create($request);
 
             JsonHelper::jsonResponse(['data' => $libro, 'message' => 'Libro creado exitosamente'], 201);
         } catch (Throwable $e) {
