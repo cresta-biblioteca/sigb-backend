@@ -17,8 +17,7 @@ readonly class LibroController
 {
     public function __construct(
         private LibroService $libroService
-    )
-    {
+    ) {
     }
 
     /**

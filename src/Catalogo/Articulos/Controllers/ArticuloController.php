@@ -84,7 +84,6 @@ class ArticuloController
         }
     }
 
-    // Keep all OpenApi attributes and method signatures for addTemaToArticulo, getTemaTitlesByArticulo, deleteTemaFromArticulo EXACTLY as they were, just replace the catch blocks
 
     #[OA\Post(
         path: '/articulos/{idArticulo}/temas/{idTema}',

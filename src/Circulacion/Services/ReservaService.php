@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Circulacion\Services;
@@ -19,12 +20,11 @@ use DateTimeImmutable;
 readonly class ReservaService
 {
     public function __construct(
-        private ReservaRepository  $reservaRepository,
+        private ReservaRepository $reservaRepository,
         private PrestamoRepository $prestamoRepository,
         private EjemplarRepository $ejemplarRepository,
-        private LibroRepository    $libroRepository
-    )
-    {
+        private LibroRepository $libroRepository
+    ) {
     }
 
     public function getReservaById(int $reservaId): ReservaResponse
@@ -47,10 +47,12 @@ readonly class ReservaService
         }
 
         // Para que el usuario no acapare el stock
-        if (
-            $this->reservaRepository->lectorTieneReservaPendienteParaArticulo($request->lectorId, $request->articuloId)
-            || $this->prestamoRepository->lectorTienePrestamoActivoParaArticulo($request->lectorId, $request->articuloId)
-        ) {
+        $tieneReserva = $this->reservaRepository
+            ->lectorTieneReservaPendienteParaArticulo($request->lectorId, $request->articuloId);
+        $tienePrestamo = $this->prestamoRepository
+            ->lectorTienePrestamoActivoParaArticulo($request->lectorId, $request->articuloId);
+
+        if ($tieneReserva || $tienePrestamo) {
             throw new LectorYaTieneReservaOPrestamoException($request->lectorId, $request->articuloId);
         }
 
@@ -59,7 +61,12 @@ readonly class ReservaService
         if ($ejemplarDisponible !== null) {
             // Hay ejemplar disponible: se asigna de inmediato con fecha de vencimiento
             $fechaVencimiento = HorarioBiblioteca::calcularVencimientoReserva(new DateTimeImmutable());
-            $reserva = Reserva::create($request->lectorId, $request->articuloId, $ejemplarDisponible->getId(), $fechaVencimiento);
+            $reserva = Reserva::create(
+                $request->lectorId,
+                $request->articuloId,
+                $ejemplarDisponible->getId(),
+                $fechaVencimiento
+            );
         } else {
             // Sin ejemplar disponible: reserva en cola, ejemplar y vencimiento se asignan luego
             $reserva = Reserva::create($request->lectorId, $request->articuloId);

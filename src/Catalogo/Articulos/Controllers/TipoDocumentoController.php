@@ -216,7 +216,8 @@ class TipoDocumentoController
         try {
             $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
             TipoDocumentoRequestValidator::validateInputCreate($input);
-            JsonHelper::jsonResponse($this->service->createTipoDocumento(TipoDocumentoMapper::fromArrayToCreate($input)), 201);
+            $tipoDocumento = $this->service->createTipoDocumento(TipoDocumentoMapper::fromArrayToCreate($input));
+            JsonHelper::jsonResponse($tipoDocumento, 201);
         } catch (Throwable $e) {
             ExceptionHandler::handle($e, 'TipoDocumentoController::createTipoDocumento');
         }
@@ -296,7 +297,11 @@ class TipoDocumentoController
             TipoDocumentoRequestValidator::validateId($id);
             $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
             TipoDocumentoRequestValidator::validateInputUpdate($input);
-            JsonHelper::jsonResponse($this->service->updateTipoDocumento((int) $id, TipoDocumentoMapper::fromArrayToUpdate($input)), 200);
+            $tipoDocumento = $this->service->updateTipoDocumento(
+                (int) $id,
+                TipoDocumentoMapper::fromArrayToUpdate($input)
+            );
+            JsonHelper::jsonResponse($tipoDocumento, 200);
         } catch (Throwable $e) {
             ExceptionHandler::handle($e, 'TipoDocumentoController::updateTipoDocumento');
         }

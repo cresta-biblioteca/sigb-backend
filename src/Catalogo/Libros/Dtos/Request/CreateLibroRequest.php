@@ -9,28 +9,26 @@ readonly class CreateLibroRequest
     private function __construct(
         // Articulo fields
         public string $titulo,
-        public int     $anioPublicacion,
-        public int     $tipoDocumentoId,
-        public string  $idioma,
+        public int $anioPublicacion,
+        public int $tipoDocumentoId,
+        public string $idioma,
         // Libro fields
-        public string  $exportMarc,
+        public string $exportMarc,
         public ?string $descripcion,
         public ?string $isbn,
         public ?string $issn,
-        public ?int    $paginas,
+        public ?int $paginas,
         public ?string $autor,
         public ?string $autores,
         public ?string $colaboradores,
         public ?string $tituloInformativo,
-        public ?int    $cdu,
+        public ?int $cdu,
         public ?string $editorial,
         public ?string $lugarDePublicacion
-    )
-    {
+    ) {
     }
 
-    public
-    static function fromArray(array $articuloData, array $libroData): CreateLibroRequest
+    public static function fromArray(array $articuloData, array $libroData): CreateLibroRequest
     {
         return new self(
             titulo: $articuloData['titulo'],

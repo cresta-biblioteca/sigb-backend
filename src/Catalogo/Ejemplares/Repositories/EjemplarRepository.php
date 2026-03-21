@@ -9,7 +9,6 @@ use App\Shared\Repository;
 
 class EjemplarRepository extends Repository
 {
-
     protected function getTableName(): string
     {
         return 'ejemplar';
@@ -22,7 +21,8 @@ class EjemplarRepository extends Repository
 
     public function insertEjemplar(Ejemplar $ejemplar): Ejemplar
     {
-        $sql = 'INSERT INTO ejemplar (codigo_barras, habilitado, articulo_id, signatura_topografica, created_at, updated_at)
+        $sql = 'INSERT INTO ejemplar
+				(codigo_barras, habilitado, articulo_id, signatura_topografica, created_at, updated_at)
 				VALUES (:codigo_barras, :habilitado, :articulo_id, :signatura_topografica, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
