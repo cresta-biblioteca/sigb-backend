@@ -7,24 +7,17 @@ use App\Catalogo\Libros\Services\LibroService;
 use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 
+/**
+ * @var \Bramus\Router\Router $router
+ */
+
 $libroRepository = new LibroRepository();
 $articuloRepository = new ArticuloRepository();
-
 $libroService = new LibroService($libroRepository);
 $articuloService = new ArticuloService($articuloRepository);
-
 $libroController = new LibroController($libroService, $articuloService);
 
 $router->get('/libros', function () use ($libroController) {
-    $libroController->getAll();
-});
-
-// Rutas de búsqueda (ANTES de /libros/{id} para evitar conflictos)
-$router->get('/libros/search', function () use ($libroController) {
-    $libroController->search();
-});
-
-$router->get('/libros/search/paginated', function () use ($libroController) {
     $libroController->searchPaginated();
 });
 

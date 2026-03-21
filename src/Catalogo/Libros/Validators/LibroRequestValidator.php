@@ -152,7 +152,9 @@ class LibroRequestValidator
             'materia_ids',
             'materias',
             'page',
-            'per_page'
+            'per_page',
+            'sort_by',
+            'sort_dir',
         ];
 
         // Validar que solo se usen parámetros permitidos
@@ -321,6 +323,16 @@ class LibroRequestValidator
                     }
                 }
             }
+        }
+
+        // Validar ordenamiento
+        $allowedSortBy = ['titulo', 'autor', 'anio_publicacion', 'editorial', 'isbn', 'idioma', 'id'];
+        if (isset($params['sort_by']) && !in_array($params['sort_by'], $allowedSortBy, true)) {
+            $errors['sort_by'] = ['El valor de sort_by no es válido. Valores permitidos: ' . implode(', ', $allowedSortBy)];
+        }
+
+        if (isset($params['sort_dir']) && !in_array(strtolower((string) $params['sort_dir']), ['asc', 'desc'], true)) {
+            $errors['sort_dir'] = ['El valor de sort_dir debe ser "asc" o "desc"'];
         }
 
         // Validar paginación

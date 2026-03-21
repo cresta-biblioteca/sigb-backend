@@ -52,32 +52,6 @@ class LibroRepository extends Repository
         return $this->hydrateLibroWithArticulo($row);
     }
 
-    /**
-     * @return Libro[]
-     */
-    public function findAll(): array
-    {
-        $sql = "SELECT
-                l.*,
-                a.id AS a_id,
-                a.titulo AS a_titulo,
-                a.anio_publicacion AS a_anio_publicacion,
-                a.tipo_documento_id AS a_tipo_documento_id,
-                a.idioma AS a_idioma,
-                a.descripcion AS a_descripcion
-            FROM libro l
-            INNER JOIN articulo a ON a.id = l.articulo_id";
-
-        $stmt = $this->pdo->query($sql);
-        $libros = [];
-
-        while ($row = $stmt->fetch()) {
-            $libros[] = $this->hydrateLibroWithArticulo($row);
-        }
-
-        return $libros;
-    }
-
     public function delete(int $id): bool
     {
         $sql = "DELETE FROM libro WHERE articulo_id = :id";
@@ -195,43 +169,21 @@ class LibroRepository extends Repository
         return $stmt->fetch() !== false;
     }
 
-    public function search(array $filters): array
-    {
-        [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
-
-        $sql = "SELECT
-                l.*,
-                a.id AS a_id,
-                a.titulo AS a_titulo,
-                a.anio_publicacion AS a_anio_publicacion,
-                a.tipo_documento_id AS a_tipo_documento_id,
-                a.idioma AS a_idioma,
-                a.descripcion AS a_descripcion
-            FROM libro l
-            INNER JOIN articulo a ON a.id = l.articulo_id";
-
-        if ($conditions) {
-            $sql .= " WHERE " . implode(' AND ', $conditions);
-        }
-
-        $sql .= " ORDER BY a.titulo, l.articulo_id";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-
-        $libros = [];
-        while ($row = $stmt->fetch()) {
-            $libros[] = $this->hydrateLibroWithArticulo($row);
-        }
-
-        return $libros;
-    }
+    private const SORTABLE_COLUMNS = [
+        'titulo'           => 'a.titulo',
+        'autor'            => 'l.autor',
+        'anio_publicacion' => 'a.anio_publicacion',
+        'editorial'        => 'l.editorial',
+        'isbn'             => 'l.isbn',
+        'idioma'           => 'a.idioma',
+        'id'               => 'l.articulo_id',
+    ];
 
     /**
      * @param array<string, mixed> $filters
      * @return Libro[]
      */
-    public function searchPaginated(array $filters, int $page, int $perPage): array
+    public function searchPaginated(array $filters, int $page, int $perPage, string $sortBy = 'titulo', string $sortDir = 'asc'): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
@@ -256,7 +208,9 @@ class LibroRepository extends Repository
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        $sql .= " ORDER BY a.titulo, l.articulo_id LIMIT :limit OFFSET :offset";
+        $column    = self::SORTABLE_COLUMNS[$sortBy] ?? 'a.titulo';
+        $direction = strtoupper($sortDir) === 'DESC' ? 'DESC' : 'ASC';
+        $sql .= " ORDER BY {$column} {$direction}, l.articulo_id {$direction} LIMIT :limit OFFSET :offset";
 
         $stmt = $this->pdo->prepare($sql);
 
@@ -283,6 +237,7 @@ class LibroRepository extends Repository
     {
         [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
 
+        // La query hacer el INNER JOIN debido a que para las conditions es necesario obtener info de articulo
         $sql = "SELECT COUNT(*)
             FROM libro l
             INNER JOIN articulo a ON a.id = l.articulo_id";
