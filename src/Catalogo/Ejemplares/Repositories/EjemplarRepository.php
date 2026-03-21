@@ -22,14 +22,15 @@ class EjemplarRepository extends Repository
 
     public function insertEjemplar(Ejemplar $ejemplar): Ejemplar
     {
-        $sql = 'INSERT INTO ejemplar (codigo_barras, habilitado, articulo_id, created_at, updated_at)
-				VALUES (:codigo_barras, :habilitado, :articulo_id, NOW(), NOW())';
+        $sql = 'INSERT INTO ejemplar (codigo_barras, habilitado, articulo_id, signatura_topografica, created_at, updated_at)
+				VALUES (:codigo_barras, :habilitado, :articulo_id, :signatura_topografica, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
             'codigo_barras' => $ejemplar->getCodigoBarras(),
             'habilitado' => $ejemplar->isHabilitado() ? 1 : 0,
             'articulo_id' => $ejemplar->getArticuloId(),
+            'signatura_topografica' => $ejemplar->getSignaturaTopografica(),
         ]);
 
         if ($success === false || $stmt->rowCount() === 0) {
@@ -47,6 +48,7 @@ class EjemplarRepository extends Repository
 				SET codigo_barras = :codigo_barras,
 					habilitado = :habilitado,
 					articulo_id = :articulo_id,
+					signatura_topografica = :signatura_topografica,
 					updated_at = NOW()
 				WHERE id = :id';
 
@@ -55,6 +57,7 @@ class EjemplarRepository extends Repository
             'codigo_barras' => $ejemplar->getCodigoBarras(),
             'habilitado' => $ejemplar->isHabilitado() ? 1 : 0,
             'articulo_id' => $ejemplar->getArticuloId(),
+            'signatura_topografica' => $ejemplar->getSignaturaTopografica(),
             'id' => $ejemplar->getId(),
         ]);
 

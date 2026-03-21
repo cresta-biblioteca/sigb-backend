@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Controllers;
 
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
+use App\Catalogo\Libros\Dtos\Request\CrearLibroRequest;
 use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
 use App\Catalogo\Libros\Services\LibroService;
 use App\Catalogo\Articulos\Services\ArticuloService;
@@ -68,20 +68,25 @@ class LibroController
                 titulo: $articuloData['titulo'],
                 anioPublicacion: (int) $articuloData['anio_publicacion'],
                 tipoDocumentoId: (int) $articuloData['tipo_documento_id'],
-                idioma: $articuloData['idioma'] ?? 'es'
+                idioma: $articuloData['idioma'] ?? 'es',
+                descripcion: $articuloData['descripcion'] ?? null
             );
 
             $articuloResponse = $this->articuloService->create($articuloRequest);
 
-            $libroRequest = new LibroRequest(
+            $libroRequest = new CrearLibroRequest(
                 articuloId: $articuloResponse->getId(),
-                isbn: $libroData['isbn'],
                 exportMarc: $libroData['export_marc'],
+                isbn: $libroData['isbn'] ?? null,
+                issn: $libroData['issn'] ?? null,
+                paginas: isset($libroData['paginas']) ? (int) $libroData['paginas'] : null,
                 autor: $libroData['autor'] ?? null,
                 autores: $libroData['autores'] ?? null,
                 colaboradores: $libroData['colaboradores'] ?? null,
                 tituloInformativo: $libroData['titulo_informativo'] ?? null,
-                cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null
+                cdu: isset($libroData['cdu']) ? (int) $libroData['cdu'] : null,
+                editorial: $libroData['editorial'] ?? null,
+                lugarDePublicacion: $libroData['lugar_de_publicacion'] ?? null
             );
 
             $libro = $this->libroService->create($libroRequest);
@@ -104,15 +109,19 @@ class LibroController
 
             LibroRequestValidator::validatePatch($input);
 
-            $request = new LibroRequest(
+            $request = new CrearLibroRequest(
                 articuloId: 0,
-                isbn: '',
                 exportMarc: '',
+                isbn: null,
+                issn: null,
+                paginas: isset($input['paginas']) ? (int) $input['paginas'] : null,
                 autor: $input['autor'] ?? null,
                 autores: $input['autores'] ?? null,
                 colaboradores: $input['colaboradores'] ?? null,
                 tituloInformativo: $input['titulo_informativo'] ?? null,
-                cdu: isset($input['cdu']) ? (int) $input['cdu'] : null
+                cdu: isset($input['cdu']) ? (int) $input['cdu'] : null,
+                editorial: $input['editorial'] ?? null,
+                lugarDePublicacion: $input['lugar_de_publicacion'] ?? null
             );
 
             $response = $this->libroService->updateLibro((int) $id, $request);

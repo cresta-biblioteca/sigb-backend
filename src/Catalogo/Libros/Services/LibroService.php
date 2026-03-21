@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Services;
 
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
+use App\Catalogo\Libros\Dtos\Request\CrearLibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
+use App\Shared\Exceptions\BusinessRuleException;
 
 class LibroService
 {
@@ -42,21 +43,31 @@ class LibroService
     /**
      * Crea un nuevo libro
      */
-    public function create(LibroRequest $request): LibroResponse
+    public function create(CrearLibroRequest $request): LibroResponse
     {
-        if ($this->repository->existsByIsbn($request->getIsbn())) {
+        $this->validateIsbnIssnExclusivity($request->getIsbn(), $request->getIssn());
+
+        if ($request->getIsbn() !== null && $this->repository->existsByIsbn($request->getIsbn())) {
             throw new LibroAlreadyExistsException($request->getIsbn(), 'isbn');
         }
 
+        if ($request->getIssn() !== null && $this->repository->existsByIssn($request->getIssn())) {
+            throw new LibroAlreadyExistsException($request->getIssn(), 'issn');
+        }
+
         $libro = Libro::create(
-            $request->getArticuloId(),
-            $request->getIsbn(),
-            $request->getExportMarc(),
-            $request->getAutor(),
-            $request->getAutores(),
-            $request->getColaboradores(),
-            $request->getTituloInformativo(),
-            $request->getCdu()
+            articuloId: $request->getArticuloId(),
+            exportMarc: $request->getExportMarc(),
+            isbn: $request->getIsbn(),
+            issn: $request->getIssn(),
+            paginas: $request->getPaginas(),
+            autor: $request->getAutor(),
+            autores: $request->getAutores(),
+            colaboradores: $request->getColaboradores(),
+            tituloInformativo: $request->getTituloInformativo(),
+            cdu: $request->getCdu(),
+            editorial: $request->getEditorial(),
+            lugarDePublicacion: $request->getLugarDePublicacion()
         );
 
         $savedLibro = $this->repository->insertLibro($libro);
@@ -64,7 +75,7 @@ class LibroService
         return LibroMapper::toLibroResponse($savedLibro);
     }
 
-    public function updateLibro(int $id, LibroRequest $request): LibroResponse
+    public function updateLibro(int $id, CrearLibroRequest $request): LibroResponse
     {
         // Obtener libro existente para verificar que existe y preservar inmutables
         $existing = $this->repository->findById($id);
@@ -75,14 +86,18 @@ class LibroService
 
         // Preservar campos inmutables del libro existente, usar campos editables del request
         $libro = Libro::create(
-            $existing->getArticuloId(), // Inmutable - del existente
-            $existing->getIsbn(), // Inmutable - del existente
-            $existing->getExportMarc(), // Inmutable - del existente
-            $request->getAutor() ?? $existing->getAutor(), // Editable - del request o existente si no se proporciona
-            $request->getAutores() ?? $existing->getAutores(),
-            $request->getColaboradores() ?? $existing->getColaboradores(),
-            $request->getTituloInformativo() ?? $existing->getTituloInformativo(),
-            $request->getCdu() ?? $existing->getCdu()
+            articuloId: $existing->getArticuloId(),
+            exportMarc: $existing->getExportMarc(),
+            isbn: $existing->getIsbn(),
+            issn: $existing->getIssn(),
+            paginas: $request->getPaginas() ?? $existing->getPaginas(),
+            autor: $request->getAutor() ?? $existing->getAutor(),
+            autores: $request->getAutores() ?? $existing->getAutores(),
+            colaboradores: $request->getColaboradores() ?? $existing->getColaboradores(),
+            tituloInformativo: $request->getTituloInformativo() ?? $existing->getTituloInformativo(),
+            cdu: $request->getCdu() ?? $existing->getCdu(),
+            editorial: $request->getEditorial() ?? $existing->getEditorial(),
+            lugarDePublicacion: $request->getLugarDePublicacion() ?? $existing->getLugarDePublicacion()
         );
 
         $updated = $this->repository->updateLibro($id, $libro);
@@ -109,6 +124,17 @@ class LibroService
         return array_map(fn($libro) => LibroMapper::toLibroResponse($libro), $libros);
     }
 
+
+    private function validateIsbnIssnExclusivity(?string $isbn, ?string $issn): void
+    {
+        if ($isbn !== null && $issn !== null) {
+            throw new BusinessRuleException(
+                'BUSINESS_RULE_VIOLATION',
+                'Un libro no puede tener ISBN y ISSN a la vez',
+                field: 'isbn'
+            );
+        }
+    }
 
     public function searchPaginated(array $filters, int $page, int $perPage): array
     {

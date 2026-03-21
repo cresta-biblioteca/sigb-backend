@@ -9,14 +9,15 @@ use App\Shared\Exceptions\ValidationException;
 class LibroRequestValidator
 {
     private const ISBN_PATTERN = '/^\d{10}(\d{3})?$/';
+    private const ISSN_PATTERN = '/^\d{4}-?\d{3}[\dXx]$/';
     private const MAX_TEXT_LENGTH = 255;
+    private const MAX_TEXT_LENGTH_200 = 200;
     private const MIN_CDU = 0;
     private const MAX_CDU = 999;
     private const MIN_YEAR = 1000;
 
     /** @var array<int, string> */
     private const REQUIRED_FIELDS = [
-        'isbn',
         'export_marc',
     ];
 
@@ -37,10 +38,30 @@ class LibroRequestValidator
             throw new ValidationException($errors);
         }
 
-        if (!is_string($data['isbn'])) {
-            $errors['isbn'] = ['El campo isbn debe ser un string'];
-        } elseif (!preg_match(self::ISBN_PATTERN, $data['isbn'])) {
-            $errors['isbn'] = ['El formato del ISBN no es válido. Debe tener 10 o 13 dígitos.'];
+        // Validar ISBN (opcional)
+        if (isset($data['isbn']) && $data['isbn'] !== null) {
+            if (!is_string($data['isbn'])) {
+                $errors['isbn'] = ['El campo isbn debe ser un string'];
+            } elseif (!preg_match(self::ISBN_PATTERN, $data['isbn'])) {
+                $errors['isbn'] = ['El formato del ISBN no es válido. Debe tener 10 o 13 dígitos.'];
+            }
+        }
+
+        // Validar ISSN (opcional)
+        if (isset($data['issn']) && $data['issn'] !== null) {
+            if (!is_string($data['issn'])) {
+                $errors['issn'] = ['El campo issn debe ser un string'];
+            } elseif (!preg_match(self::ISSN_PATTERN, $data['issn'])) {
+                $errors['issn'] = ['El formato del ISSN no es válido. Debe tener el formato XXXX-XXXX.'];
+            }
+        }
+
+        // Regla de negocio: no puede tener ISBN y ISSN a la vez
+        if (
+            isset($data['isbn']) && $data['isbn'] !== null
+            && isset($data['issn']) && $data['issn'] !== null
+        ) {
+            $errors['isbn'] = ['Un libro no puede tener ISBN y ISSN a la vez'];
         }
 
         if (!is_string($data['export_marc'])) {
@@ -50,39 +71,36 @@ class LibroRequestValidator
              ' caracteres'];
         }
 
-        // Validaciones opcionales
-        if (isset($data['autor']) && $data['autor'] !== null) {
-            if (!is_string($data['autor'])) {
-                $errors['autor'] = ['El campo autor debe ser un string'];
-            } elseif (mb_strlen(trim($data['autor'])) > self::MAX_TEXT_LENGTH) {
-                $errors['autor'] = ['El campo autor no puede tener más de ' . self::MAX_TEXT_LENGTH . ' caracteres'];
+        // Validar paginas (opcional)
+        if (isset($data['paginas']) && $data['paginas'] !== null) {
+            if (!is_int($data['paginas']) && !is_numeric($data['paginas'])) {
+                $errors['paginas'] = ['El campo paginas debe ser un número entero'];
+            } elseif ((int) $data['paginas'] < 1) {
+                $errors['paginas'] = ['El campo paginas debe ser un entero positivo'];
             }
         }
 
-        if (isset($data['autores']) && $data['autores'] !== null) {
-            if (!is_string($data['autores'])) {
-                $errors['autores'] = ['El campo autores debe ser un string'];
-            } elseif (mb_strlen(trim($data['autores'])) > self::MAX_TEXT_LENGTH) {
-                $errors['autores'] = ['El campo autores no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                 ' caracteres'];
+        // Validaciones opcionales de texto
+        foreach (['autor', 'autores', 'colaboradores', 'titulo_informativo'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null) {
+                if (!is_string($data[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH) {
+                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                     " caracteres"];
+                }
             }
         }
 
-        if (isset($data['colaboradores']) && $data['colaboradores'] !== null) {
-            if (!is_string($data['colaboradores'])) {
-                $errors['colaboradores'] = ['El campo colaboradores debe ser un string'];
-            } elseif (mb_strlen(trim($data['colaboradores'])) > self::MAX_TEXT_LENGTH) {
-                $errors['colaboradores'] = ['El campo colaboradores no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                 ' caracteres'];
-            }
-        }
-
-        if (isset($data['titulo_informativo']) && $data['titulo_informativo'] !== null) {
-            if (!is_string($data['titulo_informativo'])) {
-                $errors['titulo_informativo'] = ['El campo titulo_informativo debe ser un string'];
-            } elseif (mb_strlen(trim($data['titulo_informativo'])) > self::MAX_TEXT_LENGTH) {
-                $errors['titulo_informativo'] = ['El campo titulo_informativo no puede tener más de ' .
-                 self::MAX_TEXT_LENGTH . ' caracteres'];
+        // Validar editorial y lugar_de_publicacion (max 200)
+        foreach (['editorial', 'lugar_de_publicacion'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null) {
+                if (!is_string($data[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH_200) {
+                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH_200 .
+                     " caracteres"];
+                }
             }
         }
 
@@ -117,11 +135,14 @@ class LibroRequestValidator
         $errors = [];
         $allowedParams = [
             'isbn',
+            'issn',
             'autor',
             'autores',
             'colaboradores',
             'titulo_informativo',
             'cdu',
+            'editorial',
+            'lugar_de_publicacion',
             'titulo',
             'anio_publicacion',
             'tipo_documento_id',
@@ -150,6 +171,14 @@ class LibroRequestValidator
             }
         }
 
+        if (isset($params['issn']) && $params['issn'] !== '') {
+            if (!is_string($params['issn'])) {
+                $errors['issn'] = ['El campo issn debe ser un string'];
+            } elseif (!preg_match(self::ISSN_PATTERN, $params['issn'])) {
+                $errors['issn'] = ['El formato del ISSN no es válido'];
+            }
+        }
+
         if (isset($params['cdu']) && $params['cdu'] !== '') {
             if (!is_numeric($params['cdu'])) {
                 $errors['cdu'] = ['El campo cdu debe ser un número'];
@@ -170,6 +199,20 @@ class LibroRequestValidator
                 } elseif (mb_strlen(trim($params[$field])) > self::MAX_TEXT_LENGTH) {
                     $errors[$field] = [
                         "El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH .
+                        " caracteres"
+                    ];
+                }
+            }
+        }
+
+        // Validar campos de texto con max 200
+        foreach (['editorial', 'lugar_de_publicacion'] as $field) {
+            if (isset($params[$field]) && $params[$field] !== '') {
+                if (!is_string($params[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($params[$field])) > self::MAX_TEXT_LENGTH_200) {
+                    $errors[$field] = [
+                        "El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH_200 .
                         " caracteres"
                     ];
                 }
@@ -307,8 +350,8 @@ class LibroRequestValidator
 
     /**
      * Valida datos para operaciones PATCH (actualización parcial)
-     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo, cdu
-     * ISBN y export_marc NO son modificables via PATCH
+     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo, cdu, paginas, editorial, lugar_de_publicacion
+     * ISBN, ISSN y export_marc NO son modificables via PATCH
      * @param array<string, mixed> $data
      */
     public static function validatePatch(array $data): void
@@ -318,6 +361,10 @@ class LibroRequestValidator
         // Rechazar explícitamente campos no editables
         if (array_key_exists('isbn', $data)) {
             $errors['isbn'] = ['El ISBN no puede ser modificado'];
+        }
+
+        if (array_key_exists('issn', $data)) {
+            $errors['issn'] = ['El ISSN no puede ser modificado'];
         }
 
         if (array_key_exists('export_marc', $data)) {
@@ -336,6 +383,18 @@ class LibroRequestValidator
             }
         }
 
+        // Validar editorial y lugar_de_publicacion (max 200)
+        foreach (['editorial', 'lugar_de_publicacion'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null) {
+                if (!is_string($data[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH_200) {
+                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH_200 .
+                     " caracteres"];
+                }
+            }
+        }
+
         // Validar cdu solo si está presente
         if (array_key_exists('cdu', $data) && $data['cdu'] !== null) {
             if (!is_numeric($data['cdu'])) {
@@ -345,6 +404,15 @@ class LibroRequestValidator
                 if ($cdu < self::MIN_CDU || $cdu > self::MAX_CDU) {
                     $errors['cdu'] = ['El campo cdu debe estar entre ' . self::MIN_CDU . ' y ' . self::MAX_CDU];
                 }
+            }
+        }
+
+        // Validar paginas solo si está presente
+        if (array_key_exists('paginas', $data) && $data['paginas'] !== null) {
+            if (!is_int($data['paginas']) && !is_numeric($data['paginas'])) {
+                $errors['paginas'] = ['El campo paginas debe ser un número entero'];
+            } elseif ((int) $data['paginas'] < 1) {
+                $errors['paginas'] = ['El campo paginas debe ser un entero positivo'];
             }
         }
 

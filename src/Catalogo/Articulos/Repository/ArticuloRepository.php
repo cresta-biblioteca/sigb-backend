@@ -26,8 +26,8 @@ class ArticuloRepository extends Repository
 
     public function insertArticulo(Articulo $articulo): Articulo
     {
-        $sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, created_at, updated_at)
-				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, NOW(), NOW())';
+        $sql = 'INSERT INTO articulo (titulo, anio_publicacion, tipo_documento_id, idioma, descripcion, created_at, updated_at)
+				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, :descripcion, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
@@ -35,6 +35,7 @@ class ArticuloRepository extends Repository
             'anio_publicacion' => $articulo->getAnioPublicacion(),
             'tipo_documento_id' => $articulo->getTipoDocumentoId(),
             'idioma' => $articulo->getIdioma(),
+            'descripcion' => $articulo->getDescripcion(),
         ]);
 
         if ($success === false || $stmt->rowCount() === 0) {
@@ -53,6 +54,7 @@ class ArticuloRepository extends Repository
 					anio_publicacion = :anio_publicacion,
 					tipo_documento_id = :tipo_documento_id,
 					idioma = :idioma,
+					descripcion = :descripcion,
 					updated_at = NOW()
 				WHERE id = :id';
 
@@ -62,6 +64,7 @@ class ArticuloRepository extends Repository
             'anio_publicacion' => $articulo->getAnioPublicacion(),
             'tipo_documento_id' => $articulo->getTipoDocumentoId(),
             'idioma' => $articulo->getIdioma(),
+            'descripcion' => $articulo->getDescripcion(),
             'id' => $id,
         ]);
 

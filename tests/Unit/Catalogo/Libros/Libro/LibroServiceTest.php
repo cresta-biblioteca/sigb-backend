@@ -1,6 +1,6 @@
 <?php
 
-use App\Catalogo\Libros\Dtos\Request\LibroRequest;
+use App\Catalogo\Libros\Dtos\Request\CrearLibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroAlreadyExistsException;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
@@ -78,7 +78,7 @@ test('lanza excepcion al obtener libro inexistente', function () {
 });
 
 test('crea un libro completo exitosamente', function () {
-    $request = new LibroRequest(
+    $request = new CrearLibroRequest(
         articuloId: 1,
         isbn: '9780132350884',
         exportMarc: 'MARC Test',
@@ -117,7 +117,7 @@ test('crea un libro completo exitosamente', function () {
 });
 
 test('lanza excepcion si isbn ya existe al crear libro', function () {
-    $request = new LibroRequest(
+    $request = new CrearLibroRequest(
         articuloId: 1,
         isbn: '9780132350884',
         exportMarc: 'MARC'
@@ -134,7 +134,7 @@ test('lanza excepcion si isbn ya existe al crear libro', function () {
 });
 
 test('actualiza libro exitosamente', function () {
-    $request = new LibroRequest(
+    $request = new CrearLibroRequest(
         articuloId: 7,
         isbn: '9780132350884', // Este valor será ignorado (inmutable)
         exportMarc: 'MARC-UPDATED', // Este valor será ignorado (inmutable)
@@ -177,7 +177,7 @@ test('actualiza libro exitosamente', function () {
 });
 
 test('lanza excepcion al actualizar libro inexistente', function () {
-    $request = new LibroRequest(
+    $request = new CrearLibroRequest(
         articuloId: 999,
         isbn: '9780132350884',
         exportMarc: 'MARC'
@@ -195,7 +195,7 @@ test('lanza excepcion al actualizar libro inexistente', function () {
 
 test('actualiza solo campos editables mientras preserva inmutables', function () {
     // Este test reemplaza al de "isbn duplicado" porque ISBN ya no puede cambiar
-    $request = new LibroRequest(
+    $request = new CrearLibroRequest(
         articuloId: 7,
         isbn: '9999999999999', // Valor ignorado porque ISBN es inmutable
         exportMarc: 'MARC-IGNORADO', // Valor ignorado porque export_marc es inmutable

@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Dtos\Request;
 
-readonly class LibroRequest
+readonly class CrearLibroRequest
 {
     public function __construct(
         private int $articuloId,
-        private string $isbn,
         private string $exportMarc,
+        private ?string $isbn = null,
+        private ?string $issn = null,
+        private ?int $paginas = null,
         private ?string $autor = null,
         private ?string $autores = null,
         private ?string $colaboradores = null,
         private ?string $tituloInformativo = null,
-        private ?int $cdu = null
+        private ?int $cdu = null,
+        private ?string $editorial = null,
+        private ?string $lugarDePublicacion = null
     ) {
     }
 
@@ -23,9 +27,19 @@ readonly class LibroRequest
         return $this->articuloId;
     }
 
-    public function getIsbn(): string
+    public function getIsbn(): ?string
     {
         return $this->isbn;
+    }
+
+    public function getIssn(): ?string
+    {
+        return $this->issn;
+    }
+
+    public function getPaginas(): ?int
+    {
+        return $this->paginas;
     }
 
     public function getExportMarc(): string
@@ -56,5 +70,15 @@ readonly class LibroRequest
     public function getCdu(): ?int
     {
         return $this->cdu;
+    }
+
+    public function getEditorial(): ?string
+    {
+        return $this->editorial;
+    }
+
+    public function getLugarDePublicacion(): ?string
+    {
+        return $this->lugarDePublicacion;
     }
 }

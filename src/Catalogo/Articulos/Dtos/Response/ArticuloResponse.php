@@ -14,6 +14,7 @@ readonly class ArticuloResponse implements JsonSerializable
         private int $anioPublicacion,
         private int $tipoDocumentoId,
         private string $idioma,
+        private ?string $descripcion = null,
         private ?array $tipoDocumento = null,
         private array $temas = [],
         private array $materias = []
@@ -36,6 +37,7 @@ readonly class ArticuloResponse implements JsonSerializable
             'anio_publicacion' => $this->anioPublicacion,
             'tipo_documento_id' => $this->tipoDocumentoId,
             'idioma' => $this->idioma,
+            'descripcion' => $this->descripcion,
             'tipo_documento' => $this->tipoDocumento,
             'temas' => $this->temas,
             'materias' => $this->materias,
