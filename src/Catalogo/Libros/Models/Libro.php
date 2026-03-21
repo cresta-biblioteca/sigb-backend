@@ -35,22 +35,21 @@ class Libro extends Entity
      * Crea un nuevo Libro (valida datos)
      */
     public static function create(
-        int $articuloId,
-        string $exportMarc,
+        int     $articuloId,
         ?string $isbn = null,
         ?string $issn = null,
-        ?int $paginas = null,
+        ?int    $paginas = null,
         ?string $autor = null,
         ?string $autores = null,
         ?string $colaboradores = null,
         ?string $tituloInformativo = null,
-        ?int $cdu = null,
+        ?int    $cdu = null,
         ?string $editorial = null,
         ?string $lugarDePublicacion = null
-    ): self {
+    ): self
+    {
         $libro = new self();
         $libro->setArticuloId($articuloId);
-        $libro->setExportMarc($exportMarc);
         $libro->setIsbn($isbn);
         $libro->setIssn($issn);
         $libro->setPaginas($paginas);
@@ -73,16 +72,16 @@ class Libro extends Entity
     public static function fromDatabase(array $row): self
     {
         $libro = new self();
-        $libro->articuloId = (int) $row['articulo_id'];
+        $libro->articuloId = (int)$row['articulo_id'];
         $libro->id = $libro->articuloId;
         $libro->isbn = $row['isbn'] ?? null;
         $libro->issn = $row['issn'] ?? null;
-        $libro->paginas = isset($row['paginas']) ? (int) $row['paginas'] : null;
+        $libro->paginas = isset($row['paginas']) ? (int)$row['paginas'] : null;
         $libro->autor = $row['autor'];
         $libro->autores = $row['autores'];
         $libro->colaboradores = $row['colaboradores'];
         $libro->tituloInformativo = $row['titulo_informativo'];
-        $libro->cdu = $row['cdu'] !== null ? (int) $row['cdu'] : null;
+        $libro->cdu = $row['cdu'] !== null ? (int)$row['cdu'] : null;
         $libro->exportMarc = $row['export_marc'] ?? '';
         $libro->editorial = $row['editorial'] ?? null;
         $libro->lugarDePublicacion = $row['lugar_de_publicacion'] ?? null;

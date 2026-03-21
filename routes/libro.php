@@ -4,18 +4,18 @@ declare(strict_types=1);
 use App\Catalogo\Libros\Controllers\LibroController;
 use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Catalogo\Libros\Services\LibroService;
-use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Shared\Database\Connection;
 
 /**
  * @var \Bramus\Router\Router $router
  */
 
-$libroRepository = new LibroRepository();
-$articuloRepository = new ArticuloRepository();
-$libroService = new LibroService($libroRepository);
-$articuloService = new ArticuloService($articuloRepository);
-$libroController = new LibroController($libroService, $articuloService);
+$pdo = Connection::getInstance();
+$libroRepository = new LibroRepository($pdo);
+$articuloRepository = new ArticuloRepository($pdo);
+$libroService = new LibroService($libroRepository, $articuloRepository, $pdo);
+$libroController = new LibroController($libroService);
 
 $router->get('/libros', function () use ($libroController) {
     $libroController->searchPaginated();
