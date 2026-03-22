@@ -1,7 +1,6 @@
 <?php
 
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
-use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Controllers\LibroController;
 use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Catalogo\Libros\Services\LibroService;
@@ -13,10 +12,9 @@ uses(TestCase::class);
 beforeEach(function () {
     $libroRepository = new LibroRepository($this->pdo);
     $articuloRepository = new ArticuloRepository($this->pdo);
-    $articuloService = new ArticuloService($articuloRepository);
-    $service = new LibroService($libroRepository);
+    $service = new LibroService($libroRepository, $articuloRepository, $this->pdo);
 
-    $this->controller = new LibroController($service, $articuloService);
+    $this->controller = new LibroController($service);
 
     $_GET = [];
 });
@@ -57,7 +55,6 @@ test('create crea libro completo con articulo y datos del libro', function () {
         ],
         'libro' => [
             'isbn' => '9780132350884',
-            'export_marc' => 'MARC-CLEAN-CODE',
             'autor' => 'Robert C. Martin',
             'autores' => 'Robert C. Martin, Uncle Bob',
             'colaboradores' => 'Prentice Hall',
@@ -72,7 +69,7 @@ test('create crea libro completo con articulo y datos del libro', function () {
 
     $response = json_decode($this->output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data']['isbn'])->toBe('9780132350884')
         ->and($response['data']['autor'])->toBe('Robert C. Martin')
         ->and($response['data']['autores'])->toBe('Robert C. Martin, Uncle Bob')
@@ -109,7 +106,6 @@ test('create falla con isbn duplicado', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-ORIGINAL',
     ]);
 
     withJsonInputLibro([
@@ -121,7 +117,6 @@ test('create falla con isbn duplicado', function () {
         ],
         'libro' => [
             'isbn' => '9780132350884', // ISBN duplicado
-            'export_marc' => 'MARC-OTRO'
         ]
     ], function () {
         ob_start();
@@ -131,8 +126,9 @@ test('create falla con isbn duplicado', function () {
 
     $response = json_decode($this->output, true);
 
-    expect($response['error'])->toBe(true)
-        ->and($response)->toHaveKey('message');
+    expect($response)->toHaveKey('error')
+        ->and($response['error'])->toBeArray()
+        ->and($response['error']['code'])->toBe('ENTITY_ALREADY_EXISTS');
 });
 
 test('update actualiza libro exitosamente', function () {
@@ -158,7 +154,6 @@ test('update actualiza libro exitosamente', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-ORIGINAL',
     ]);
 
     withJsonInputLibro([
@@ -175,7 +170,7 @@ test('update actualiza libro exitosamente', function () {
 
     $response = json_decode($this->output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data']['isbn'])->toBe('9780132350884') // ISBN original (inmutable)
         ->and($response['data']['autor'])->toBe('Autor Actualizado')
         ->and($response['data']['autores'])->toBe('Autores Actualizados')
@@ -207,7 +202,6 @@ test('delete elimina libro exitosamente', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-ELIMINAR',
     ]);
 
     ob_start();
@@ -216,7 +210,7 @@ test('delete elimina libro exitosamente', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false);
+    expect($response)->toHaveKey('message');
     expect($this->recordExists('libro', ['articulo_id' => $articuloId]))->toBeFalse();
 });
 
@@ -245,7 +239,6 @@ test('listAll filtra libros con paginacion y metadatos', function () {
             'colaboradores' => null,
             'titulo_informativo' => "Info $i",
             'cdu' => 100 + $i,
-            'export_marc' => "MARC-$i",
         ]);
     }
 
@@ -257,7 +250,7 @@ test('listAll filtra libros con paginacion y metadatos', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(5) // 5 por página
         ->and($response['pagination']['page'])->toBe(1)
         ->and($response['pagination']['per_page'])->toBe(5)
@@ -269,8 +262,7 @@ test('listAll filtra libros con paginacion y metadatos', function () {
         ->and($firstBook)->toHaveKey('autor')
         ->and($firstBook)->toHaveKey('autores')
         ->and($firstBook)->toHaveKey('titulo_informativo')
-        ->and($firstBook)->toHaveKey('cdu')
-        ->and($firstBook)->toHaveKey('export_marc');
+        ->and($firstBook)->toHaveKey('cdu');
 });
 
 test('getById retorna libro con todos los campos', function () {
@@ -296,7 +288,6 @@ test('getById retorna libro con todos los campos', function () {
         'colaboradores' => 'Editor, Revisor',
         'titulo_informativo' => 'Subtítulo informativo',
         'cdu' => 500,
-        'export_marc' => 'MARC-COMPLETO',
     ]);
 
     ob_start();
@@ -305,15 +296,14 @@ test('getById retorna libro con todos los campos', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data']['id'])->toBe($articuloId) // id y articulo_id son lo mismo
         ->and($response['data']['isbn'])->toBe('9780132350884')
         ->and($response['data']['autor'])->toBe('Autor Completo')
         ->and($response['data']['autores'])->toBe('Autor Principal, Coautor')
         ->and($response['data']['colaboradores'])->toBe('Editor, Revisor')
         ->and($response['data']['titulo_informativo'])->toBe('Subtítulo informativo')
-        ->and($response['data']['cdu'])->toBe(500)
-        ->and($response['data']['export_marc'])->toBe('MARC-COMPLETO');
+        ->and($response['data']['cdu'])->toBe(500);
 });
 
 test('search filtra libros por titulos de temas', function () {
@@ -347,7 +337,6 @@ test('search filtra libros por titulos de temas', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-PROG',
     ]);
 
     $this->insertInto('articulo_tema', [
@@ -370,7 +359,6 @@ test('search filtra libros por titulos de temas', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-HIST',
     ]);
 
     $this->insertInto('articulo_tema', [
@@ -381,12 +369,12 @@ test('search filtra libros por titulos de temas', function () {
     $_GET = ['temas' => 'Programacion'];
 
     ob_start();
-    $this->controller->search();
+    $this->controller->searchPaginated();
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(1)
         ->and($response['data'][0]['id'])->toBe($articuloProgramacionId)
         ->and($response['data'][0]['articulo']['titulo'])->toBe('Libro de Programacion');
@@ -423,7 +411,6 @@ test('searchPaginated filtra libros por multiples temas', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-UNO',
     ]);
 
     $this->insertInto('articulo_tema', [
@@ -446,7 +433,6 @@ test('searchPaginated filtra libros por multiples temas', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-DOS',
     ]);
 
     $this->insertInto('articulo_tema', [
@@ -466,7 +452,7 @@ test('searchPaginated filtra libros por multiples temas', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(2)
         ->and($response['pagination']['total'])->toBe(2);
 });
@@ -502,7 +488,6 @@ test('search filtra libros por titulos de materias', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-CONTA',
     ]);
 
     $this->insertInto('materia_articulo', [
@@ -525,7 +510,6 @@ test('search filtra libros por titulos de materias', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-FISICA',
     ]);
 
     $this->insertInto('materia_articulo', [
@@ -536,12 +520,12 @@ test('search filtra libros por titulos de materias', function () {
     $_GET = ['materias' => 'Contabilidad'];
 
     ob_start();
-    $this->controller->search();
+    $this->controller->searchPaginated();
     $output = ob_get_clean();
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(1)
         ->and($response['data'][0]['id'])->toBe($articuloContabilidadId)
         ->and($response['data'][0]['articulo']['titulo'])->toBe('Libro de Contabilidad');
@@ -578,7 +562,6 @@ test('searchPaginated filtra libros por multiples materias', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-UNO-MAT',
     ]);
 
     $this->insertInto('materia_articulo', [
@@ -601,7 +584,6 @@ test('searchPaginated filtra libros por multiples materias', function () {
         'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
-        'export_marc' => 'MARC-DOS-MAT',
     ]);
 
     $this->insertInto('materia_articulo', [
@@ -621,7 +603,7 @@ test('searchPaginated filtra libros por multiples materias', function () {
 
     $response = json_decode($output, true);
 
-    expect($response['error'])->toBe(false)
+    expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(2)
         ->and($response['pagination']['total'])->toBe(2);
 });

@@ -13,10 +13,10 @@ class PatchLibroRequest
         public readonly ?string $issn = null,
         public readonly ?int $paginas = null,
         public readonly ?string $autor = null,
-        public readonly ?array $autores = null,
-        public readonly ?array $colaboradores = null,
+        public readonly ?string $autores = null,
+        public readonly ?string $colaboradores = null,
         public readonly ?string $tituloInformativo = null,
-        public readonly ?string $cdu = null,
+        public readonly ?int $cdu = null,
         public readonly ?string $editorial = null,
         public readonly ?string $lugarDePublicacion = null,
         public array $provided

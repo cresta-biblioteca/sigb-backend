@@ -52,7 +52,11 @@ readonly class LibroService
             throw new LibroAlreadyExistsException($request->issn, 'issn');
         }
 
-        $this->pdo->beginTransaction();
+        $inTransaction = $this->pdo->inTransaction();
+
+        if (!$inTransaction) {
+            $this->pdo->beginTransaction();
+        }
 
         try {
             $articulo = Articulo::create(
@@ -79,14 +83,15 @@ readonly class LibroService
                 lugarDePublicacion: $request->lugarDePublicacion
             );
 
-            $mark21 = 'archivo en mark 21';
-            $libro->setExportMarc($mark21);
-
             $savedLibro = $this->repository->insertLibro($libro);
 
-            $this->pdo->commit();
+            if (!$inTransaction) {
+                $this->pdo->commit();
+            }
         } catch (\Throwable $e) {
-            $this->pdo->rollBack();
+            if (!$inTransaction) {
+                $this->pdo->rollBack();
+            }
             throw $e;
         }
 

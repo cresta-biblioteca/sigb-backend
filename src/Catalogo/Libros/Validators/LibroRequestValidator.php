@@ -17,9 +17,7 @@ class LibroRequestValidator
     private const MIN_YEAR = 1000;
 
     /** @var array<int, string> */
-    private const REQUIRED_FIELDS = [
-        'export_marc',
-    ];
+    private const REQUIRED_FIELDS = [];
 
     /**
      * @param array<string, mixed> $data
@@ -62,15 +60,6 @@ class LibroRequestValidator
             && isset($data['issn']) && $data['issn'] !== null
         ) {
             $errors['isbn'] = ['Un libro no puede tener ISBN y ISSN a la vez'];
-        }
-
-        if (!is_string($data['export_marc'])) {
-            $errors['export_marc'] = ['El campo export_marc debe ser un string'];
-        } elseif (mb_strlen(trim($data['export_marc'])) > self::MAX_TEXT_LENGTH) {
-            $errors['export_marc'] = [
-                'El campo export_marc no puede tener más de ' . self::MAX_TEXT_LENGTH .
-                ' caracteres'
-            ];
         }
 
         // Validar paginas (opcional)
@@ -382,10 +371,6 @@ class LibroRequestValidator
 
         if (array_key_exists('issn', $data)) {
             $errors['issn'] = ['El ISSN no puede ser modificado'];
-        }
-
-        if (array_key_exists('export_marc', $data)) {
-            $errors['export_marc'] = ['El export_marc se actualiza automáticamente, no puede ser modificado'];
         }
 
         // Validar campos opcionales solo si están presentes
