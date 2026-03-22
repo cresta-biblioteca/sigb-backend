@@ -23,7 +23,6 @@ class LibroMapper
             colaboradores: $libro->getColaboradores(),
             tituloInformativo: $libro->getTituloInformativo(),
             cdu: $libro->getCdu(),
-            exportMarc: $libro->getExportMarc(),
             editorial: $libro->getEditorial(),
             lugarDePublicacion: $libro->getLugarDePublicacion(),
             // Información del artículo (si está disponible)

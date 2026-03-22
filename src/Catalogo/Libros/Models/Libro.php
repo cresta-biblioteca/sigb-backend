@@ -21,7 +21,6 @@ class Libro extends Entity
     private ?string $colaboradores;
     private ?string $tituloInformativo;
     private ?int $cdu;
-    private string $exportMarc;
     private ?string $editorial = null;
     private ?string $lugarDePublicacion = null;
 
@@ -81,7 +80,6 @@ class Libro extends Entity
         $libro->colaboradores = $row['colaboradores'];
         $libro->tituloInformativo = $row['titulo_informativo'];
         $libro->cdu = $row['cdu'] !== null ? (int)$row['cdu'] : null;
-        $libro->exportMarc = $row['export_marc'] ?? '';
         $libro->editorial = $row['editorial'] ?? null;
         $libro->lugarDePublicacion = $row['lugar_de_publicacion'] ?? null;
         $libro->setTimestamps(
@@ -226,17 +224,6 @@ class Libro extends Entity
         $this->cdu = $cdu;
     }
 
-    public function getExportMarc(): string
-    {
-        return $this->exportMarc;
-    }
-
-    public function setExportMarc(string $exportMarc): void
-    {
-        $this->assertNotEmpty($exportMarc, 'export_marc');
-        $this->exportMarc = $exportMarc;
-    }
-
     public function getEditorial(): ?string
     {
         return $this->editorial;
@@ -290,7 +277,6 @@ class Libro extends Entity
             'colaboradores' => $this->colaboradores,
             'titulo_informativo' => $this->tituloInformativo,
             'cdu' => $this->cdu,
-            'export_marc' => $this->exportMarc,
             'editorial' => $this->editorial,
             'lugar_de_publicacion' => $this->lugarDePublicacion,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),

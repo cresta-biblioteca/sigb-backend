@@ -17,9 +17,7 @@ class LibroRequestValidator
     private const MIN_YEAR = 1000;
 
     /** @var array<int, string> */
-    private const REQUIRED_FIELDS = [
-        'export_marc',
-    ];
+    private const REQUIRED_FIELDS = [];
 
     /**
      * @param array<string, mixed> $data
@@ -380,10 +378,6 @@ class LibroRequestValidator
 
         if (array_key_exists('issn', $data)) {
             $errors['issn'] = ['El ISSN no puede ser modificado'];
-        }
-
-        if (array_key_exists('export_marc', $data)) {
-            $errors['export_marc'] = ['El export_marc se actualiza automáticamente, no puede ser modificado'];
         }
 
         // Validar campos opcionales solo si están presentes

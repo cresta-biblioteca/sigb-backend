@@ -18,7 +18,6 @@ readonly class LibroResponse implements JsonSerializable
         private ?string $colaboradores,
         private ?string $tituloInformativo,
         private ?int $cdu,
-        private string $exportMarc,
         private ?string $editorial,
         private ?string $lugarDePublicacion,
         // Información del artículo asociado
@@ -42,7 +41,6 @@ readonly class LibroResponse implements JsonSerializable
             'colaboradores' => $this->colaboradores,
             'titulo_informativo' => $this->tituloInformativo,
             'cdu' => $this->cdu,
-            'export_marc' => $this->exportMarc,
             'editorial' => $this->editorial,
             'lugar_de_publicacion' => $this->lugarDePublicacion,
         ];

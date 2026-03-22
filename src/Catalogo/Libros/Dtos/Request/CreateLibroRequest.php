@@ -13,7 +13,6 @@ readonly class CreateLibroRequest
         public int $tipoDocumentoId,
         public string $idioma,
         // Libro fields
-        public string $exportMarc,
         public ?string $descripcion,
         public ?string $isbn,
         public ?string $issn,
@@ -35,7 +34,6 @@ readonly class CreateLibroRequest
             anioPublicacion: (int)$articuloData['anio_publicacion'],
             tipoDocumentoId: (int)$articuloData['tipo_documento_id'],
             idioma: $articuloData['idioma'] ?? 'es',
-            exportMarc: $libroData['export_marc'],
             descripcion: $articuloData['descripcion'] ?? null,
             isbn: $libroData['isbn'] ?? null,
             issn: $libroData['issn'] ?? null,

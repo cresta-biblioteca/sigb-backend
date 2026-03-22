@@ -65,10 +65,10 @@ class LibroRepository extends Repository
     {
         $sql = "INSERT INTO libro
             (articulo_id, isbn, issn, paginas, autor, autores, colaboradores, titulo_informativo, cdu,
-             export_marc, editorial, lugar_de_publicacion, created_at, updated_at)
+             editorial, lugar_de_publicacion, created_at, updated_at)
             VALUES
             (:articulo_id, :isbn, :issn, :paginas, :autor, :autores, :colaboradores, :titulo_informativo, :cdu,
-             :export_marc, :editorial, :lugar_de_publicacion, NOW(), NOW())";
+             :editorial, :lugar_de_publicacion, NOW(), NOW())";
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
@@ -81,7 +81,6 @@ class LibroRepository extends Repository
             'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
-            'export_marc' => $libro->getExportMarc(),
             'editorial' => $libro->getEditorial(),
             'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
         ]);
@@ -104,7 +103,6 @@ class LibroRepository extends Repository
             colaboradores = :colaboradores,
             titulo_informativo = :titulo_informativo,
             cdu = :cdu,
-            export_marc = :export_marc,
             editorial = :editorial,
             lugar_de_publicacion = :lugar_de_publicacion,
             updated_at = NOW()
@@ -120,7 +118,6 @@ class LibroRepository extends Repository
             'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
-            'export_marc' => $libro->getExportMarc(),
             'editorial' => $libro->getEditorial(),
             'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
             'id' => $id,
@@ -330,10 +327,6 @@ class LibroRepository extends Repository
             $params['lugar_de_publicacion'] = '%' . $filters['lugar_de_publicacion'] . '%';
         }
 
-        if (!empty($filters['export_marc'])) {
-            $conditions[] = 'l.export_marc LIKE :export_marc';
-            $params['export_marc'] = '%' . $filters['export_marc'] . '%';
-        }
     }
 
     /**
