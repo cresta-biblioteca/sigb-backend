@@ -14,6 +14,7 @@ use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
+use App\Catalogo\Libros\Repositories\PersonaRepository;
 use App\Shared\Exceptions\BusinessRuleException;
 use PDO;
 
@@ -22,6 +23,7 @@ readonly class LibroService
     public function __construct(
         private LibroRepository $repository,
         private ArticuloRepository $articuloRepository,
+        private PersonaRepository $personaRepository,
         private PDO $pdo
     ) {
     }
@@ -37,9 +39,6 @@ readonly class LibroService
         return LibroMapper::toLibroResponse($libro);
     }
 
-    /**
-     * Crea un nuevo libro junto con su artículo en una sola transacción
-     */
     public function create(CreateLibroRequest $request): LibroResponse
     {
         $this->validateIsbnIssnExclusivity($request->isbn, $request->issn);
@@ -74,16 +73,23 @@ readonly class LibroService
                 isbn: $request->isbn,
                 issn: $request->issn,
                 paginas: $request->paginas,
-                autor: $request->autor,
-                autores: $request->autores,
-                colaboradores: $request->colaboradores,
                 tituloInformativo: $request->tituloInformativo,
                 cdu: $request->cdu,
                 editorial: $request->editorial,
-                lugarDePublicacion: $request->lugarDePublicacion
+                lugarDePublicacion: $request->lugarDePublicacion,
+                edicion: $request->edicion,
+                dimensiones: $request->dimensiones,
+                ilustraciones: $request->ilustraciones,
+                serie: $request->serie,
+                numeroSerie: $request->numeroSerie,
+                notas: $request->notas,
+                paisPublicacion: $request->paisPublicacion,
             );
 
-            $savedLibro = $this->repository->insertLibro($libro);
+            $this->repository->insertLibro($libro);
+
+            // Procesar personas
+            $this->processPersonas($savedArticulo->getId(), $request->personas);
 
             if (!$inTransaction) {
                 $this->pdo->commit();
@@ -95,7 +101,8 @@ readonly class LibroService
             throw $e;
         }
 
-        return LibroMapper::toLibroResponse($savedLibro);
+        // Re-fetch para devolver libro completo con personas
+        return LibroMapper::toLibroResponse($this->repository->findById($savedArticulo->getId()));
     }
 
     public function updateLibro(int $id, PatchLibroRequest $request): LibroResponse
@@ -106,28 +113,55 @@ readonly class LibroService
             throw new LibroNotFoundException($id);
         }
 
-        $apply = [
-            'isbn' => fn() => $existing->setIsbn($request->isbn),
-            'issn' => fn() => $existing->setIssn($request->issn),
-            'paginas' => fn() => $existing->setPaginas($request->paginas),
-            'autor' => fn() => $existing->setAutor($request->autor),
-            'autores' => fn() => $existing->setAutores($request->autores),
-            'colaboradores' => fn() => $existing->setColaboradores($request->colaboradores),
-            'titulo_informativo' => fn() => $existing->setTituloInformativo($request->tituloInformativo),
-            'cdu' => fn() => $existing->setCdu($request->cdu),
-            'editorial' => fn() => $existing->setEditorial($request->editorial),
-            'lugar_de_publicacion' => fn() => $existing->setLugarDePublicacion($request->lugarDePublicacion),
-        ];
+        $inTransaction = $this->pdo->inTransaction();
 
-        foreach ($request->provided as $field) {
-            if (isset($apply[$field])) {
-                $apply[$field]();
-            }
+        if (!$inTransaction) {
+            $this->pdo->beginTransaction();
         }
 
-        $updated = $this->repository->updateLibro($id, $existing);
+        try {
+            $apply = [
+                'isbn' => fn() => $existing->setIsbn($request->isbn),
+                'issn' => fn() => $existing->setIssn($request->issn),
+                'paginas' => fn() => $existing->setPaginas($request->paginas),
+                'titulo_informativo' => fn() => $existing->setTituloInformativo($request->tituloInformativo),
+                'cdu' => fn() => $existing->setCdu($request->cdu),
+                'editorial' => fn() => $existing->setEditorial($request->editorial),
+                'lugar_de_publicacion' => fn() => $existing->setLugarDePublicacion($request->lugarDePublicacion),
+                'edicion' => fn() => $existing->setEdicion($request->edicion),
+                'dimensiones' => fn() => $existing->setDimensiones($request->dimensiones),
+                'ilustraciones' => fn() => $existing->setIlustraciones($request->ilustraciones),
+                'serie' => fn() => $existing->setSerie($request->serie),
+                'numero_serie' => fn() => $existing->setNumeroSerie($request->numeroSerie),
+                'notas' => fn() => $existing->setNotas($request->notas),
+                'pais_publicacion' => fn() => $existing->setPaisPublicacion($request->paisPublicacion),
+            ];
 
-        return LibroMapper::toLibroResponse($updated);
+            foreach ($request->provided as $field) {
+                if (isset($apply[$field])) {
+                    $apply[$field]();
+                }
+            }
+
+            $this->repository->updateLibro($id, $existing);
+
+            // Si personas está en provided, reemplazo completo
+            if ($request->isProvided('personas') && $request->personas !== null) {
+                $this->processPersonas($id, $request->personas);
+            }
+
+            if (!$inTransaction) {
+                $this->pdo->commit();
+            }
+        } catch (\Throwable $e) {
+            if (!$inTransaction) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        // Re-fetch
+        return LibroMapper::toLibroResponse($this->repository->findById($id));
     }
 
     public function deleteLibro(int $id): void
@@ -148,6 +182,29 @@ readonly class LibroService
                 field: 'isbn'
             );
         }
+    }
+
+    /**
+     * @param array<int, array{nombre: string, apellido: string, rol: string}> $personasData
+     */
+    private function processPersonas(int $libroId, array $personasData): void
+    {
+        $syncData = [];
+
+        foreach ($personasData as $index => $data) {
+            $persona = $this->personaRepository->findOrCreate(
+                trim($data['nombre']),
+                trim($data['apellido'])
+            );
+
+            $syncData[] = [
+                'persona_id' => $persona->getId(),
+                'rol' => $data['rol'],
+                'orden' => $data['orden'] ?? $index,
+            ];
+        }
+
+        $this->repository->syncPersonas($libroId, $syncData);
     }
 
     public function searchPaginated(

@@ -1,6 +1,8 @@
-# MARC21 — Implementación y uso
+# MARC21 — Referencia Tecnica
 
-## Índice
+> Para conceptos basicos de MARC21 y campos pendientes de consulta con el cliente, ver [guia_de_uso_marc21.md](guia_de_uso_marc21.md).
+
+## Indice
 
 1. [Qué es MARC21](#1-qué-es-marc21)
 2. [Arquitectura de la implementación](#2-arquitectura-de-la-implementación)
@@ -50,7 +52,7 @@ Marc21ExportController
     │ valida id / params
     ▼
 Marc21ExportService
-    │ obtiene Libro+Articulo del repositorio
+    │ obtiene Libro+Articulo+Personas del repositorio
     ▼
 Marc21Builder::build(Libro)
     │ construye File_MARC_Record
@@ -95,7 +97,7 @@ $record->toRaw();   // ISO 2709 binario (.mrc) como string binario
 
 ## 4. Marc21Builder — mapeo de campos
 
-`Marc21Builder::build(Libro $libro): Record` toma un `Libro` con su `Articulo` cargado y construye el registro MARC21 completo.
+`Marc21Builder::build(Libro $libro): Record` toma un `Libro` con su `Articulo` y `Personas` cargados y construye el registro MARC21 completo.
 
 ### Tabla de mapeo
 
@@ -103,21 +105,39 @@ $record->toRaw();   // ISO 2709 binario (.mrc) como string binario
 |------------|--------|-------------|-----------|---------------------|
 | `001` | Identificador de registro | — | — | `Libro::getId()` |
 | `003` | Código de organización | — | — | Fijo: `AR-BuSIGB` |
+| `008` | Datos fijos | — | — | Construido desde `Articulo`, `Libro` (40 chars) |
 | `020` | ISBN | `' '` `' '` | `$a` ISBN | `Libro::getIsbn()` |
 | `022` | ISSN | `'0'` `' '` | `$a` ISSN | `Libro::getIssn()` |
 | `041` | Código de idioma | `'0'` `' '` | `$a` código ISO 639-2 | `Articulo::getIdioma()` (mapeado) |
 | `080` | Clasificación CDU (UDC) | `' '` `' '` | `$a` número CDU | `Libro::getCdu()` |
-| `100` | Autor principal | `'1'` `' '` | `$a` nombre, `$e` "autor" | `Libro::getAutor()` |
-| `245` | Mención de título | `'1'` `'0'` | `$a` título, `$b` subtítulo, `$c` autor | `Articulo::getTitulo()`, `Libro::getTituloInformativo()` |
+| `100` | Autor principal | `'1'` `' '` | `$a` "Apellido, Nombre", `$e` "autor" | `Libro::getAutorPrincipal()` |
+| `245` | Mención de título | `'1'` `'0'` | `$a` título, `$b` subtítulo, `$c` autor | `Articulo::getTitulo()`, `Libro::getTituloInformativo()`, autor principal |
+| `250` | Edición | `' '` `' '` | `$a` edición | `Libro::getEdicion()` |
 | `264` | Publicación | `' '` `'1'` | `$a` lugar, `$b` editorial, `$c` año | `Libro::getLugarDePublicacion()`, `Libro::getEditorial()`, `Articulo::getAnioPublicacion()` |
-| `300` | Descripción física | `' '` `' '` | `$a` "N páginas" | `Libro::getPaginas()` |
+| `300` | Descripción física | `' '` `' '` | `$a` páginas, `$b` ilustraciones, `$c` dimensiones | `Libro::getPaginas()`, `Libro::getIlustraciones()`, `Libro::getDimensiones()` |
+| `490` | Serie | `'0'` `' '` | `$a` serie, `$v` número | `Libro::getSerie()`, `Libro::getNumeroSerie()` |
+| `500` | Notas | `' '` `' '` | `$a` texto | `Libro::getNotas()` |
 | `520` | Resumen | `' '` `' '` | `$a` texto | `Articulo::getDescripcion()` |
-| `700` | Coautores | `'1'` `' '` | `$a` nombre (uno por persona), `$e` "coautor" | `Libro::getAutores()` (separados por coma) |
-| `700` | Colaboradores | `'1'` `' '` | `$a` nombre (uno por persona), `$e` "colaborador" | `Libro::getColaboradores()` (separados por coma) |
+| `650` | Materias | `' '` `'4'` | `$a` materia (uno por cada) | `Articulo::getMaterias()` |
+| `653` | Temas | `' '` `' '` | `$a` tema (uno por cada) | `Articulo::getTemas()` |
+| `700` | Personas adicionales | `'1'` `' '` | `$a` "Apellido, Nombre", `$e` rol | Personas excluyendo autor principal |
+
+### Campo 008 — Datos fijos (40 caracteres)
+
+| Posición | Contenido | Fuente |
+|----------|-----------|--------|
+| 00-05 | Fecha de creación (yymmdd) | `date('ymd')` |
+| 06 | Tipo de fecha: `s` (fecha única) | Fijo |
+| 07-10 | Año de publicación | `Articulo::getAnioPublicacion()` |
+| 11-14 | Espacios | — |
+| 15-17 | País de publicación (código MARC) | `Libro::getPaisPublicacion()` mapeado |
+| 18-21 | Ilustraciones | `Libro::getIlustraciones()` ? `a   ` : `    ` |
+| 22-34 | Defaults/espacios | — |
+| 35-37 | Código de idioma (ISO 639-2) | `Articulo::getIdioma()` mapeado |
+| 38 | Registro modificado: espacio | — |
+| 39 | Fuente de catalogación: `d` | Fijo |
 
 ### Mapeo de idiomas
-
-El campo `041` requiere el código ISO 639-2 de tres letras. La conversión se realiza internamente:
 
 | Código del sistema | Código MARC21 (ISO 639-2) |
 |--------------------|--------------------------|
@@ -128,11 +148,37 @@ El campo `041` requiere el código ISO 639-2 de tres letras. La conversión se r
 | `de` | `ger` |
 | `it` | `ita` |
 
-Si el idioma no está en el mapa, se usa el código tal cual viene del sistema.
+### Mapeo de países
+
+| Código ISO | Código MARC |
+|------------|-------------|
+| `ar` | `ag ` |
+| `us` | `xxu` |
+| `mx` | `mx ` |
+| `es` | `sp ` |
+| `gb` | `xxk` |
+| `br` | `bl ` |
+| `cl` | `cl ` |
+| `co` | `ck ` |
+| `pe` | `pe ` |
+| `uy` | `uy ` |
+| `fr` | `fr ` |
+| `de` | `gw ` |
+| `it` | `it ` |
+| `pt` | `po ` |
 
 ### Campos opcionales
 
 Todos los campos excepto `001`, `003` y `245` son opcionales. Si el dato no está cargado en el modelo, el campo simplemente no se incluye en el registro. Esto es válido en MARC21.
+
+### Modelo de personas
+
+Los autores y colaboradores se almacenan en una tabla normalizada `persona` (nombre, apellido) con una tabla pivote `libro_persona` que incluye el rol y orden. Esto permite:
+
+- Generar el campo 100 con formato correcto "Apellido, Nombre"
+- Generar campos 700 individuales por cada persona adicional
+- Deduplicar personas compartidas entre libros
+- Soportar roles múltiples (autor, coautor, colaborador, editor, traductor, ilustrador)
 
 ---
 
@@ -204,9 +250,9 @@ curl -H "Authorization: Bearer {token}" \
      "https://api.sigb.example/api/v1/libros/marc21?idioma=es" \
      -o catalogo-es.xml
 
-# Libros de un autor específico en ISO 2709
+# Libros de una persona específica en ISO 2709
 curl -H "Authorization: Bearer {token}" \
-     "https://api.sigb.example/api/v1/libros/marc21?autor=Martin&format=iso" \
+     "https://api.sigb.example/api/v1/libros/marc21?persona=Martin&format=iso" \
      -o libros-martin.mrc
 
 # Todo el catálogo en MARCXML
@@ -224,10 +270,11 @@ curl -H "Authorization: Bearer {token}" \
     <leader>00000nam a2200000 i 4500</leader>
     <controlfield tag="001">42</controlfield>
     <controlfield tag="003">AR-BuSIGB</controlfield>
+    <controlfield tag="008">260322s2008    ag a          000 0 eng d</controlfield>
     <datafield tag="020" ind1=" " ind2=" ">
       <subfield code="a">9780132350884</subfield>
     </datafield>
-    <datafield tag="041" ind1=" " ind2=" ">
+    <datafield tag="041" ind1="0" ind2=" ">
       <subfield code="a">eng</subfield>
     </datafield>
     <datafield tag="100" ind1="1" ind2=" ">
@@ -239,6 +286,9 @@ curl -H "Authorization: Bearer {token}" \
       <subfield code="b">A Handbook of Agile Software Craftsmanship</subfield>
       <subfield code="c">Martin, Robert C.</subfield>
     </datafield>
+    <datafield tag="250" ind1=" " ind2=" ">
+      <subfield code="a">1st ed.</subfield>
+    </datafield>
     <datafield tag="264" ind1=" " ind2="1">
       <subfield code="a">Upper Saddle River</subfield>
       <subfield code="b">Prentice Hall</subfield>
@@ -246,6 +296,17 @@ curl -H "Authorization: Bearer {token}" \
     </datafield>
     <datafield tag="300" ind1=" " ind2=" ">
       <subfield code="a">431 páginas</subfield>
+      <subfield code="c">24 cm</subfield>
+    </datafield>
+    <datafield tag="650" ind1=" " ind2="4">
+      <subfield code="a">Ingeniería de Software</subfield>
+    </datafield>
+    <datafield tag="653" ind1=" " ind2=" ">
+      <subfield code="a">Clean Code</subfield>
+    </datafield>
+    <datafield tag="700" ind1="1" ind2=" ">
+      <subfield code="a">Feathers, Michael C.</subfield>
+      <subfield code="e">colaborador</subfield>
     </datafield>
   </record>
   <!-- ... más registros -->
@@ -330,7 +391,3 @@ El protocolo OAI-PMH permite que otros sistemas "cosechan" (harvesting) registro
 ### Z39.50
 
 Protocolo estándar de búsqueda y recuperación bibliográfica. Permite que otros sistemas consulten el catálogo y descarguen registros MARC21 directamente. Requiere un servidor Z39.50 separado (como YAZ) que consumiría los mismos datos via la API.
-
-### Agregar campos MARC21
-
-Para enriquecer los registros generados (por ejemplo, agregar el campo `650` de materias o `082` de clasificación Dewey), solo es necesario modificar `Marc21Builder::build()` agregando nuevos `File_MARC_Data_Field` con los subcampos correspondientes.

@@ -108,6 +108,7 @@ class CatalogoTestDataSeeder extends AbstractSeed
 
         // ============================================================
         // ARTICULOS + LIBROS (20 libros variados)
+        // Ahora con personas normalizadas en tabla persona + libro_persona
         // ============================================================
         $now = date('Y-m-d H:i:s');
 
@@ -118,11 +119,18 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto clasico sobre algoritmos y estructuras de datos',
                 'isbn' => '9780262033848',
-                'autor' => 'Thomas H. Cormen',
-                'autores' => 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest',
                 'editorial' => 'MIT Press',
                 'paginas' => 1312,
                 'lugar' => 'Cambridge',
+                'edicion' => '3a edicion',
+                'dimensiones' => '24 cm',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Thomas H.', 'apellido' => 'Cormen', 'rol' => 'autor'],
+                    ['nombre' => 'Charles E.', 'apellido' => 'Leiserson', 'rol' => 'coautor'],
+                    ['nombre' => 'Ronald L.', 'apellido' => 'Rivest', 'rol' => 'coautor'],
+                    ['nombre' => 'Clifford', 'apellido' => 'Stein', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Algoritmos', 'Programacion', 'Matematicas'],
                 'materias' => ['Programacion I', 'Programacion II'],
             ],
@@ -132,11 +140,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Fundamentos de sistemas de bases de datos relacionales',
                 'isbn' => '9780133970777',
-                'autor' => 'Ramez Elmasri',
-                'autores' => 'Ramez Elmasri, Shamkant B. Navathe',
                 'editorial' => 'Pearson',
                 'paginas' => 1200,
                 'lugar' => 'Boston',
+                'edicion' => '7a edicion',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Ramez', 'apellido' => 'Elmasri', 'rol' => 'autor'],
+                    ['nombre' => 'Shamkant B.', 'apellido' => 'Navathe', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Base de Datos', 'Programacion'],
                 'materias' => ['Base de Datos I', 'Base de Datos II'],
             ],
@@ -146,11 +158,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Enfoque descendente sobre redes de computadoras',
                 'isbn' => '9780133594140',
-                'autor' => 'James F. Kurose',
-                'autores' => 'James F. Kurose, Keith W. Ross',
                 'editorial' => 'Pearson',
                 'paginas' => 864,
                 'lugar' => 'Boston',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'James F.', 'apellido' => 'Kurose', 'rol' => 'autor'],
+                    ['nombre' => 'Keith W.', 'apellido' => 'Ross', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Redes', 'Seguridad Informatica'],
                 'materias' => ['Redes de Computadoras'],
             ],
@@ -160,11 +175,17 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto de referencia en inteligencia artificial',
                 'isbn' => '9780134610993',
-                'autor' => 'Stuart Russell',
-                'autores' => 'Stuart Russell, Peter Norvig',
                 'editorial' => 'Pearson',
                 'paginas' => 1136,
                 'lugar' => 'New Jersey',
+                'edicion' => '4a edicion',
+                'dimensiones' => '26 cm',
+                'ilustraciones' => 'ilustraciones a color',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Stuart', 'apellido' => 'Russell', 'rol' => 'autor'],
+                    ['nombre' => 'Peter', 'apellido' => 'Norvig', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Inteligencia Artificial', 'Algoritmos', 'Matematicas'],
                 'materias' => ['Programacion II'],
             ],
@@ -174,11 +195,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Calculo diferencial e integral de una variable',
                 'isbn' => '9786075228778',
-                'autor' => 'James Stewart',
-                'autores' => 'James Stewart',
                 'editorial' => 'Cengage Learning',
                 'paginas' => 960,
                 'lugar' => 'Mexico DF',
+                'edicion' => '8a edicion',
+                'pais_publicacion' => 'mx',
+                'personas' => [
+                    ['nombre' => 'James', 'apellido' => 'Stewart', 'rol' => 'autor'],
+                ],
                 'temas' => ['Matematicas'],
                 'materias' => ['Analisis Matematico I'],
             ],
@@ -188,11 +212,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Introduccion al algebra lineal con aplicaciones',
                 'isbn' => '9780321982384',
-                'autor' => 'David C. Lay',
-                'autores' => 'David C. Lay, Steven R. Lay, Judi J. McDonald',
                 'editorial' => 'Pearson',
                 'paginas' => 576,
                 'lugar' => 'Boston',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'David C.', 'apellido' => 'Lay', 'rol' => 'autor'],
+                    ['nombre' => 'Steven R.', 'apellido' => 'Lay', 'rol' => 'coautor'],
+                    ['nombre' => 'Judi J.', 'apellido' => 'McDonald', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Matematicas'],
                 'materias' => ['Algebra'],
             ],
@@ -202,11 +230,17 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto de fisica general para ingenieria',
                 'isbn' => '9786073244374',
-                'autor' => 'Hugh D. Young',
-                'autores' => 'Hugh D. Young, Roger A. Freedman',
                 'editorial' => 'Pearson',
                 'paginas' => 1568,
                 'lugar' => 'Mexico DF',
+                'edicion' => '14a edicion',
+                'ilustraciones' => 'ilustraciones a color',
+                'dimensiones' => '28 cm',
+                'pais_publicacion' => 'mx',
+                'personas' => [
+                    ['nombre' => 'Hugh D.', 'apellido' => 'Young', 'rol' => 'autor'],
+                    ['nombre' => 'Roger A.', 'apellido' => 'Freedman', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Fisica', 'Matematicas'],
                 'materias' => ['Fisica I'],
             ],
@@ -216,11 +250,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'A Handbook of Agile Software Craftsmanship',
                 'isbn' => '9780132350884',
-                'autor' => 'Robert C. Martin',
-                'autores' => 'Robert C. Martin',
                 'editorial' => 'Prentice Hall',
                 'paginas' => 464,
                 'lugar' => 'New Jersey',
+                'pais_publicacion' => 'us',
+                'notas' => 'Lectura recomendada para Ingenieria de Software I',
+                'personas' => [
+                    ['nombre' => 'Robert C.', 'apellido' => 'Martin', 'rol' => 'autor'],
+                ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
                 'materias' => ['Ingenieria de Software I', 'Programacion II'],
             ],
@@ -230,11 +267,16 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'Elements of Reusable Object-Oriented Software',
                 'isbn' => '9780201633610',
-                'autor' => 'Erich Gamma',
-                'autores' => 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides',
                 'editorial' => 'Addison-Wesley',
                 'paginas' => 416,
                 'lugar' => 'Reading',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Erich', 'apellido' => 'Gamma', 'rol' => 'autor'],
+                    ['nombre' => 'Richard', 'apellido' => 'Helm', 'rol' => 'coautor'],
+                    ['nombre' => 'Ralph', 'apellido' => 'Johnson', 'rol' => 'coautor'],
+                    ['nombre' => 'John', 'apellido' => 'Vlissides', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
                 'materias' => ['Ingenieria de Software I'],
             ],
@@ -244,11 +286,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto integral sobre sistemas operativos',
                 'isbn' => '9780133591620',
-                'autor' => 'Andrew S. Tanenbaum',
-                'autores' => 'Andrew S. Tanenbaum, Herbert Bos',
                 'editorial' => 'Pearson',
                 'paginas' => 1136,
                 'lugar' => 'Amsterdam',
+                'edicion' => '4a edicion',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Andrew S.', 'apellido' => 'Tanenbaum', 'rol' => 'autor'],
+                    ['nombre' => 'Herbert', 'apellido' => 'Bos', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Sistemas Operativos', 'Programacion'],
                 'materias' => ['Sistemas Operativos'],
             ],
@@ -258,11 +304,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto sobre procesos y practicas de ingenieria de software',
                 'isbn' => '9780133943030',
-                'autor' => 'Ian Sommerville',
-                'autores' => 'Ian Sommerville',
                 'editorial' => 'Pearson',
                 'paginas' => 816,
                 'lugar' => 'Londres',
+                'edicion' => '10a edicion',
+                'pais_publicacion' => 'gb',
+                'personas' => [
+                    ['nombre' => 'Ian', 'apellido' => 'Sommerville', 'rol' => 'autor'],
+                ],
                 'temas' => ['Ingenieria de Software'],
                 'materias' => ['Ingenieria de Software I'],
             ],
@@ -272,11 +321,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'Your Journey to Mastery, 20th Anniversary Edition',
                 'isbn' => '9780135957059',
-                'autor' => 'David Thomas',
-                'autores' => 'David Thomas, Andrew Hunt',
                 'editorial' => 'Addison-Wesley',
                 'paginas' => 352,
                 'lugar' => 'Boston',
+                'edicion' => '2nd edition',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'David', 'apellido' => 'Thomas', 'rol' => 'autor'],
+                    ['nombre' => 'Andrew', 'apellido' => 'Hunt', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
                 'materias' => ['Programacion II', 'Ingenieria de Software I'],
             ],
@@ -286,11 +339,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Implementacion de estructuras de datos en Java',
                 'isbn' => '9781118771334',
-                'autor' => 'Michael T. Goodrich',
-                'autores' => 'Michael T. Goodrich, Roberto Tamassia',
                 'editorial' => 'Wiley',
                 'paginas' => 736,
                 'lugar' => 'New York',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Michael T.', 'apellido' => 'Goodrich', 'rol' => 'autor'],
+                    ['nombre' => 'Roberto', 'apellido' => 'Tamassia', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Algoritmos', 'Programacion'],
                 'materias' => ['Programacion I', 'Programacion II'],
             ],
@@ -300,11 +356,16 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Conceptos fundamentales de bases de datos',
                 'isbn' => '9780078022159',
-                'autor' => 'Abraham Silberschatz',
-                'autores' => 'Abraham Silberschatz, Henry F. Korth, S. Sudarshan',
                 'editorial' => 'McGraw-Hill',
                 'paginas' => 1376,
                 'lugar' => 'New York',
+                'edicion' => '7a edicion',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'Abraham', 'apellido' => 'Silberschatz', 'rol' => 'autor'],
+                    ['nombre' => 'Henry F.', 'apellido' => 'Korth', 'rol' => 'coautor'],
+                    ['nombre' => 'S.', 'apellido' => 'Sudarshan', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Base de Datos'],
                 'materias' => ['Base de Datos I', 'Base de Datos II'],
             ],
@@ -314,11 +375,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'Networking fundamentals with top-down approach',
                 'isbn' => '9780136681557',
-                'autor' => 'James F. Kurose',
-                'autores' => 'James F. Kurose, Keith W. Ross',
                 'editorial' => 'Pearson',
                 'paginas' => 800,
                 'lugar' => 'Boston',
+                'edicion' => '8th edition',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'James F.', 'apellido' => 'Kurose', 'rol' => 'autor'],
+                    ['nombre' => 'Keith W.', 'apellido' => 'Ross', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Redes'],
                 'materias' => ['Redes de Computadoras'],
             ],
@@ -328,11 +393,17 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'Comprehensive text on deep learning techniques',
                 'isbn' => '9780262035613',
-                'autor' => 'Ian Goodfellow',
-                'autores' => 'Ian Goodfellow, Yoshua Bengio, Aaron Courville',
                 'editorial' => 'MIT Press',
                 'paginas' => 800,
                 'lugar' => 'Cambridge',
+                'ilustraciones' => 'ilustraciones y graficos',
+                'pais_publicacion' => 'us',
+                'serie' => 'Adaptive Computation and Machine Learning',
+                'personas' => [
+                    ['nombre' => 'Ian', 'apellido' => 'Goodfellow', 'rol' => 'autor'],
+                    ['nombre' => 'Yoshua', 'apellido' => 'Bengio', 'rol' => 'coautor'],
+                    ['nombre' => 'Aaron', 'apellido' => 'Courville', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Inteligencia Artificial', 'Matematicas', 'Algoritmos'],
                 'materias' => ['Programacion II'],
             ],
@@ -342,11 +413,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Calculo con funciones trascendentes desde el inicio',
                 'isbn' => '9786075268699',
-                'autor' => 'Dennis G. Zill',
-                'autores' => 'Dennis G. Zill, Warren S. Wright',
                 'editorial' => 'Cengage Learning',
                 'paginas' => 784,
                 'lugar' => 'Mexico DF',
+                'edicion' => '6a edicion',
+                'pais_publicacion' => 'mx',
+                'personas' => [
+                    ['nombre' => 'Dennis G.', 'apellido' => 'Zill', 'rol' => 'autor'],
+                    ['nombre' => 'Warren S.', 'apellido' => 'Wright', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Matematicas'],
                 'materias' => ['Analisis Matematico I'],
             ],
@@ -356,11 +431,14 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Principios y practicas de seguridad informatica',
                 'isbn' => '9780134794105',
-                'autor' => 'William Stallings',
-                'autores' => 'William Stallings, Lawrie Brown',
                 'editorial' => 'Pearson',
                 'paginas' => 832,
                 'lugar' => 'Boston',
+                'pais_publicacion' => 'us',
+                'personas' => [
+                    ['nombre' => 'William', 'apellido' => 'Stallings', 'rol' => 'autor'],
+                    ['nombre' => 'Lawrie', 'apellido' => 'Brown', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Seguridad Informatica', 'Redes'],
                 'materias' => ['Redes de Computadoras'],
             ],
@@ -370,11 +448,15 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'en',
                 'descripcion' => 'Improving the Design of Existing Code, 2nd Edition',
                 'isbn' => '9780134757599',
-                'autor' => 'Martin Fowler',
-                'autores' => 'Martin Fowler',
                 'editorial' => 'Addison-Wesley',
                 'paginas' => 448,
                 'lugar' => 'Boston',
+                'edicion' => '2nd edition',
+                'pais_publicacion' => 'us',
+                'notas' => 'Complemento de Clean Code para refactorizacion',
+                'personas' => [
+                    ['nombre' => 'Martin', 'apellido' => 'Fowler', 'rol' => 'autor'],
+                ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
                 'materias' => ['Ingenieria de Software I'],
             ],
@@ -384,11 +466,17 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 'idioma' => 'es',
                 'descripcion' => 'Texto de fisica con enfoque en ingenieria',
                 'isbn' => '9786075266893',
-                'autor' => 'Raymond A. Serway',
-                'autores' => 'Raymond A. Serway, John W. Jewett',
                 'editorial' => 'Cengage Learning',
                 'paginas' => 1296,
                 'lugar' => 'Mexico DF',
+                'edicion' => '10a edicion',
+                'ilustraciones' => 'ilustraciones a color',
+                'dimensiones' => '28 cm',
+                'pais_publicacion' => 'mx',
+                'personas' => [
+                    ['nombre' => 'Raymond A.', 'apellido' => 'Serway', 'rol' => 'autor'],
+                    ['nombre' => 'John W.', 'apellido' => 'Jewett', 'rol' => 'coautor'],
+                ],
                 'temas' => ['Fisica', 'Matematicas'],
                 'materias' => ['Fisica I'],
             ],
@@ -400,6 +488,9 @@ class CatalogoTestDataSeeder extends AbstractSeed
         foreach ($allTemas as $t) {
             $temaMap[$t['titulo']] = $t['id'];
         }
+
+        // Cache de personas ya creadas (nombre+apellido -> id)
+        $personaCache = [];
 
         // Insertar cada libro
         foreach ($libros as $index => $libroData) {
@@ -417,23 +508,72 @@ class CatalogoTestDataSeeder extends AbstractSeed
             ])->save();
 
             $articuloId = $this->fetchRow(
-                "SELECT id FROM articulo WHERE titulo = '{$libroData['titulo']}'"
+                "SELECT id FROM articulo WHERE titulo = '" .
+                addslashes($libroData['titulo']) . "'"
             )['id'];
 
-            // 2. Insertar libro (subclase)
-            $this->table('libro')->insert([
-                [
-                    'articulo_id' => $articuloId,
-                    'isbn' => $libroData['isbn'],
-                    'paginas' => $libroData['paginas'],
-                    'autor' => $libroData['autor'],
-                    'autores' => $libroData['autores'],
-                    'editorial' => $libroData['editorial'],
-                    'lugar_de_publicacion' => $libroData['lugar'],
-                ],
-            ])->save();
+            // 2. Insertar libro (sin autor/autores/colaboradores)
+            $libroRow = [
+                'articulo_id' => $articuloId,
+                'isbn' => $libroData['isbn'],
+                'paginas' => $libroData['paginas'],
+                'editorial' => $libroData['editorial'],
+                'lugar_de_publicacion' => $libroData['lugar'],
+                'edicion' => $libroData['edicion'] ?? null,
+                'dimensiones' => $libroData['dimensiones'] ?? null,
+                'ilustraciones' => $libroData['ilustraciones'] ?? null,
+                'serie' => $libroData['serie'] ?? null,
+                'numero_serie' => $libroData['numero_serie'] ?? null,
+                'notas' => $libroData['notas'] ?? null,
+                'pais_publicacion' => $libroData['pais_publicacion'] ?? null,
+            ];
+            $this->table('libro')->insert([$libroRow])->save();
 
-            // 3. Insertar ejemplares (entre 1 y 4 por libro)
+            // 3. Insertar personas y relaciones libro_persona
+            if (!empty($libroData['personas'])) {
+                foreach ($libroData['personas'] as $orden => $personaData) {
+                    $cacheKey = $personaData['nombre'] . '|' . $personaData['apellido'];
+
+                    if (!isset($personaCache[$cacheKey])) {
+                        // Verificar si ya existe
+                        $existing = $this->fetchRow(
+                            "SELECT id FROM persona WHERE nombre = '" .
+                            addslashes($personaData['nombre']) . "' AND apellido = '" .
+                            addslashes($personaData['apellido']) . "'"
+                        );
+
+                        if ($existing) {
+                            $personaCache[$cacheKey] = $existing['id'];
+                        } else {
+                            $this->table('persona')->insert([
+                                [
+                                    'nombre' => $personaData['nombre'],
+                                    'apellido' => $personaData['apellido'],
+                                    'created_at' => $now,
+                                    'updated_at' => $now,
+                                ],
+                            ])->save();
+
+                            $personaCache[$cacheKey] = $this->fetchRow(
+                                "SELECT id FROM persona WHERE nombre = '" .
+                                addslashes($personaData['nombre']) . "' AND apellido = '" .
+                                addslashes($personaData['apellido']) . "'"
+                            )['id'];
+                        }
+                    }
+
+                    $this->table('libro_persona')->insert([
+                        [
+                            'libro_id' => $articuloId,
+                            'persona_id' => $personaCache[$cacheKey],
+                            'rol' => $personaData['rol'],
+                            'orden' => $orden,
+                        ],
+                    ])->save();
+                }
+            }
+
+            // 4. Insertar ejemplares (entre 1 y 4 por libro)
             $cantEjemplares = ($index % 4) + 1; // 1, 2, 3, 4, 1, 2, ...
             $ejemplares = [];
             for ($e = 1; $e <= $cantEjemplares; $e++) {
@@ -448,7 +588,7 @@ class CatalogoTestDataSeeder extends AbstractSeed
             }
             $this->table('ejemplar')->insert($ejemplares)->save();
 
-            // 4. Asociar temas
+            // 5. Asociar temas
             $articuloTemas = [];
             foreach ($libroData['temas'] as $temaNombre) {
                 if (isset($temaMap[$temaNombre])) {
@@ -462,7 +602,7 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 $this->table('articulo_tema')->insert($articuloTemas)->save();
             }
 
-            // 5. Asociar materias
+            // 6. Asociar materias
             $articuloMaterias = [];
             foreach ($libroData['materias'] as $materiaNombre) {
                 if (isset($materiaMap[$materiaNombre])) {

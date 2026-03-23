@@ -3,6 +3,7 @@
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Libros\Controllers\LibroController;
 use App\Catalogo\Libros\Repositories\LibroRepository;
+use App\Catalogo\Libros\Repositories\PersonaRepository;
 use App\Catalogo\Libros\Services\LibroService;
 use Tests\Helper\TestStreamWrapper;
 use Tests\TestCase;
@@ -12,7 +13,8 @@ uses(TestCase::class);
 beforeEach(function () {
     $libroRepository = new LibroRepository($this->pdo);
     $articuloRepository = new ArticuloRepository($this->pdo);
-    $service = new LibroService($libroRepository, $articuloRepository, $this->pdo);
+    $personaRepository = new PersonaRepository($this->pdo);
+    $service = new LibroService($libroRepository, $articuloRepository, $personaRepository, $this->pdo);
 
     $this->controller = new LibroController($service);
 
@@ -38,7 +40,7 @@ function withJsonInputLibro(array $payload, callable $callback): void
     }
 }
 
-test('create crea libro completo con articulo y datos del libro', function () {
+test('create crea libro completo con articulo y personas', function () {
     $tipoDocumentoId = $this->insertInto('tipo_documento', [
         'codigo' => 'LIB',
         'descripcion' => 'Libro',
@@ -55,11 +57,13 @@ test('create crea libro completo con articulo y datos del libro', function () {
         ],
         'libro' => [
             'isbn' => '9780132350884',
-            'autor' => 'Robert C. Martin',
-            'autores' => 'Robert C. Martin, Uncle Bob',
-            'colaboradores' => 'Prentice Hall',
             'titulo_informativo' => 'A Handbook of Agile Software Craftsmanship',
-            'cdu' => 004
+            'cdu' => 004,
+            'edicion' => '1a edición',
+            'personas' => [
+                ['nombre' => 'Robert C.', 'apellido' => 'Martin', 'rol' => 'autor'],
+                ['nombre' => 'Michael C.', 'apellido' => 'Feathers', 'rol' => 'colaborador'],
+            ]
         ]
     ], function () {
         ob_start();
@@ -71,14 +75,17 @@ test('create crea libro completo con articulo y datos del libro', function () {
 
     expect($response)->toHaveKey('data')
         ->and($response['data']['isbn'])->toBe('9780132350884')
-        ->and($response['data']['autor'])->toBe('Robert C. Martin')
-        ->and($response['data']['autores'])->toBe('Robert C. Martin, Uncle Bob')
-        ->and($response['data']['colaboradores'])->toBe('Prentice Hall')
         ->and($response['data']['titulo_informativo'])->toBe('A Handbook of Agile Software Craftsmanship')
-        ->and($response['data']['cdu'])->toBe(004);
+        ->and($response['data']['cdu'])->toBe(004)
+        ->and($response['data']['edicion'])->toBe('1a edición')
+        ->and($response['data']['personas'])->toHaveCount(2)
+        ->and($response['data']['personas'][0]['apellido'])->toBe('Martin')
+        ->and($response['data']['personas'][0]['rol'])->toBe('autor')
+        ->and($response['data']['personas'][1]['apellido'])->toBe('Feathers')
+        ->and($response['data']['personas'][1]['rol'])->toBe('colaborador');
 
     // Verificar que tanto artículo como libro se crearon
-    $articuloId = $response['data']['id']; // id y articulo_id son lo mismo
+    $articuloId = $response['data']['id'];
     expect($this->recordExists('articulo', ['id' => $articuloId]))->toBeTrue();
     expect($this->recordExists('libro', ['articulo_id' => $articuloId]))->toBeTrue();
 });
@@ -101,9 +108,6 @@ test('create falla con isbn duplicado', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloId1,
         'isbn' => '9780132350884',
-        'autor' => 'Autor Original',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -131,7 +135,7 @@ test('create falla con isbn duplicado', function () {
         ->and($response['error']['code'])->toBe('ENTITY_ALREADY_EXISTS');
 });
 
-test('update actualiza libro exitosamente', function () {
+test('update actualiza libro y personas exitosamente', function () {
     $tipoDocumentoId = $this->insertInto('tipo_documento', [
         'codigo' => 'LIB',
         'descripcion' => 'Libro',
@@ -149,19 +153,17 @@ test('update actualiza libro exitosamente', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloId,
         'isbn' => '9780132350884',
-        'autor' => 'Autor Original',
-        'autores' => 'Autores Originales',
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
 
     withJsonInputLibro([
-        'autor' => 'Autor Actualizado',
-        'autores' => 'Autores Actualizados',
-        'colaboradores' => 'Colaboradores Nuevos',
         'titulo_informativo' => 'Título informativo nuevo',
-        'cdu' => 123
+        'cdu' => 123,
+        'edicion' => '2a edición',
+        'personas' => [
+            ['nombre' => 'Juan', 'apellido' => 'Pérez', 'rol' => 'autor'],
+        ]
     ], function () use ($articuloId) {
         ob_start();
         $this->controller->updateLibro($articuloId);
@@ -172,11 +174,11 @@ test('update actualiza libro exitosamente', function () {
 
     expect($response)->toHaveKey('data')
         ->and($response['data']['isbn'])->toBe('9780132350884') // ISBN original (inmutable)
-        ->and($response['data']['autor'])->toBe('Autor Actualizado')
-        ->and($response['data']['autores'])->toBe('Autores Actualizados')
-        ->and($response['data']['colaboradores'])->toBe('Colaboradores Nuevos')
         ->and($response['data']['titulo_informativo'])->toBe('Título informativo nuevo')
-        ->and($response['data']['cdu'])->toBe(123);
+        ->and($response['data']['cdu'])->toBe(123)
+        ->and($response['data']['edicion'])->toBe('2a edición')
+        ->and($response['data']['personas'])->toHaveCount(1)
+        ->and($response['data']['personas'][0]['apellido'])->toBe('Pérez');
 });
 
 test('delete elimina libro exitosamente', function () {
@@ -197,9 +199,6 @@ test('delete elimina libro exitosamente', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloId,
         'isbn' => '9780132350884',
-        'autor' => 'Autor Test',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -233,10 +232,7 @@ test('listAll filtra libros con paginacion y metadatos', function () {
 
         $this->insertInto('libro', [
             'articulo_id' => $articuloId,
-            'isbn' => sprintf('978013235%03d', $i), // Genera ISBNs como 9780132350001, 9780132350002, etc.
-            'autor' => "Autor $i",
-            'autores' => "Autores $i",
-            'colaboradores' => null,
+            'isbn' => sprintf('978013235%03d', $i),
             'titulo_informativo' => "Info $i",
             'cdu' => 100 + $i,
         ]);
@@ -256,13 +252,12 @@ test('listAll filtra libros con paginacion y metadatos', function () {
         ->and($response['pagination']['per_page'])->toBe(5)
         ->and($response['pagination']['total'])->toBeGreaterThan(10);
 
-    // Verificar que los datos del libro incluyen todos los campos
+    // Verificar que los datos del libro incluyen los campos nuevos
     $firstBook = $response['data'][0];
     expect($firstBook)->toHaveKey('isbn')
-        ->and($firstBook)->toHaveKey('autor')
-        ->and($firstBook)->toHaveKey('autores')
         ->and($firstBook)->toHaveKey('titulo_informativo')
-        ->and($firstBook)->toHaveKey('cdu');
+        ->and($firstBook)->toHaveKey('cdu')
+        ->and($firstBook)->toHaveKey('personas');
 });
 
 test('getById retorna libro con todos los campos', function () {
@@ -283,11 +278,23 @@ test('getById retorna libro con todos los campos', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloId,
         'isbn' => '9780132350884',
-        'autor' => 'Autor Completo',
-        'autores' => 'Autor Principal, Coautor',
-        'colaboradores' => 'Editor, Revisor',
         'titulo_informativo' => 'Subtítulo informativo',
         'cdu' => 500,
+        'edicion' => '3a edición',
+        'dimensiones' => '24 cm',
+        'pais_publicacion' => 'ar',
+    ]);
+
+    $personaId = $this->insertInto('persona', [
+        'nombre' => 'Thomas H.',
+        'apellido' => 'Cormen',
+    ]);
+
+    $this->insertInto('libro_persona', [
+        'libro_id' => $articuloId,
+        'persona_id' => $personaId,
+        'rol' => 'autor',
+        'orden' => 0,
     ]);
 
     ob_start();
@@ -297,13 +304,71 @@ test('getById retorna libro con todos los campos', function () {
     $response = json_decode($output, true);
 
     expect($response)->toHaveKey('data')
-        ->and($response['data']['id'])->toBe($articuloId) // id y articulo_id son lo mismo
+        ->and($response['data']['id'])->toBe($articuloId)
         ->and($response['data']['isbn'])->toBe('9780132350884')
-        ->and($response['data']['autor'])->toBe('Autor Completo')
-        ->and($response['data']['autores'])->toBe('Autor Principal, Coautor')
-        ->and($response['data']['colaboradores'])->toBe('Editor, Revisor')
         ->and($response['data']['titulo_informativo'])->toBe('Subtítulo informativo')
-        ->and($response['data']['cdu'])->toBe(500);
+        ->and($response['data']['cdu'])->toBe(500)
+        ->and($response['data']['edicion'])->toBe('3a edición')
+        ->and($response['data']['dimensiones'])->toBe('24 cm')
+        ->and($response['data']['pais_publicacion'])->toBe('ar')
+        ->and($response['data']['personas'])->toHaveCount(1)
+        ->and($response['data']['personas'][0]['nombre'])->toBe('Thomas H.')
+        ->and($response['data']['personas'][0]['apellido'])->toBe('Cormen');
+});
+
+test('deduplicación de personas al crear dos libros con mismo autor', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    // Crear primer libro con autor
+    withJsonInputLibro([
+        'articulo' => [
+            'titulo' => 'Libro Uno',
+            'anio_publicacion' => 2020,
+            'tipo_documento_id' => $tipoDocumentoId,
+            'idioma' => 'es'
+        ],
+        'libro' => [
+            'isbn' => '9780132350001',
+            'personas' => [
+                ['nombre' => 'Jorge Luis', 'apellido' => 'Borges', 'rol' => 'autor'],
+            ]
+        ]
+    ], function () {
+        ob_start();
+        $this->controller->create();
+        ob_get_clean();
+    });
+
+    // Crear segundo libro con el mismo autor
+    withJsonInputLibro([
+        'articulo' => [
+            'titulo' => 'Libro Dos',
+            'anio_publicacion' => 2021,
+            'tipo_documento_id' => $tipoDocumentoId,
+            'idioma' => 'es'
+        ],
+        'libro' => [
+            'isbn' => '9780132350002',
+            'personas' => [
+                ['nombre' => 'Jorge Luis', 'apellido' => 'Borges', 'rol' => 'autor'],
+            ]
+        ]
+    ], function () {
+        ob_start();
+        $this->controller->create();
+        ob_get_clean();
+    });
+
+    // Solo debe haber 1 registro en persona
+    $stmt = $this->pdo->query("SELECT COUNT(*) FROM persona WHERE nombre = 'Jorge Luis' AND apellido = 'Borges'");
+    $count = (int) $stmt->fetchColumn();
+
+    expect($count)->toBe(1);
 });
 
 test('search filtra libros por titulos de temas', function () {
@@ -332,9 +397,6 @@ test('search filtra libros por titulos de temas', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloProgramacionId,
         'isbn' => '9780132350001',
-        'autor' => 'Autor Programacion',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -354,9 +416,6 @@ test('search filtra libros por titulos de temas', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloHistoriaId,
         'isbn' => '9780132350002',
-        'autor' => 'Autor Historia',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -406,9 +465,6 @@ test('searchPaginated filtra libros por multiples temas', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloUnoId,
         'isbn' => '9780132350003',
-        'autor' => 'Autor Uno',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -428,9 +484,6 @@ test('searchPaginated filtra libros por multiples temas', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloDosId,
         'isbn' => '9780132350004',
-        'autor' => 'Autor Dos',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -483,9 +536,6 @@ test('search filtra libros por titulos de materias', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloContabilidadId,
         'isbn' => '9780132351001',
-        'autor' => 'Autor Contabilidad',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -505,9 +555,6 @@ test('search filtra libros por titulos de materias', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloFisicaId,
         'isbn' => '9780132351002',
-        'autor' => 'Autor Fisica',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -557,9 +604,6 @@ test('searchPaginated filtra libros por multiples materias', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloUnoId,
         'isbn' => '9780132351003',
-        'autor' => 'Autor Uno',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -579,9 +623,6 @@ test('searchPaginated filtra libros por multiples materias', function () {
     $this->insertInto('libro', [
         'articulo_id' => $articuloDosId,
         'isbn' => '9780132351004',
-        'autor' => 'Autor Dos',
-        'autores' => null,
-        'colaboradores' => null,
         'titulo_informativo' => null,
         'cdu' => null,
     ]);
@@ -606,4 +647,51 @@ test('searchPaginated filtra libros por multiples materias', function () {
     expect($response)->toHaveKey('data')
         ->and($response['data'])->toHaveCount(2)
         ->and($response['pagination']['total'])->toBe(2);
+});
+
+test('search filtra libros por persona', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Introduction to Algorithms',
+        'anio_publicacion' => 2009,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'en',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloId,
+        'isbn' => '9780262033848',
+        'titulo_informativo' => null,
+        'cdu' => null,
+    ]);
+
+    $personaId = $this->insertInto('persona', [
+        'nombre' => 'Thomas H.',
+        'apellido' => 'Cormen',
+    ]);
+
+    $this->insertInto('libro_persona', [
+        'libro_id' => $articuloId,
+        'persona_id' => $personaId,
+        'rol' => 'autor',
+        'orden' => 0,
+    ]);
+
+    $_GET = ['persona' => 'Cormen'];
+
+    ob_start();
+    $this->controller->searchPaginated();
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response)->toHaveKey('data')
+        ->and($response['data'])->toHaveCount(1)
+        ->and($response['data'][0]['articulo']['titulo'])->toBe('Introduction to Algorithms');
 });

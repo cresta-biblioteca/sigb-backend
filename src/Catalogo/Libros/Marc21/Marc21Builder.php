@@ -22,9 +22,23 @@ class Marc21Builder
         'it' => 'ita',
     ];
 
-    /**
-     * Construye un Record MARC21 a partir de un Libro con su Articulo cargado.
-     */
+    private const COUNTRY_MAP = [
+        'ar' => 'ag ',
+        'us' => 'xxu',
+        'mx' => 'mx ',
+        'es' => 'sp ',
+        'gb' => 'xxk',
+        'br' => 'bl ',
+        'cl' => 'cl ',
+        'co' => 'ck ',
+        'pe' => 'pe ',
+        'uy' => 'uy ',
+        'fr' => 'fr ',
+        'de' => 'gw ',
+        'it' => 'it ',
+        'pt' => 'po ',
+    ];
+
     public static function build(Libro $libro): Record
     {
         $articulo = $libro->getArticulo();
@@ -38,6 +52,11 @@ class Marc21Builder
 
         // 003 - Código de organización MARC
         $raw->appendField(new File_MARC_Control_Field('003', 'AR-BuSIGB'));
+
+        // 008 - Campo de datos fijos
+        if ($articulo !== null) {
+            $raw->appendField(new File_MARC_Control_Field('008', self::build008($libro)));
+        }
 
         // 020 - ISBN
         if ($libro->getIsbn() !== null) {
@@ -68,10 +87,11 @@ class Marc21Builder
             ], ' ', ' '));
         }
 
-        // 100 - Autor principal
-        if ($libro->getAutor() !== null) {
+        // 100 - Autor principal (desde personas)
+        $autorPrincipal = $libro->getAutorPrincipal();
+        if ($autorPrincipal !== null) {
             $raw->appendField(new File_MARC_Data_Field('100', [
-                new File_MARC_Subfield('a', $libro->getAutor()),
+                new File_MARC_Subfield('a', $autorPrincipal->getNombreCompleto()),
                 new File_MARC_Subfield('e', 'autor'),
             ], '1', ' '));
         }
@@ -82,10 +102,17 @@ class Marc21Builder
             if ($libro->getTituloInformativo() !== null) {
                 $subfields[] = new File_MARC_Subfield('b', $libro->getTituloInformativo());
             }
-            if ($libro->getAutor() !== null) {
-                $subfields[] = new File_MARC_Subfield('c', $libro->getAutor());
+            if ($autorPrincipal !== null) {
+                $subfields[] = new File_MARC_Subfield('c', $autorPrincipal->getNombreCompleto());
             }
             $raw->appendField(new File_MARC_Data_Field('245', $subfields, '1', '0'));
+        }
+
+        // 250 - Edición
+        if ($libro->getEdicion() !== null) {
+            $raw->appendField(new File_MARC_Data_Field('250', [
+                new File_MARC_Subfield('a', $libro->getEdicion()),
+            ], ' ', ' '));
         }
 
         // 264 - Producción, publicación, distribución, fabricación
@@ -102,10 +129,31 @@ class Marc21Builder
             $raw->appendField(new File_MARC_Data_Field('264', $subfields, ' ', '1'));
         }
 
-        // 300 - Descripción física (páginas)
+        // 300 - Descripción física
         if ($libro->getPaginas() !== null) {
-            $raw->appendField(new File_MARC_Data_Field('300', [
-                new File_MARC_Subfield('a', $libro->getPaginas() . ' páginas'),
+            $subfields = [new File_MARC_Subfield('a', $libro->getPaginas() . ' páginas')];
+            if ($libro->getIlustraciones() !== null) {
+                $subfields[] = new File_MARC_Subfield('b', $libro->getIlustraciones());
+            }
+            if ($libro->getDimensiones() !== null) {
+                $subfields[] = new File_MARC_Subfield('c', $libro->getDimensiones());
+            }
+            $raw->appendField(new File_MARC_Data_Field('300', $subfields, ' ', ' '));
+        }
+
+        // 490 - Serie (ind1='0' = serie no trazada)
+        if ($libro->getSerie() !== null) {
+            $subfields = [new File_MARC_Subfield('a', $libro->getSerie())];
+            if ($libro->getNumeroSerie() !== null) {
+                $subfields[] = new File_MARC_Subfield('v', $libro->getNumeroSerie());
+            }
+            $raw->appendField(new File_MARC_Data_Field('490', $subfields, '0', ' '));
+        }
+
+        // 500 - Notas
+        if ($libro->getNotas() !== null) {
+            $raw->appendField(new File_MARC_Data_Field('500', [
+                new File_MARC_Subfield('a', $libro->getNotas()),
             ], ' ', ' '));
         }
 
@@ -116,56 +164,128 @@ class Marc21Builder
             ], ' ', ' '));
         }
 
-        // 700 - Coautores (un campo 700 por cada persona)
-        if ($libro->getAutores() !== null) {
-            self::appendPersonFields($raw, $libro->getAutores(), 'coautor');
+        // 650 - Materias (ind2='4' = fuente no especificada)
+        if ($articulo !== null) {
+            foreach ($articulo->getMaterias() as $materia) {
+                $raw->appendField(new File_MARC_Data_Field('650', [
+                    new File_MARC_Subfield('a', $materia->getTitulo()),
+                ], ' ', '4'));
+            }
         }
 
-        // 700 - Colaboradores (un campo 700 por cada persona)
-        if ($libro->getColaboradores() !== null) {
-            self::appendPersonFields($raw, $libro->getColaboradores(), 'colaborador');
+        // 653 - Temas (términos de índice no controlados)
+        if ($articulo !== null) {
+            foreach ($articulo->getTemas() as $tema) {
+                $raw->appendField(new File_MARC_Data_Field('653', [
+                    new File_MARC_Subfield('a', $tema->getTitulo()),
+                ], ' ', ' '));
+            }
+        }
+
+        // 700 - Personas adicionales (excluyendo autor principal)
+        $autorPrincipalId = $autorPrincipal?->getId();
+        foreach ($libro->getPersonas() as $libroPersona) {
+            // Saltar el autor principal (ya incluido en campo 100)
+            if ($libroPersona->rol === 'autor' && $libroPersona->persona->getId() === $autorPrincipalId) {
+                continue;
+            }
+
+            $raw->appendField(new File_MARC_Data_Field('700', [
+                new File_MARC_Subfield('a', $libroPersona->persona->getNombreCompleto()),
+                new File_MARC_Subfield('e', $libroPersona->rol),
+            ], '1', ' '));
         }
 
         return new Record($raw);
     }
 
-    /**
-     * Separa un string de nombres delimitado por comas y agrega un campo 700 por persona.
-     */
-    private static function appendPersonFields(
-        File_MARC_Record $raw,
-        string $names,
-        string $relatorTerm
-    ): void {
-        $people = array_filter(array_map('trim', explode(',', $names)));
+    private static function build008(Libro $libro): string
+    {
+        $articulo = $libro->getArticulo();
+        $now = new \DateTimeImmutable();
 
-        foreach ($people as $name) {
-            $raw->appendField(new File_MARC_Data_Field('700', [
-                new File_MARC_Subfield('a', $name),
-                new File_MARC_Subfield('e', $relatorTerm),
-            ], '1', ' '));
+        // pos 00-05: fecha creación (yymmdd)
+        $dateCreated = $now->format('ymd');
+
+        // pos 06: 's' (fecha única de publicación)
+        $dateType = 's';
+
+        // pos 07-10: año de publicación
+        $year = $articulo !== null ? str_pad((string) $articulo->getAnioPublicacion(), 4, ' ') : '    ';
+
+        // pos 11-14: espacios (fecha 2 no usada)
+        $date2 = '    ';
+
+        // pos 15-17: código de país
+        $country = 'xx ';
+        if ($libro->getPaisPublicacion() !== null) {
+            $country = self::COUNTRY_MAP[strtolower($libro->getPaisPublicacion())] ?? 'xx ';
         }
+
+        // pos 18-21: código de ilustraciones (o espacios)
+        $illustrations = '    ';
+        if ($libro->getIlustraciones() !== null) {
+            $illustrations = str_pad(substr('a   ', 0, 4), 4, ' ');
+        }
+
+        // pos 22: público objetivo (sin especificar)
+        $targetAudience = ' ';
+
+        // pos 23: forma del item (sin especificar)
+        $formOfItem = ' ';
+
+        // pos 24-27: naturaleza del contenido
+        $natureOfContents = '    ';
+
+        // pos 28: publicación gubernamental
+        $govPub = ' ';
+
+        // pos 29: publicación de conferencia
+        $confPub = '0';
+
+        // pos 30: festschrift
+        $festschrift = '0';
+
+        // pos 31: índice
+        $index = '0';
+
+        // pos 32: sin definir
+        $undefined = ' ';
+
+        // pos 33: forma literaria
+        $litForm = '0';
+
+        // pos 34: biografía
+        $biography = ' ';
+
+        // pos 35-37: código de idioma
+        $langCode = 'und';
+        if ($articulo !== null) {
+            $langCode = self::LANGUAGE_MAP[$articulo->getIdioma()] ?? 'und';
+        }
+
+        // pos 38: registro modificado
+        $modifiedRecord = ' ';
+
+        // pos 39: fuente de catalogación
+        $catSource = 'd';
+
+        return $dateCreated . $dateType . $year . $date2 . $country
+            . $illustrations . $targetAudience . $formOfItem . $natureOfContents
+            . $govPub . $confPub . $festschrift . $index . $undefined
+            . $litForm . $biography . $langCode . $modifiedRecord . $catSource;
     }
 
-    /**
-     * Exporta el registro como MARCXML (ISO 25577).
-     */
     public static function toMarcXml(Libro $libro): string
     {
         return self::suppressDeprecations(fn() => self::build($libro)->toXML());
     }
 
-    /**
-     * Exporta el registro en formato ISO 2709 binario (.mrc).
-     */
     public static function toIso2709(Libro $libro): string
     {
         return self::suppressDeprecations(fn() => self::build($libro)->toRaw());
     }
 
-    /**
-     * Ejecuta un callable suprimiendo deprecation notices de pear/file_marc.
-     */
     private static function suppressDeprecations(callable $fn): string
     {
         $previous = error_reporting(error_reporting() & ~E_DEPRECATED);
