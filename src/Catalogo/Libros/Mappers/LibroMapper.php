@@ -13,24 +13,53 @@ class LibroMapper
     {
         $articulo = $libro->getArticulo();
 
+        $personas = array_map(fn($lp) => [
+            'nombre' => $lp->persona->getNombre(),
+            'apellido' => $lp->persona->getApellido(),
+            'rol' => $lp->rol,
+            'orden' => $lp->orden,
+        ], $libro->getPersonas());
+
+        $temas = [];
+        $materias = [];
+
+        if ($articulo !== null) {
+            $temas = array_map(fn($t) => [
+                'id' => $t->getId(),
+                'titulo' => $t->getTitulo(),
+            ], $articulo->getTemas());
+
+            $materias = array_map(fn($m) => [
+                'id' => $m->getId(),
+                'titulo' => $m->getTitulo(),
+            ], $articulo->getMaterias());
+        }
+
         return new LibroResponse(
             id: $libro->getId() ?? 0,
             isbn: $libro->getIsbn(),
             issn: $libro->getIssn(),
             paginas: $libro->getPaginas(),
-            autor: $libro->getAutor(),
-            autores: $libro->getAutores(),
-            colaboradores: $libro->getColaboradores(),
             tituloInformativo: $libro->getTituloInformativo(),
             cdu: $libro->getCdu(),
             editorial: $libro->getEditorial(),
             lugarDePublicacion: $libro->getLugarDePublicacion(),
+            edicion: $libro->getEdicion(),
+            dimensiones: $libro->getDimensiones(),
+            ilustraciones: $libro->getIlustraciones(),
+            serie: $libro->getSerie(),
+            numeroSerie: $libro->getNumeroSerie(),
+            notas: $libro->getNotas(),
+            paisPublicacion: $libro->getPaisPublicacion(),
+            personas: $personas,
             // Información del artículo (si está disponible)
             titulo: $articulo?->getTitulo(),
             anioPublicacion: $articulo?->getAnioPublicacion(),
             tipoDocumentoId: $articulo?->getTipoDocumentoId(),
             idioma: $articulo?->getIdioma(),
-            descripcion: $articulo?->getDescripcion()
+            descripcion: $articulo?->getDescripcion(),
+            temas: $temas,
+            materias: $materias,
         );
     }
 }

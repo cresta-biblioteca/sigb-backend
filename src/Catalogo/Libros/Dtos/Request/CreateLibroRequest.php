@@ -17,13 +17,19 @@ readonly class CreateLibroRequest
         public ?string $isbn,
         public ?string $issn,
         public ?int $paginas,
-        public ?string $autor,
-        public ?string $autores,
-        public ?string $colaboradores,
         public ?string $tituloInformativo,
         public ?int $cdu,
         public ?string $editorial,
-        public ?string $lugarDePublicacion
+        public ?string $lugarDePublicacion,
+        public ?string $edicion,
+        public ?string $dimensiones,
+        public ?string $ilustraciones,
+        public ?string $serie,
+        public ?string $numeroSerie,
+        public ?string $notas,
+        public ?string $paisPublicacion,
+        /** @var array<int, array{nombre: string, apellido: string, rol: string}> */
+        public array $personas,
     ) {
     }
 
@@ -38,13 +44,18 @@ readonly class CreateLibroRequest
             isbn: $libroData['isbn'] ?? null,
             issn: $libroData['issn'] ?? null,
             paginas: isset($libroData['paginas']) ? (int)$libroData['paginas'] : null,
-            autor: $libroData['autor'] ?? null,
-            autores: $libroData['autores'] ?? null,
-            colaboradores: $libroData['colaboradores'] ?? null,
             tituloInformativo: $libroData['titulo_informativo'] ?? null,
             cdu: isset($libroData['cdu']) ? (int)$libroData['cdu'] : null,
             editorial: $libroData['editorial'] ?? null,
-            lugarDePublicacion: $libroData['lugar_de_publicacion'] ?? null
+            lugarDePublicacion: $libroData['lugar_de_publicacion'] ?? null,
+            edicion: $libroData['edicion'] ?? null,
+            dimensiones: $libroData['dimensiones'] ?? null,
+            ilustraciones: $libroData['ilustraciones'] ?? null,
+            serie: $libroData['serie'] ?? null,
+            numeroSerie: $libroData['numero_serie'] ?? null,
+            notas: $libroData['notas'] ?? null,
+            paisPublicacion: $libroData['pais_publicacion'] ?? null,
+            personas: $libroData['personas'] ?? [],
         );
     }
 }

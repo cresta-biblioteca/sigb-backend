@@ -16,8 +16,7 @@ class LibroRequestValidator
     private const MAX_CDU = 999;
     private const MIN_YEAR = 1000;
 
-    /** @var array<int, string> */
-    private const REQUIRED_FIELDS = [];
+    private const ALLOWED_ROLES = ['autor', 'coautor', 'colaborador', 'editor', 'traductor', 'ilustrador'];
 
     /**
      * @param array<string, mixed> $data
@@ -25,16 +24,6 @@ class LibroRequestValidator
     public static function validate(array $data): void
     {
         $errors = [];
-
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $errors[$field] = ["El campo {$field} es requerido"];
-            }
-        }
-
-        if (!empty($errors)) {
-            throw new ValidationException($errors);
-        }
 
         // Validar ISBN (opcional)
         if (isset($data['isbn']) && $data['isbn'] !== null) {
@@ -79,7 +68,7 @@ class LibroRequestValidator
         }
 
         // Validaciones opcionales de texto
-        foreach (['autor', 'autores', 'colaboradores', 'titulo_informativo'] as $field) {
+        foreach (['titulo_informativo'] as $field) {
             if (isset($data[$field]) && $data[$field] !== null) {
                 if (!is_string($data[$field])) {
                     $errors[$field] = ["El campo {$field} debe ser un string"];
@@ -113,6 +102,12 @@ class LibroRequestValidator
             }
         }
 
+        // Validar campos nuevos
+        self::validateNewFields($data, $errors);
+
+        // Validar personas
+        self::validatePersonas($data, $errors);
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
         }
@@ -134,9 +129,7 @@ class LibroRequestValidator
         $allowedParams = [
             'isbn',
             'issn',
-            'autor',
-            'autores',
-            'colaboradores',
+            'persona',
             'titulo_informativo',
             'cdu',
             'editorial',
@@ -191,7 +184,7 @@ class LibroRequestValidator
         }
 
         // Validar campos de texto de Libro
-        $textFields = ['autor', 'autores', 'colaboradores', 'titulo_informativo', 'titulo'];
+        $textFields = ['persona', 'titulo_informativo', 'titulo'];
         foreach ($textFields as $field) {
             if (isset($params[$field]) && $params[$field] !== '') {
                 if (!is_string($params[$field])) {
@@ -324,7 +317,7 @@ class LibroRequestValidator
         }
 
         // Validar ordenamiento
-        $allowedSortBy = ['titulo', 'autor', 'anio_publicacion', 'editorial', 'isbn', 'idioma', 'id'];
+        $allowedSortBy = ['titulo', 'anio_publicacion', 'editorial', 'isbn', 'idioma', 'id'];
         if (isset($params['sort_by']) && !in_array($params['sort_by'], $allowedSortBy, true)) {
             $errors['sort_by'] = [
                 'El valor de sort_by no es válido. Valores permitidos: ' . implode(', ', $allowedSortBy),
@@ -361,10 +354,6 @@ class LibroRequestValidator
     }
 
     /**
-     * Valida datos para operaciones PATCH (actualización parcial)
-     * Solo valida campos editables: autor, autores, colaboradores, titulo_informativo,
-     * cdu, paginas, editorial, lugar_de_publicacion
-     * ISBN, ISSN y export_marc NO son modificables via PATCH
      * @param array<string, mixed> $data
      */
     public static function validatePatch(array $data): void
@@ -381,7 +370,7 @@ class LibroRequestValidator
         }
 
         // Validar campos opcionales solo si están presentes
-        foreach (['autor', 'autores', 'colaboradores', 'titulo_informativo'] as $field) {
+        foreach (['titulo_informativo'] as $field) {
             if (array_key_exists($field, $data) && $data[$field] !== null) {
                 if (!is_string($data[$field])) {
                     $errors[$field] = ["El campo {$field} debe ser un string"];
@@ -425,8 +414,128 @@ class LibroRequestValidator
             }
         }
 
+        // Validar campos nuevos
+        self::validateNewFields($data, $errors);
+
+        // Validar personas si están presentes
+        if (array_key_exists('personas', $data)) {
+            self::validatePersonas($data, $errors);
+        }
+
         if (!empty($errors)) {
             throw new ValidationException($errors);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, array<string>> $errors
+     */
+    private static function validateNewFields(array $data, array &$errors): void
+    {
+        // edicion (max 100)
+        if (isset($data['edicion']) && $data['edicion'] !== null) {
+            if (!is_string($data['edicion'])) {
+                $errors['edicion'] = ['El campo edicion debe ser un string'];
+            } elseif (mb_strlen(trim($data['edicion'])) > 100) {
+                $errors['edicion'] = ['El campo edicion no puede tener más de 100 caracteres'];
+            }
+        }
+
+        // dimensiones (max 50)
+        if (isset($data['dimensiones']) && $data['dimensiones'] !== null) {
+            if (!is_string($data['dimensiones'])) {
+                $errors['dimensiones'] = ['El campo dimensiones debe ser un string'];
+            } elseif (mb_strlen(trim($data['dimensiones'])) > 50) {
+                $errors['dimensiones'] = ['El campo dimensiones no puede tener más de 50 caracteres'];
+            }
+        }
+
+        // ilustraciones (max 100)
+        if (isset($data['ilustraciones']) && $data['ilustraciones'] !== null) {
+            if (!is_string($data['ilustraciones'])) {
+                $errors['ilustraciones'] = ['El campo ilustraciones debe ser un string'];
+            } elseif (mb_strlen(trim($data['ilustraciones'])) > 100) {
+                $errors['ilustraciones'] = ['El campo ilustraciones no puede tener más de 100 caracteres'];
+            }
+        }
+
+        // serie (max 255)
+        if (isset($data['serie']) && $data['serie'] !== null) {
+            if (!is_string($data['serie'])) {
+                $errors['serie'] = ['El campo serie debe ser un string'];
+            } elseif (mb_strlen(trim($data['serie'])) > self::MAX_TEXT_LENGTH) {
+                $errors['serie'] = ['El campo serie no puede tener más de ' . self::MAX_TEXT_LENGTH . ' caracteres'];
+            }
+        }
+
+        // numero_serie (max 50)
+        if (isset($data['numero_serie']) && $data['numero_serie'] !== null) {
+            if (!is_string($data['numero_serie'])) {
+                $errors['numero_serie'] = ['El campo numero_serie debe ser un string'];
+            } elseif (mb_strlen(trim($data['numero_serie'])) > 50) {
+                $errors['numero_serie'] = ['El campo numero_serie no puede tener más de 50 caracteres'];
+            }
+        }
+
+        // notas (text, sin max específico)
+        if (isset($data['notas']) && $data['notas'] !== null) {
+            if (!is_string($data['notas'])) {
+                $errors['notas'] = ['El campo notas debe ser un string'];
+            }
+        }
+
+        // pais_publicacion (char 2)
+        if (isset($data['pais_publicacion']) && $data['pais_publicacion'] !== null) {
+            if (!is_string($data['pais_publicacion'])) {
+                $errors['pais_publicacion'] = ['El campo pais_publicacion debe ser un string'];
+            } elseif (mb_strlen($data['pais_publicacion']) !== 2) {
+                $errors['pais_publicacion'] = ['El campo pais_publicacion debe tener exactamente 2 caracteres'];
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, array<string>> $errors
+     */
+    private static function validatePersonas(array $data, array &$errors): void
+    {
+        if (!isset($data['personas'])) {
+            return;
+        }
+
+        if (!is_array($data['personas'])) {
+            $errors['personas'] = ['El campo personas debe ser un array'];
+            return;
+        }
+
+        foreach ($data['personas'] as $index => $persona) {
+            if (!is_array($persona)) {
+                $errors["personas.{$index}"] = ['Cada persona debe ser un objeto'];
+                continue;
+            }
+
+            if (!isset($persona['nombre']) || !is_string($persona['nombre']) || trim($persona['nombre']) === '') {
+                $errors["personas.{$index}.nombre"] = ['El campo nombre es requerido y debe ser un string'];
+            } elseif (mb_strlen(trim($persona['nombre'])) > 100) {
+                $errors["personas.{$index}.nombre"] = ['El campo nombre no puede tener más de 100 caracteres'];
+            }
+
+            if (
+                !isset($persona['apellido']) || !is_string($persona['apellido'])
+                || trim($persona['apellido']) === ''
+            ) {
+                $errors["personas.{$index}.apellido"] = ['El campo apellido es requerido y debe ser un string'];
+            } elseif (mb_strlen(trim($persona['apellido'])) > 100) {
+                $errors["personas.{$index}.apellido"] = ['El campo apellido no puede tener más de 100 caracteres'];
+            }
+
+            if (!isset($persona['rol']) || !in_array($persona['rol'], self::ALLOWED_ROLES, true)) {
+                $errors["personas.{$index}.rol"] = [
+                    'El campo rol debe ser uno de: ' . implode(', ', self::ALLOWED_ROLES)
+                ];
+            }
         }
     }
 }
