@@ -37,7 +37,7 @@ class EjemplarService
     public function createEjemplar(EjemplarRequest $request): EjemplarResponse
     {
         if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras())) {
-            throw new AlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
+            throw new AlreadyExistsException('El código de barras ya está en uso');
         }
 
         $ejemplar = Ejemplar::create(
@@ -57,15 +57,11 @@ class EjemplarService
         $ejemplar = $this->findOrFail($id);
 
         if ($request->getArticuloId() !== $ejemplar->getArticuloId()) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                'El articulo_id del ejemplar no puede ser modificado',
-                field: 'articulo_id'
-            );
+            throw new BusinessRuleException('El articulo_id del ejemplar no puede ser modificado', 'articulo_id');
         }
 
         if ($this->ejemplarRepository->existsEjemplarByCodigoBarras($request->getCodigoBarras(), $id)) {
-            throw new AlreadyExistsException('Ejemplar', 'codigo_barras', $request->getCodigoBarras());
+            throw new AlreadyExistsException('El código de barras ya está en uso');
         }
 
         $ejemplar->setCodigoBarras($request->getCodigoBarras());
@@ -141,7 +137,7 @@ class EjemplarService
         $ejemplar = $this->ejemplarRepository->findById($id);
 
         if ($ejemplar === null) {
-            throw new NotFoundException('Ejemplar', $id);
+            throw new NotFoundException('Ejemplar no encontrado');
         }
 
         return $ejemplar;

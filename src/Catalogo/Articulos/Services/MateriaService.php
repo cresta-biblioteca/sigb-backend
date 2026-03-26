@@ -33,7 +33,7 @@ class MateriaService
         $materia = $this->repo->findById($id);
 
         if (!$materia) {
-            throw new MateriaNotFoundException($id);
+            throw new MateriaNotFoundException();
         }
         return MateriaMapper::toMateriaResponse($materia);
     }
@@ -45,7 +45,7 @@ class MateriaService
 
         // Sugerencia -> cambiar a unique el titulo en la base de datos y se evita este check
         if ($this->repo->findCoincidence($materia->getTitulo())) {
-            throw new MateriaAlreadyExistsException($materia->getTitulo());
+            throw new MateriaAlreadyExistsException();
         }
 
         $materiaCreada = $this->repo->insertMateria($materia);
@@ -59,7 +59,7 @@ class MateriaService
         $materiaExistente = $this->repo->findById($id);
 
         if (!$materiaExistente) {
-            throw new MateriaNotFoundException($id);
+            throw new MateriaNotFoundException();
         }
 
         /** @var Materia $materiaExistente */
@@ -67,7 +67,7 @@ class MateriaService
         if ($materia->getTitulo() !== $materiaExistente->getTitulo()) {
             $coincidencia = $this->repo->findCoincidence($materia->getTitulo());
             if ($coincidencia && $coincidencia->getId() !== $id) {
-                throw new MateriaAlreadyExistsException($materia->getTitulo());
+                throw new MateriaAlreadyExistsException();
             }
         }
 
@@ -91,12 +91,12 @@ class MateriaService
         $materiaExistente = $this->repo->findById($id);
 
         if (!$materiaExistente) {
-            throw new MateriaNotFoundException($id);
+            throw new MateriaNotFoundException();
         }
 
         $borrada = $this->repo->delete($id);
         if (!$borrada) {
-            throw new MateriaNotFoundException($id);
+            throw new MateriaNotFoundException();
         }
     }
 }

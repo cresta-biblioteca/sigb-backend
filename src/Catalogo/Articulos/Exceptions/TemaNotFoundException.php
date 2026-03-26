@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class TemaNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct("Tema", $identifier);
+        parent::__construct('Tema no encontrado');
     }
 }

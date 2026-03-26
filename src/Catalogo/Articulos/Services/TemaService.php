@@ -50,7 +50,7 @@ class TemaService
         $tema = $this->repo->findById($id);
 
         if (!$tema) {
-            throw new TemaNotFoundException($id);
+            throw new TemaNotFoundException();
         }
         return TemaMapper::toTemaResponse($tema);
     }
@@ -60,7 +60,7 @@ class TemaService
         $tema = TemaMapper::fromTemaRequest($request);
 
         if ($this->repo->findCoincidence($tema->getTitulo())) {
-            throw new TemaAlreadyExistsException($tema->getTitulo());
+            throw new TemaAlreadyExistsException();
         }
 
         $temaCreado = $this->repo->insertTema($tema);
@@ -74,13 +74,13 @@ class TemaService
         $temaExistente = $this->repo->findById($id);
 
         if (!$temaExistente) {
-            throw new TemaNotFoundException($id);
+            throw new TemaNotFoundException();
         }
 
         /** @var Tema|null $temaCoincidente */
         $temaCoincidente = $this->repo->findCoincidence($tema->getTitulo());
         if ($temaCoincidente !== null && $temaCoincidente->getId() !== $id) {
-            throw new TemaAlreadyExistsException($tema->getTitulo());
+            throw new TemaAlreadyExistsException();
         }
 
         $temaActualizado = $this->repo->updateTema($id, $tema);
@@ -93,12 +93,12 @@ class TemaService
         $temaExistente = $this->repo->findById($id);
 
         if (!$temaExistente) {
-            throw new TemaNotFoundException($id);
+            throw new TemaNotFoundException();
         }
 
         $borrado = $this->repo->delete($id);
         if (!$borrado) {
-            throw new TemaNotFoundException($id);
+            throw new TemaNotFoundException();
         }
     }
 }

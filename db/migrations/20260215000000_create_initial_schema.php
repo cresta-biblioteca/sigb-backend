@@ -6,10 +6,6 @@ use Phinx\Migration\AbstractMigration;
 
 final class CreateInitialSchema extends AbstractMigration
 {
-    /**
-     * Migrate Up - Crea todas las tablas del esquema inicial.
-     *
-     */
     public function up(): void
     {
         // ============================================================
@@ -116,6 +112,22 @@ final class CreateInitialSchema extends AbstractMigration
         ");
 
         // ============================================================
+        // TABLAS DE PERSONAS (autores, colaboradores, etc.)
+        // ============================================================
+
+        $this->execute("
+            CREATE TABLE persona (
+                id BIGINT NOT NULL AUTO_INCREMENT,
+                nombre VARCHAR(100) NOT NULL,
+                apellido VARCHAR(100) NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE INDEX uq_persona_nombre_apellido (nombre, apellido),
+                CONSTRAINT persona_pk PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+
+        // ============================================================
         // TABLAS DE CATÁLOGO
         // ============================================================
 
@@ -139,18 +151,36 @@ final class CreateInitialSchema extends AbstractMigration
                 isbn VARCHAR(13) NULL,
                 issn VARCHAR(8) NULL,
                 paginas INT NULL,
-                autor VARCHAR(255) NULL,
-                autores VARCHAR(255) NULL,
-                colaboradores VARCHAR(255) NULL,
                 titulo_informativo VARCHAR(255) NULL,
                 cdu INT NULL,
-                export_marc TEXT NULL,
                 editorial VARCHAR(200) NULL,
                 lugar_de_publicacion VARCHAR(200) NULL,
+                edicion VARCHAR(100) NULL,
+                dimensiones VARCHAR(50) NULL,
+                ilustraciones VARCHAR(100) NULL,
+                serie VARCHAR(255) NULL,
+                numero_serie VARCHAR(50) NULL,
+                notas TEXT NULL,
+                pais_publicacion CHAR(2) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE INDEX uq_libro_isbn (isbn),
                 CONSTRAINT libro_pk PRIMARY KEY (articulo_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+
+        $this->execute("
+            CREATE TABLE libro_persona (
+                libro_id BIGINT NOT NULL,
+                persona_id BIGINT NOT NULL,
+                rol ENUM('autor','coautor','colaborador','editor','traductor','ilustrador') NOT NULL,
+                orden INT NOT NULL DEFAULT 0,
+                CONSTRAINT libro_persona_pk PRIMARY KEY (libro_id, persona_id, rol),
+                INDEX idx_libro_persona_persona_id (persona_id),
+                CONSTRAINT fk_libro_persona_libro
+                    FOREIGN KEY (libro_id) REFERENCES libro(articulo_id) ON DELETE CASCADE,
+                CONSTRAINT fk_libro_persona_persona
+                    FOREIGN KEY (persona_id) REFERENCES persona(id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
@@ -391,13 +421,8 @@ final class CreateInitialSchema extends AbstractMigration
         $this->execute("CREATE INDEX idx_articulo_anio ON articulo (anio_publicacion);");
 
         $this->execute("CREATE INDEX idx_lector_apellido ON lector (apellido);");
-        $this->execute("CREATE INDEX idx_libro_autor ON libro (autor);");
     }
 
-    /**
-     * Migrate Down - Elimina todo el esquema.
-     *
-    */
     public function down(): void
     {
         // Eliminar en orden inverso por las FK
@@ -409,7 +434,9 @@ final class CreateInitialSchema extends AbstractMigration
         $this->execute("DROP TABLE IF EXISTS materia_articulo;");
         $this->execute("DROP TABLE IF EXISTS articulo_tema;");
         $this->execute("DROP TABLE IF EXISTS ejemplar;");
+        $this->execute("DROP TABLE IF EXISTS libro_persona;");
         $this->execute("DROP TABLE IF EXISTS libro;");
+        $this->execute("DROP TABLE IF EXISTS persona;");
         $this->execute("DROP TABLE IF EXISTS articulo;");
         $this->execute("DROP TABLE IF EXISTS role_permiso;");
         $this->execute("DROP TABLE IF EXISTS `user`;");

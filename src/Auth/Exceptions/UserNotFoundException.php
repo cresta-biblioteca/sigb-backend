@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class UserNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct('User', $identifier);
+        parent::__construct('Usuario no encontrado');
     }
 }

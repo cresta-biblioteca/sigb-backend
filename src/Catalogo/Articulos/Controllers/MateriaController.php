@@ -7,10 +7,8 @@ namespace App\Catalogo\Articulos\Controllers;
 use App\Catalogo\Articulos\Mappers\MateriaMapper;
 use App\Catalogo\Articulos\Services\MateriaService;
 use App\Catalogo\Articulos\Validators\MateriaRequestValidator;
-use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use OpenApi\Attributes as OA;
-use Throwable;
 
 class MateriaController
 {
@@ -67,22 +65,18 @@ class MateriaController
     )]
     public function getAll(): void
     {
-        try {
-            $params = array_filter(
-                array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
-                fn($value) => $value !== ''
-            );
+        $params = array_filter(
+            array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
+            fn($value) => $value !== ''
+        );
 
-            if (!empty($params)) {
-                MateriaRequestValidator::validateParams($params);
-                JsonHelper::jsonResponse($this->service->getByParams($params), 200);
-                return;
-            }
-
-            JsonHelper::jsonResponse($this->service->getAll(), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'MateriaController::getAll');
+        if (!empty($params)) {
+            MateriaRequestValidator::validateParams($params);
+            JsonHelper::jsonResponse($this->service->getByParams($params), 200);
+            return;
         }
+
+        JsonHelper::jsonResponse($this->service->getAll(), 200);
     }
 
     #[OA\Get(
@@ -132,12 +126,8 @@ class MateriaController
     )]
     public function getById($id): void
     {
-        try {
-            MateriaRequestValidator::validateId($id);
-            JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'MateriaController::getById');
-        }
+        MateriaRequestValidator::validateId($id);
+        JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
     }
 
     #[OA\Post(
@@ -192,13 +182,9 @@ class MateriaController
     )]
     public function createMateria(): void
     {
-        try {
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            MateriaRequestValidator::validate($input);
-            JsonHelper::jsonResponse($this->service->createMateria(MateriaMapper::fromArray($input)), 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'MateriaController::createMateria');
-        }
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        MateriaRequestValidator::validate($input);
+        JsonHelper::jsonResponse($this->service->createMateria(MateriaMapper::fromArray($input)), 201);
     }
 
     #[OA\Put(
@@ -271,14 +257,10 @@ class MateriaController
     )]
     public function updateMateria($id): void
     {
-        try {
-            MateriaRequestValidator::validateId($id);
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            MateriaRequestValidator::validate($input);
-            JsonHelper::jsonResponse($this->service->updateMateria((int) $id, MateriaMapper::fromArray($input)), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'MateriaController::updateMateria');
-        }
+        MateriaRequestValidator::validateId($id);
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        MateriaRequestValidator::validate($input);
+        JsonHelper::jsonResponse($this->service->updateMateria((int) $id, MateriaMapper::fromArray($input)), 200);
     }
 
     #[OA\Delete(
@@ -327,12 +309,8 @@ class MateriaController
     )]
     public function deleteMateria($id): void
     {
-        try {
-            MateriaRequestValidator::validateId($id);
-            $this->service->deleteMateria((int) $id);
-            http_response_code(204);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'MateriaController::deleteMateria');
-        }
+        MateriaRequestValidator::validateId($id);
+        $this->service->deleteMateria((int) $id);
+        http_response_code(204);
     }
 }

@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class EjemplarNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct('Ejemplar', $identifier);
+        parent::__construct('Ejemplar no encontrado');
     }
 }

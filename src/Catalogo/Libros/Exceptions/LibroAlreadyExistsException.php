@@ -8,8 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class LibroAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(int|string $value, string $field = 'articulo_id')
+    public function __construct()
     {
-        parent::__construct('Libro', $field, $value);
+        parent::__construct('El libro ya existe');
     }
 }

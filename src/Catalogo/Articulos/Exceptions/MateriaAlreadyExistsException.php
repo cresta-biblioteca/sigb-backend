@@ -8,12 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class MateriaAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(string $materia)
+    public function __construct()
     {
-        parent::__construct(
-            'Materia',
-            'titulo',
-            $materia
-        );
+        parent::__construct('La materia ya existe');
     }
 }
