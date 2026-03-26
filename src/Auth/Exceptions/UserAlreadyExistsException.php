@@ -8,8 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class UserAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(string $field, string $value)
+    public function __construct()
     {
-        parent::__construct('User', $field, $value);
+        parent::__construct('El usuario ya existe');
     }
 }

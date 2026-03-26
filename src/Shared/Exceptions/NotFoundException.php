@@ -6,13 +6,9 @@ namespace App\Shared\Exceptions;
 
 class NotFoundException extends AppException
 {
-    public function __construct(
-        private readonly string $entityType,
-        private readonly mixed $identifier
-    ) {
-        parent::__construct(
-            sprintf('%s con identificador "%s" no encontrado', $entityType, (string) $identifier)
-        );
+    public function __construct(string $message)
+    {
+        parent::__construct($message);
     }
 
     public function getErrorCode(): string
@@ -27,16 +23,6 @@ class NotFoundException extends AppException
 
     public function getSafeMessage(): string
     {
-        return sprintf('%s no encontrado', $this->entityType);
-    }
-
-    public function getEntityType(): string
-    {
-        return $this->entityType;
-    }
-
-    public function getIdentifier(): mixed
-    {
-        return $this->identifier;
+        return $this->getMessage();
     }
 }

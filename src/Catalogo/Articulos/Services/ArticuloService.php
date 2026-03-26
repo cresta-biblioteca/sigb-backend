@@ -42,7 +42,7 @@ class ArticuloService
         $articulo = $this->repository->findById($id);
 
         if ($articulo === null) {
-            throw new ArticuloNotFoundException($id);
+            throw new ArticuloNotFoundException();
         }
 
         return ArticuloMapper::toArticuloResponse($articulo);
@@ -71,7 +71,7 @@ class ArticuloService
         $existing = $this->repository->findById($id);
 
         if ($existing === null) {
-            throw new ArticuloNotFoundException($id);
+            throw new ArticuloNotFoundException();
         }
 
         /** @var Articulo $existing */
@@ -85,11 +85,7 @@ class ArticuloService
             && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
             && $this->repository->isLinkedToLibro($id)
         ) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro',
-                field: 'tipo_documento_id'
-            );
+            throw new BusinessRuleException('No se puede modificar tipo_documento_id porque el artículo está asociado a un libro', 'tipo_documento_id');
         }
 
         $articulo = Articulo::create(
@@ -116,16 +112,12 @@ class ArticuloService
     public function deleteArticulo(int $id): void
     {
         if ($this->repository->findById($id) === null) {
-            throw new ArticuloNotFoundException($id);
+            throw new ArticuloNotFoundException();
         }
 
         $blockingRelation = $this->repository->getDeleteBlockingRelation($id);
         if ($blockingRelation !== null) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "No se puede eliminar el artículo porque tiene {$blockingRelation}",
-                field: 'id'
-            );
+            throw new BusinessRuleException("No se puede eliminar el artículo porque tiene {$blockingRelation}", 'id');
         }
 
         $this->repository->delete($id);
@@ -134,15 +126,15 @@ class ArticuloService
     public function addTemaToArticulo(int $articuloId, int $temaId): void
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         if (!$this->repository->temaExists($temaId)) {
-            throw new TemaNotFoundException($temaId);
+            throw new TemaNotFoundException();
         }
 
         if ($this->repository->isTemaAdded($articuloId, $temaId)) {
-            throw new TemaAlreadyInArticuloException($temaId, $articuloId);
+            throw new TemaAlreadyInArticuloException();
         }
 
         $this->repository->addTemaToArticulo($articuloId, $temaId);
@@ -154,7 +146,7 @@ class ArticuloService
     public function getTemaTitlesByArticuloId(int $articuloId): array
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         return $this->repository->findTemaTitlesByArticuloId($articuloId);
@@ -163,15 +155,15 @@ class ArticuloService
     public function deleteTemaFromArticulo(int $articuloId, int $temaId): void
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         if (!$this->repository->temaExists($temaId)) {
-            throw new TemaNotFoundException($temaId);
+            throw new TemaNotFoundException();
         }
 
         if (!$this->repository->isTemaAdded($articuloId, $temaId)) {
-            throw new TemaAlreadyEliminatedException($temaId, $articuloId);
+            throw new TemaAlreadyEliminatedException();
         }
 
         $this->repository->deleteTemaFromArticulo($articuloId, $temaId);
@@ -180,18 +172,15 @@ class ArticuloService
     public function addMateriaToArticulo(int $articuloId, int $materiaId): void
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         if (!$this->repository->materiaExists($materiaId)) {
-            throw new MateriaNotFoundException($materiaId);
+            throw new MateriaNotFoundException();
         }
 
         if ($this->repository->isMateriaAdded($articuloId, $materiaId)) {
-            throw new MateriaAlreadyInArticuloException(
-                'materia',
-                "La materia (ID: {$materiaId}) ya está agregada a este artículo (ID: {$articuloId})"
-            );
+            throw new MateriaAlreadyInArticuloException();
         }
 
         $this->repository->addMateriaToArticulo($articuloId, $materiaId);
@@ -203,7 +192,7 @@ class ArticuloService
     public function getMateriaTitlesByArticuloId(int $articuloId): array
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         return $this->repository->findMateriaTitlesByArticuloId($articuloId);
@@ -212,18 +201,15 @@ class ArticuloService
     public function deleteMateriaFromArticulo(int $articuloId, int $materiaId): void
     {
         if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException($articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         if (!$this->repository->materiaExists($materiaId)) {
-            throw new MateriaNotFoundException($materiaId);
+            throw new MateriaNotFoundException();
         }
 
         if (!$this->repository->isMateriaAdded($articuloId, $materiaId)) {
-            throw new MateriaAlreadyEliminatedException(
-                'materia',
-                "La materia (ID: {$materiaId}) no pertenece al artículo (ID: {$articuloId})"
-            );
+            throw new MateriaAlreadyEliminatedException();
         }
 
         $this->repository->deleteMateriaFromArticulo($articuloId, $materiaId);

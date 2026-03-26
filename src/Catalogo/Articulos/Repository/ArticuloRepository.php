@@ -133,10 +133,7 @@ class ArticuloRepository extends Repository
             ]);
         } catch (\PDOException $e) {
             if ($this->isTemaAlreadyInArticuloViolation($e)) {
-                throw new TemaAlreadyInArticuloException(
-                    'tema',
-                    "El tema (ID: {$temaId}) ya está agregado a este artículo (ID: {$articuloId})"
-                );
+                throw new TemaAlreadyInArticuloException();
             }
             throw $e;
         }
@@ -173,10 +170,7 @@ class ArticuloRepository extends Repository
         ]);
 
         if ($stmt->rowCount() === 0) {
-            throw new TemaAlreadyEliminatedException(
-                'tema',
-                "El tema (ID: {$temaId}) no pertenece al artículo (ID: {$articuloId})"
-            );
+            throw new TemaAlreadyEliminatedException();
         }
     }
 
@@ -229,10 +223,7 @@ class ArticuloRepository extends Repository
             ]);
         } catch (\PDOException $e) {
             if ($this->isMateriaAlreadyInArticuloViolation($e)) {
-                throw new MateriaAlreadyInArticuloException(
-                    'materia',
-                    "La materia (ID: {$materiaId}) ya está agregada a este artículo (ID: {$articuloId})"
-                );
+                throw new MateriaAlreadyInArticuloException();
             }
 
             throw $e;
@@ -269,10 +260,7 @@ class ArticuloRepository extends Repository
         ]);
 
         if ($stmt->rowCount() === 0) {
-            throw new MateriaAlreadyEliminatedException(
-                'materia',
-                "La materia (ID: {$materiaId}) no pertenece al artículo (ID: {$articuloId})"
-            );
+            throw new MateriaAlreadyEliminatedException();
         }
     }
 

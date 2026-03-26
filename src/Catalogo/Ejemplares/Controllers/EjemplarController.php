@@ -8,9 +8,7 @@ use App\Catalogo\Ejemplares\Dtos\Request\EjemplarRequest;
 use App\Catalogo\Ejemplares\Services\EjemplarService;
 use App\Catalogo\Ejemplares\Validators\EjemplarRequestValidator;
 use App\Shared\Exceptions\ValidationException;
-use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
-use Throwable;
 
 class EjemplarController
 {
@@ -24,50 +22,46 @@ class EjemplarController
      */
     public function getAll(): void
     {
-        try {
-            if (isset($_GET['codigo_barras']) && $_GET['codigo_barras'] !== '') {
-                $codigoBarras = trim((string) $_GET['codigo_barras']);
+        if (isset($_GET['codigo_barras']) && $_GET['codigo_barras'] !== '') {
+            $codigoBarras = trim((string) $_GET['codigo_barras']);
 
-                if (!EjemplarRequestValidator::validateCodigoBarras($codigoBarras)) {
-                    throw ValidationException::forField(
-                        'codigo_barras',
-                        'El campo codigo_barras debe contener solo dígitos (máximo 13)'
-                    );
-                }
-
-                $ejemplar = $this->ejemplarService->getByCodigoBarras($codigoBarras);
-                JsonHelper::jsonResponse(['data' => $ejemplar === null ? [] : [$ejemplar]]);
-                return;
+            if (!EjemplarRequestValidator::validateCodigoBarras($codigoBarras)) {
+                throw ValidationException::forField(
+                    'codigo_barras',
+                    'El campo codigo_barras debe contener solo dígitos (máximo 13)'
+                );
             }
 
-            if (isset($_GET['articulo_id']) && $_GET['articulo_id'] !== '') {
-                $articuloId = (int) $_GET['articulo_id'];
-                EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
-
-                if (isset($_GET['habilitado']) && filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN)) {
-                    $this->getHabilitadosByArticuloId($articuloId);
-                    return;
-                }
-
-                $this->getByArticuloId($articuloId);
-                return;
-            }
-
-            if (isset($_GET['habilitado']) && $_GET['habilitado'] !== '') {
-                $habilitado = filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-
-                if (!is_bool($habilitado)) {
-                    throw ValidationException::forField('habilitado', 'El campo habilitado debe ser booleano');
-                }
-
-                JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByHabilitado($habilitado)]);
-                return;
-            }
-
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getAll()]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::getAll');
+            $ejemplar = $this->ejemplarService->getByCodigoBarras($codigoBarras);
+            JsonHelper::jsonResponse(['data' => $ejemplar === null ? [] : [$ejemplar]]);
+            return;
         }
+
+        if (isset($_GET['articulo_id']) && $_GET['articulo_id'] !== '') {
+            $articuloId = (int) $_GET['articulo_id'];
+            EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
+
+            if (isset($_GET['habilitado']) && filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN)) {
+                $this->getHabilitadosByArticuloId($articuloId);
+                return;
+            }
+
+            $this->getByArticuloId($articuloId);
+            return;
+        }
+
+        if (isset($_GET['habilitado']) && $_GET['habilitado'] !== '') {
+            $habilitado = filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+            if (!is_bool($habilitado)) {
+                throw ValidationException::forField('habilitado', 'El campo habilitado debe ser booleano');
+            }
+
+            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByHabilitado($habilitado)]);
+            return;
+        }
+
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getAll()]);
     }
 
     /**
@@ -75,11 +69,7 @@ class EjemplarController
      */
     public function getById(int $id): void
     {
-        try {
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getById($id)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::getById');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getById($id)]);
     }
 
     /**
@@ -87,21 +77,17 @@ class EjemplarController
      */
     public function createEjemplar(): void
     {
-        try {
-            $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
-            EjemplarRequestValidator::validate($input);
+        $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+        EjemplarRequestValidator::validate($input);
 
-            $request = new EjemplarRequest(
-                (int) $input['articulo_id'],
-                trim((string) $input['codigo_barras']),
-                (bool) $input['habilitado'],
-                isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
-            );
+        $request = new EjemplarRequest(
+            (int) $input['articulo_id'],
+            trim((string) $input['codigo_barras']),
+            (bool) $input['habilitado'],
+            isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
+        );
 
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->createEjemplar($request)], 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::createEjemplar');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->createEjemplar($request)], 201);
     }
 
     /**
@@ -109,25 +95,21 @@ class EjemplarController
      */
     public function updateEjemplar(int $id): void
     {
-        try {
-            if ($id < 1) {
-                throw ValidationException::forField('id', 'El ID debe ser un entero positivo mayor que 0');
-            }
-
-            $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
-            EjemplarRequestValidator::validate($input);
-
-            $request = new EjemplarRequest(
-                (int) $input['articulo_id'],
-                trim((string) $input['codigo_barras']),
-                (bool) $input['habilitado'],
-                isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
-            );
-
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->updateEjemplar($id, $request)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::updateEjemplar');
+        if ($id < 1) {
+            throw ValidationException::forField('id', 'El ID debe ser un entero positivo mayor que 0');
         }
+
+        $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+        EjemplarRequestValidator::validate($input);
+
+        $request = new EjemplarRequest(
+            (int) $input['articulo_id'],
+            trim((string) $input['codigo_barras']),
+            (bool) $input['habilitado'],
+            isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
+        );
+
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->updateEjemplar($id, $request)]);
     }
 
     /**
@@ -135,12 +117,8 @@ class EjemplarController
      */
     public function deleteEjemplar(int $id): void
     {
-        try {
-            $this->ejemplarService->deleteEjemplar($id);
-            JsonHelper::jsonResponse(['message' => 'Ejemplar eliminado']);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::deleteEjemplar');
-        }
+        $this->ejemplarService->deleteEjemplar($id);
+        JsonHelper::jsonResponse(['message' => 'Ejemplar eliminado']);
     }
 
     /**
@@ -148,11 +126,7 @@ class EjemplarController
      */
     public function getByArticuloId(int $articuloId): void
     {
-        try {
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByArticuloId($articuloId)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::getByArticuloId');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByArticuloId($articuloId)]);
     }
 
     /**
@@ -160,11 +134,7 @@ class EjemplarController
      */
     public function getHabilitadosByArticuloId(int $articuloId): void
     {
-        try {
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getHabilitadosByArticuloId($articuloId)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::getHabilitadosByArticuloId');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getHabilitadosByArticuloId($articuloId)]);
     }
 
     /**
@@ -172,11 +142,7 @@ class EjemplarController
      */
     public function habilitar(int $id): void
     {
-        try {
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->habilitarEjemplar($id)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::habilitar');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->habilitarEjemplar($id)]);
     }
 
     /**
@@ -184,10 +150,6 @@ class EjemplarController
      */
     public function deshabilitar(int $id): void
     {
-        try {
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->deshabilitarEjemplar($id)]);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'EjemplarController::deshabilitar');
-        }
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->deshabilitarEjemplar($id)]);
     }
 }

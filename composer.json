@@ -9,6 +9,7 @@
     "ext-pdo": "*",
     "bramus/router": "^1.6",
     "firebase/php-jwt": "^7.0",
+    "monolog/monolog": "^3.10",
     "robmorgan/phinx": "^0.16",
     "scriptotek/marc": "^3.0",
     "vlucas/phpdotenv": "^5.6",

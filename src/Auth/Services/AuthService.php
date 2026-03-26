@@ -9,8 +9,8 @@ use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
+use App\Auth\Exceptions\InvalidCredentialsException;
 use App\Auth\Exceptions\UserAlreadyExistsException;
-use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -41,11 +41,11 @@ class AuthService
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
         if ($this->authRepository->findByDni($request->getDni()) !== null) {
-            throw new UserAlreadyExistsException('dni', $request->getDni());
+            throw new UserAlreadyExistsException();
         }
 
         if ($this->lectorRepository->existsByEmail($request->getEmail())) {
-            throw new UserAlreadyExistsException('email', $request->getEmail());
+            throw new UserAlreadyExistsException();
         }
 
         $this->pdo->beginTransaction();
@@ -112,16 +112,16 @@ class AuthService
     }
 
     /**
-     * @throws UserNotFoundException
+     * @throws InvalidCredentialsException
      */
     public function login(UserLoginRequest $request): UserLoginResponse
     {
         $user = $this->authRepository->findByDni($request->getDni());
         if ($user === null) {
-            throw new UserNotFoundException($request->getDni());
+            throw new InvalidCredentialsException();
         }
         if (!$this->passwordEncoder->verify($request->getPassword(), $user->getPassword())) {
-            throw new UserNotFoundException($request->getDni());
+            throw new InvalidCredentialsException();
         }
 
         $role = $this->roleRepository->findById($user->getRoleId());
@@ -148,11 +148,11 @@ class AuthService
     {
         $user = $this->authRepository->findById($userId);
         if ($user === null) {
-            throw new UserNotFoundException($userId);
+            throw new InvalidCredentialsException();
         }
 
         if (!$this->passwordEncoder->verify($request->getCurrentPassword(), $user->getPassword())) {
-            throw new UserNotFoundException($userId);
+            throw new InvalidCredentialsException();
         }
 
         $newHashedPassword = $this->passwordEncoder->hash($request->getNewPassword());

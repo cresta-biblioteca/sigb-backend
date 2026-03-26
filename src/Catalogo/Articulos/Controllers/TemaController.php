@@ -7,10 +7,8 @@ namespace App\Catalogo\Articulos\Controllers;
 use App\Catalogo\Articulos\Mappers\TemaMapper;
 use App\Catalogo\Articulos\Services\TemaService;
 use App\Catalogo\Articulos\Validators\TemaRequestValidator;
-use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use OpenApi\Attributes as OA;
-use Throwable;
 
 class TemaController
 {
@@ -67,22 +65,18 @@ class TemaController
     )]
     public function getAll(): void
     {
-        try {
-            $params = array_filter(
-                array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
-                fn($value) => $value !== ''
-            );
+        $params = array_filter(
+            array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
+            fn($value) => $value !== ''
+        );
 
-            if (!empty($params)) {
-                TemaRequestValidator::validateParams($params);
-                JsonHelper::jsonResponse($this->service->getByParams($params), 200);
-                return;
-            }
-
-            JsonHelper::jsonResponse($this->service->getAll(), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TemaController::getAll');
+        if (!empty($params)) {
+            TemaRequestValidator::validateParams($params);
+            JsonHelper::jsonResponse($this->service->getByParams($params), 200);
+            return;
         }
+
+        JsonHelper::jsonResponse($this->service->getAll(), 200);
     }
 
     #[OA\Get(
@@ -132,12 +126,8 @@ class TemaController
     )]
     public function getById(string $id): void
     {
-        try {
-            TemaRequestValidator::validateId($id);
-            JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TemaController::getById');
-        }
+        TemaRequestValidator::validateId($id);
+        JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
     }
 
     #[OA\Post(
@@ -192,13 +182,9 @@ class TemaController
     )]
     public function createTema(): void
     {
-        try {
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            TemaRequestValidator::validateInput($input);
-            JsonHelper::jsonResponse($this->service->createTema(TemaMapper::fromArray($input)), 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TemaController::createTema');
-        }
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        TemaRequestValidator::validateInput($input);
+        JsonHelper::jsonResponse($this->service->createTema(TemaMapper::fromArray($input)), 201);
     }
 
     #[OA\Put(
@@ -271,14 +257,10 @@ class TemaController
     )]
     public function updateTema(string $id): void
     {
-        try {
-            TemaRequestValidator::validateId($id);
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            TemaRequestValidator::validateInput($input);
-            JsonHelper::jsonResponse($this->service->updateTema((int) $id, TemaMapper::fromArray($input)), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TemaController::updateTema');
-        }
+        TemaRequestValidator::validateId($id);
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        TemaRequestValidator::validateInput($input);
+        JsonHelper::jsonResponse($this->service->updateTema((int) $id, TemaMapper::fromArray($input)), 200);
     }
 
     #[OA\Delete(
@@ -327,12 +309,8 @@ class TemaController
     )]
     public function deleteTema(string $id): void
     {
-        try {
-            TemaRequestValidator::validateId($id);
-            $this->service->deleteTema((int) $id);
-            http_response_code(204);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TemaController::deleteTema');
-        }
+        TemaRequestValidator::validateId($id);
+        $this->service->deleteTema((int) $id);
+        http_response_code(204);
     }
 }

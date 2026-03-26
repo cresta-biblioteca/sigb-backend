@@ -31,7 +31,7 @@ readonly class ReservaService
     {
         $reserva = $this->reservaRepository->findById($reservaId);
         if ($reserva === null) {
-            throw new ReservaNotFoundException($reservaId);
+            throw new ReservaNotFoundException();
         }
 
         return ReservaResponse::fromReserva($reserva);
@@ -43,7 +43,7 @@ readonly class ReservaService
     public function addReserva(CreateReservaRequest $request): ReservaResponse
     {
         if (!$this->libroRepository->exists($request->articuloId)) {
-            throw new ArticuloNotFoundException($request->articuloId);
+            throw new ArticuloNotFoundException();
         }
 
         // Para que el usuario no acapare el stock

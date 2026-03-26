@@ -24,7 +24,7 @@ readonly class Marc21ExportService
         $libro = $this->repository->findById($id);
 
         if ($libro === null) {
-            throw new LibroNotFoundException($id);
+            throw new LibroNotFoundException();
         }
 
         return Marc21Builder::toMarcXml($libro);
@@ -38,7 +38,7 @@ readonly class Marc21ExportService
         $libro = $this->repository->findById($id);
 
         if ($libro === null) {
-            throw new LibroNotFoundException($id);
+            throw new LibroNotFoundException();
         }
 
         return Marc21Builder::toIso2709($libro);

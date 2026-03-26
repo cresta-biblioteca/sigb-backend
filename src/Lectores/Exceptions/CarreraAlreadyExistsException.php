@@ -8,8 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class CarreraAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(string $field, mixed $value)
+    public function __construct()
     {
-        parent::__construct("Carrera", $field, $value);
+        parent::__construct('La carrera ya existe');
     }
 }

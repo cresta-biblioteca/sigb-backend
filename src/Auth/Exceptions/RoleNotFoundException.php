@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class RoleNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct('Role', $identifier);
+        parent::__construct('Rol no encontrado');
     }
 }

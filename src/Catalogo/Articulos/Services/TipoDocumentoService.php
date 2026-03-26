@@ -30,7 +30,7 @@ class TipoDocumentoService
     {
         $tipoDocumentoExistente = $this->repo->findById($id);
         if (!$tipoDocumentoExistente) {
-            throw new TipoDocumentoNotFoundException($id);
+            throw new TipoDocumentoNotFoundException();
         }
 
         return TipoDocumentoMapper::toResponse($tipoDocumentoExistente);
@@ -52,9 +52,9 @@ class TipoDocumentoService
         $tipoDocExistente = $this->repo->findCoincidence($tipoDoc->getCodigo(), $tipoDoc->getDescripcion());
         if ($tipoDocExistente) {
             if ($tipoDocExistente->getCodigo() === $tipoDoc->getCodigo()) {
-                throw new TipoDocumentoAlreadyExistsException("Codigo", $tipoDoc->getCodigo());
+                throw new TipoDocumentoAlreadyExistsException();
             }
-            throw new TipoDocumentoAlreadyExistsException("Descripcion", $tipoDoc->getDescripcion());
+            throw new TipoDocumentoAlreadyExistsException();
         }
 
         $docCreado = $this->repo->insertTipoDocumento($tipoDoc);
@@ -68,7 +68,7 @@ class TipoDocumentoService
         /** @var TipoDocumento $tipoDocExiste */
         $tipoDocExiste = $this->repo->findById($id);
         if (!$tipoDocExiste) {
-            throw new TipoDocumentoNotFoundException($id);
+            throw new TipoDocumentoNotFoundException();
         }
 
         if ($request->codigo === null) {
@@ -89,9 +89,9 @@ class TipoDocumentoService
         $coincidencia = $this->repo->findCoincidence($request->codigo, $request->descripcion, $id);
         if ($coincidencia) {
             if ($coincidencia->getCodigo() === strtoupper($request->codigo)) {
-                throw new TipoDocumentoAlreadyExistsException("Codigo", $request->codigo);
+                throw new TipoDocumentoAlreadyExistsException();
             }
-            throw new TipoDocumentoAlreadyExistsException("Descripcion", $request->descripcion);
+            throw new TipoDocumentoAlreadyExistsException();
         }
 
         $tipoDocActualizado = $this->repo->updateTipoDocumento($id, $tipoDoc);
@@ -103,12 +103,12 @@ class TipoDocumentoService
     {
         $tipoDocExistente = $this->repo->findById($id);
         if (!$tipoDocExistente) {
-            throw new TipoDocumentoNotFoundException($id);
+            throw new TipoDocumentoNotFoundException();
         }
 
         $borrado = $this->repo->delete($id);
         if (!$borrado) {
-            throw new TipoDocumentoNotFoundException($id);
+            throw new TipoDocumentoNotFoundException();
         }
     }
 }

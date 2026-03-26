@@ -33,7 +33,7 @@ readonly class LibroService
         $libro = $this->repository->findById($id);
 
         if ($libro === null) {
-            throw new LibroNotFoundException($id);
+            throw new LibroNotFoundException();
         }
 
         return LibroMapper::toLibroResponse($libro);
@@ -44,11 +44,11 @@ readonly class LibroService
         $this->validateIsbnIssnExclusivity($request->isbn, $request->issn);
 
         if ($request->isbn !== null && $this->repository->existsByIsbn($request->isbn)) {
-            throw new LibroAlreadyExistsException($request->isbn, 'isbn');
+            throw new LibroAlreadyExistsException();
         }
 
         if ($request->issn !== null && $this->repository->existsByIssn($request->issn)) {
-            throw new LibroAlreadyExistsException($request->issn, 'issn');
+            throw new LibroAlreadyExistsException();
         }
 
         $inTransaction = $this->pdo->inTransaction();
@@ -110,7 +110,7 @@ readonly class LibroService
         $existing = $this->repository->findById($id);
 
         if ($existing === null) {
-            throw new LibroNotFoundException($id);
+            throw new LibroNotFoundException();
         }
 
         $inTransaction = $this->pdo->inTransaction();
@@ -167,7 +167,7 @@ readonly class LibroService
     public function deleteLibro(int $id): void
     {
         if ($this->repository->findById($id) === null) {
-            throw new LibroNotFoundException($id);
+            throw new LibroNotFoundException();
         }
 
         $this->repository->delete($id);
@@ -176,11 +176,7 @@ readonly class LibroService
     private function validateIsbnIssnExclusivity(?string $isbn, ?string $issn): void
     {
         if ($isbn !== null && $issn !== null) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                'Un libro no puede tener ISBN y ISSN a la vez',
-                field: 'isbn'
-            );
+            throw new BusinessRuleException('Un libro no puede tener ISBN y ISSN a la vez', 'isbn');
         }
     }
 

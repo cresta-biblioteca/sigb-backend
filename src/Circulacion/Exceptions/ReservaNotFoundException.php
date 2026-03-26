@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class ReservaNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct('Reserva', $identifier);
+        parent::__construct('Reserva no encontrada');
     }
 }

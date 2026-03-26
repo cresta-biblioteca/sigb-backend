@@ -6,14 +6,9 @@ namespace App\Shared\Exceptions;
 
 class AlreadyExistsException extends AppException
 {
-    public function __construct(
-        private readonly string $entityType,
-        string $field,
-        mixed $value
-    ) {
-        parent::__construct(
-            sprintf('%s con %s "%s" ya existe', $entityType, $field, (string) $value)
-        );
+    public function __construct(string $message)
+    {
+        parent::__construct($message);
     }
 
     public function getErrorCode(): string
@@ -28,6 +23,6 @@ class AlreadyExistsException extends AppException
 
     public function getSafeMessage(): string
     {
-        return sprintf('%s ya existe', $this->entityType);
+        return $this->getMessage();
     }
 }

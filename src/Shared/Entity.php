@@ -62,7 +62,7 @@ abstract class Entity
     protected function assertNotEmpty(mixed $value, string $field): void
     {
         if ($value === null || $value === '' || (is_array($value) && count($value) === 0)) {
-            throw new BusinessRuleException('BUSINESS_RULE_VIOLATION', "El campo {$field} es requerido", field: $field);
+            throw new BusinessRuleException("El campo {$field} es requerido", $field);
         }
     }
 
@@ -74,11 +74,7 @@ abstract class Entity
     protected function assertMaxLength(string $value, int $max, string $field): void
     {
         if (mb_strlen($value) > $max) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} no debe exceder {$max} caracteres",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} no debe exceder {$max} caracteres", $field);
         }
     }
 
@@ -90,11 +86,7 @@ abstract class Entity
     protected function assertExactLength(string $value, int $length, string $field): void
     {
         if (mb_strlen($value) !== $length) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe tener exactamente {$length} caracteres",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe tener exactamente {$length} caracteres", $field);
         }
     }
 
@@ -106,11 +98,7 @@ abstract class Entity
     protected function assertMinLength(string $value, int $min, string $field): void
     {
         if (mb_strlen($value) < $min) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe tener al menos {$min} caracteres",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe tener al menos {$min} caracteres", $field);
         }
     }
 
@@ -122,11 +110,7 @@ abstract class Entity
     protected function assertPositive(int|float $value, string $field): void
     {
         if ($value <= 0) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe ser mayor a 0",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe ser mayor a 0", $field);
         }
     }
 
@@ -138,11 +122,7 @@ abstract class Entity
     protected function assertNonNegative(int|float $value, string $field): void
     {
         if ($value < 0) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} no puede ser negativo",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} no puede ser negativo", $field);
         }
     }
 
@@ -154,11 +134,7 @@ abstract class Entity
     protected function assertValidEmail(string $value, string $field): void
     {
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe ser un email válido",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe ser un email válido", $field);
         }
     }
 
@@ -172,11 +148,7 @@ abstract class Entity
     {
         if (!in_array($value, $allowed, true)) {
             $options = implode(', ', array_map(fn($v) => (string) $v, $allowed));
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe ser uno de: {$options}",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe ser uno de: {$options}", $field);
         }
     }
 
@@ -192,7 +164,7 @@ abstract class Entity
         string $message
     ): void {
         if (!preg_match($pattern, $value)) {
-            throw new BusinessRuleException('BUSINESS_RULE_VIOLATION', $message, field: $field);
+            throw new BusinessRuleException($message, $field);
         }
     }
 
@@ -204,11 +176,7 @@ abstract class Entity
     protected function assertNotFutureDate(DateTimeImmutable $date, string $field): void
     {
         if ($date > new DateTimeImmutable()) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} no puede ser una fecha futura",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} no puede ser una fecha futura", $field);
         }
     }
 
@@ -221,11 +189,7 @@ abstract class Entity
     {
         $today = new DateTimeImmutable('today');
         if ($date < $today) {
-            throw new BusinessRuleException(
-                'BUSINESS_RULE_VIOLATION',
-                "El campo {$field} debe ser una fecha presente o futura",
-                field: $field
-            );
+            throw new BusinessRuleException("El campo {$field} debe ser una fecha presente o futura", $field);
         }
     }
 

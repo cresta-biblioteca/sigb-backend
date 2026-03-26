@@ -53,6 +53,16 @@ abstract class Repository
     }
 
     /**
+     * Mensaje de error cuando la entidad no es encontrada.
+     * Las subclases pueden sobreescribir para proveer un mensaje específico.
+     */
+    protected function getNotFoundMessage(): string
+    {
+        $parts = explode('\\', $this->getEntityClass());
+        return end($parts) . ' no encontrado';
+    }
+
+    /**
      * Busca una entidad por ID o lanza excepción
      *
      * @throws NotFoundException
@@ -62,7 +72,7 @@ abstract class Repository
         $entity = $this->findById($id);
 
         if ($entity === null) {
-            throw new NotFoundException($this->getEntityClass(), $id);
+            throw new NotFoundException($this->getNotFoundMessage());
         }
 
         return $entity;
