@@ -8,13 +8,13 @@ use App\Shared\Exceptions\BusinessRuleException;
 
 class LectorYaTieneReservaOPrestamoException extends BusinessRuleException
 {
-    public function __construct(int $lectorId, int $articuloId)
+    public function __construct()
     {
-        parent::__construct(
-            errorCode: 'LECTOR_YA_TIENE_RESERVA_O_PRESTAMO',
-            safeMsg: 'Ya tenés una reserva pendiente o un préstamo activo para este artículo',
-            internalMessage: "El lector {$lectorId} ya tiene una reserva pendiente " .
-                "o préstamo activo del artículo {$articuloId}"
-        );
+        parent::__construct('Ya tenés una reserva pendiente o un préstamo activo para este artículo');
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'LECTOR_YA_TIENE_RESERVA_O_PRESTAMO';
     }
 }

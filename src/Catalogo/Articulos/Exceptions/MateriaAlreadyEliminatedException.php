@@ -8,13 +8,13 @@ use App\Shared\Exceptions\BusinessRuleException;
 
 class MateriaAlreadyEliminatedException extends BusinessRuleException
 {
-    public function __construct(int $materiaId, int $carreraId)
+    public function __construct()
     {
-        parent::__construct(
-            errorCode: 'MATERIA_NOT_IN_CARRERA',
-            safeMsg: 'La materia no pertenece a esta carrera',
-            internalMessage: "La materia (ID: {$materiaId}) no pertenece a la carrera (ID: {$carreraId})",
-            field: 'materia'
-        );
+        parent::__construct('La materia no pertenece a esta carrera', 'materia');
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'MATERIA_NOT_IN_CARRERA';
     }
 }

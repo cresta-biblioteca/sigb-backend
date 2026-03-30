@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Catalogo\Libros\Repositories;
 
 use App\Catalogo\Articulos\Models\Articulo;
+use App\Catalogo\Articulos\Models\Materia;
+use App\Catalogo\Articulos\Models\Tema;
+use App\Catalogo\Libros\Models\LibroPersona;
+use App\Catalogo\Libros\Models\Persona;
 use App\Shared\Repository;
 use App\Catalogo\Libros\Models\Libro;
 use PDO;
@@ -64,11 +68,13 @@ class LibroRepository extends Repository
     public function insertLibro(Libro $libro): Libro
     {
         $sql = "INSERT INTO libro
-            (articulo_id, isbn, issn, paginas, autor, autores, colaboradores, titulo_informativo, cdu,
-             export_marc, editorial, lugar_de_publicacion, created_at, updated_at)
+            (articulo_id, isbn, issn, paginas, titulo_informativo, cdu,
+             editorial, lugar_de_publicacion, edicion, dimensiones, ilustraciones,
+             serie, numero_serie, notas, pais_publicacion, created_at, updated_at)
             VALUES
-            (:articulo_id, :isbn, :issn, :paginas, :autor, :autores, :colaboradores, :titulo_informativo, :cdu,
-             :export_marc, :editorial, :lugar_de_publicacion, NOW(), NOW())";
+            (:articulo_id, :isbn, :issn, :paginas, :titulo_informativo, :cdu,
+             :editorial, :lugar_de_publicacion, :edicion, :dimensiones, :ilustraciones,
+             :serie, :numero_serie, :notas, :pais_publicacion, NOW(), NOW())";
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
@@ -76,14 +82,17 @@ class LibroRepository extends Repository
             'isbn' => $libro->getIsbn(),
             'issn' => $libro->getIssn(),
             'paginas' => $libro->getPaginas(),
-            'autor' => $libro->getAutor(),
-            'autores' => $libro->getAutores(),
-            'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
-            'export_marc' => $libro->getExportMarc(),
             'editorial' => $libro->getEditorial(),
             'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
+            'edicion' => $libro->getEdicion(),
+            'dimensiones' => $libro->getDimensiones(),
+            'ilustraciones' => $libro->getIlustraciones(),
+            'serie' => $libro->getSerie(),
+            'numero_serie' => $libro->getNumeroSerie(),
+            'notas' => $libro->getNotas(),
+            'pais_publicacion' => $libro->getPaisPublicacion(),
         ]);
 
         if ($success === false || $stmt->rowCount() === 0) {
@@ -99,14 +108,17 @@ class LibroRepository extends Repository
             isbn = :isbn,
             issn = :issn,
             paginas = :paginas,
-            autor = :autor,
-            autores = :autores,
-            colaboradores = :colaboradores,
             titulo_informativo = :titulo_informativo,
             cdu = :cdu,
-            export_marc = :export_marc,
             editorial = :editorial,
             lugar_de_publicacion = :lugar_de_publicacion,
+            edicion = :edicion,
+            dimensiones = :dimensiones,
+            ilustraciones = :ilustraciones,
+            serie = :serie,
+            numero_serie = :numero_serie,
+            notas = :notas,
+            pais_publicacion = :pais_publicacion,
             updated_at = NOW()
             WHERE articulo_id = :id";
 
@@ -115,14 +127,17 @@ class LibroRepository extends Repository
             'isbn' => $libro->getIsbn(),
             'issn' => $libro->getIssn(),
             'paginas' => $libro->getPaginas(),
-            'autor' => $libro->getAutor(),
-            'autores' => $libro->getAutores(),
-            'colaboradores' => $libro->getColaboradores(),
             'titulo_informativo' => $libro->getTituloInformativo(),
             'cdu' => $libro->getCdu(),
-            'export_marc' => $libro->getExportMarc(),
             'editorial' => $libro->getEditorial(),
             'lugar_de_publicacion' => $libro->getLugarDePublicacion(),
+            'edicion' => $libro->getEdicion(),
+            'dimensiones' => $libro->getDimensiones(),
+            'ilustraciones' => $libro->getIlustraciones(),
+            'serie' => $libro->getSerie(),
+            'numero_serie' => $libro->getNumeroSerie(),
+            'notas' => $libro->getNotas(),
+            'pais_publicacion' => $libro->getPaisPublicacion(),
             'id' => $id,
         ]);
 
@@ -131,6 +146,34 @@ class LibroRepository extends Repository
         }
 
         return $this->findById($id);
+    }
+
+    /**
+     * Sincroniza las personas de un libro: borra todas y re-inserta.
+     *
+     * @param array<int, array{persona_id: int, rol: string, orden: int}> $personasData
+     */
+    public function syncPersonas(int $libroId, array $personasData): void
+    {
+        $this->pdo->prepare("DELETE FROM libro_persona WHERE libro_id = :libro_id")
+            ->execute(['libro_id' => $libroId]);
+
+        if ($personasData === []) {
+            return;
+        }
+
+        $sql = "INSERT INTO libro_persona (libro_id, persona_id, rol, orden)
+                VALUES (:libro_id, :persona_id, :rol, :orden)";
+        $stmt = $this->pdo->prepare($sql);
+
+        foreach ($personasData as $data) {
+            $stmt->execute([
+                'libro_id' => $libroId,
+                'persona_id' => $data['persona_id'],
+                'rol' => $data['rol'],
+                'orden' => $data['orden'],
+            ]);
+        }
     }
 
     public function existsByIsbn(string $isbn, ?int $excludeArticuloId = null): bool
@@ -171,7 +214,6 @@ class LibroRepository extends Repository
 
     private const SORTABLE_COLUMNS = [
         'titulo'           => 'a.titulo',
-        'autor'            => 'l.autor',
         'anio_publicacion' => 'a.anio_publicacion',
         'editorial'        => 'l.editorial',
         'isbn'             => 'l.isbn',
@@ -242,7 +284,6 @@ class LibroRepository extends Repository
     {
         [$conditions, $params] = $this->buildSearchConditionsAndParams($filters);
 
-        // La query hacer el INNER JOIN debido a que para las conditions es necesario obtener info de articulo
         $sql = "SELECT COUNT(*)
             FROM libro l
             INNER JOIN articulo a ON a.id = l.articulo_id";
@@ -285,19 +326,16 @@ class LibroRepository extends Repository
             $params['l_articulo_id'] = (int) $filters['articulo_id'];
         }
 
-        if (!empty($filters['autor'])) {
-            $conditions[] = 'l.autor LIKE :autor';
-            $params['autor'] = '%' . $filters['autor'] . '%';
-        }
-
-        if (!empty($filters['autores'])) {
-            $conditions[] = 'l.autores LIKE :autores';
-            $params['autores'] = '%' . $filters['autores'] . '%';
-        }
-
-        if (!empty($filters['colaboradores'])) {
-            $conditions[] = 'l.colaboradores LIKE :colaboradores';
-            $params['colaboradores'] = '%' . $filters['colaboradores'] . '%';
+        if (!empty($filters['persona'])) {
+            $conditions[] = 'EXISTS (
+                SELECT 1
+                FROM libro_persona lp
+                INNER JOIN persona p ON p.id = lp.persona_id
+                WHERE lp.libro_id = l.articulo_id
+                AND (p.nombre LIKE :persona_nombre OR p.apellido LIKE :persona_apellido)
+            )';
+            $params['persona_nombre'] = '%' . $filters['persona'] . '%';
+            $params['persona_apellido'] = '%' . $filters['persona'] . '%';
         }
 
         if (!empty($filters['titulo_informativo'])) {
@@ -328,11 +366,6 @@ class LibroRepository extends Repository
         if (!empty($filters['lugar_de_publicacion'])) {
             $conditions[] = 'l.lugar_de_publicacion LIKE :lugar_de_publicacion';
             $params['lugar_de_publicacion'] = '%' . $filters['lugar_de_publicacion'] . '%';
-        }
-
-        if (!empty($filters['export_marc'])) {
-            $conditions[] = 'l.export_marc LIKE :export_marc';
-            $params['export_marc'] = '%' . $filters['export_marc'] . '%';
         }
     }
 
@@ -546,21 +579,91 @@ class LibroRepository extends Repository
     {
         $libro = Libro::fromDatabase($row);
 
-        if (!isset($row['a_id'])) {
-            return $libro;
+        if (isset($row['a_id'])) {
+            $articulo = Articulo::fromDatabase([
+                'id' => $row['a_id'],
+                'titulo' => $row['a_titulo'],
+                'anio_publicacion' => $row['a_anio_publicacion'],
+                'tipo_documento_id' => $row['a_tipo_documento_id'],
+                'idioma' => $row['a_idioma'],
+                'descripcion' => $row['a_descripcion'] ?? null
+            ]);
+
+            $libro->setArticulo($articulo);
         }
 
-        $articulo = Articulo::fromDatabase([
-            'id' => $row['a_id'],
-            'titulo' => $row['a_titulo'],
-            'anio_publicacion' => $row['a_anio_publicacion'],
-            'tipo_documento_id' => $row['a_tipo_documento_id'],
-            'idioma' => $row['a_idioma'],
-            'descripcion' => $row['a_descripcion'] ?? null
-        ]);
-
-        $libro->setArticulo($articulo);
+        $this->loadPersonas($libro);
+        $this->loadTemasForArticulo($libro);
+        $this->loadMateriasForArticulo($libro);
 
         return $libro;
+    }
+
+    private function loadPersonas(Libro $libro): void
+    {
+        $sql = "SELECT p.*, lp.rol, lp.orden
+                FROM libro_persona lp
+                INNER JOIN persona p ON p.id = lp.persona_id
+                WHERE lp.libro_id = :libro_id
+                ORDER BY lp.orden ASC, p.apellido ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['libro_id' => $libro->getArticuloId()]);
+
+        $personas = [];
+        while ($row = $stmt->fetch()) {
+            $persona = Persona::fromDatabase($row);
+            $personas[] = new LibroPersona($persona, $row['rol'], (int) $row['orden']);
+        }
+
+        $libro->setPersonas($personas);
+    }
+
+    private function loadTemasForArticulo(Libro $libro): void
+    {
+        $articulo = $libro->getArticulo();
+        if ($articulo === null) {
+            return;
+        }
+
+        $sql = "SELECT t.id, t.titulo
+                FROM articulo_tema at2
+                INNER JOIN tema t ON t.id = at2.tema_id
+                WHERE at2.articulo_id = :articulo_id
+                ORDER BY t.titulo ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['articulo_id' => $articulo->getId()]);
+
+        $temas = [];
+        while ($row = $stmt->fetch()) {
+            $temas[] = Tema::fromDatabase($row);
+        }
+
+        $articulo->setTemas($temas);
+    }
+
+    private function loadMateriasForArticulo(Libro $libro): void
+    {
+        $articulo = $libro->getArticulo();
+        if ($articulo === null) {
+            return;
+        }
+
+        $sql = "SELECT m.id, m.titulo
+                FROM materia_articulo ma
+                INNER JOIN materia m ON m.id = ma.materia_id
+                WHERE ma.articulo_id = :articulo_id
+                ORDER BY m.titulo ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['articulo_id' => $articulo->getId()]);
+
+        $materias = [];
+        while ($row = $stmt->fetch()) {
+            $materias[] = Materia::fromDatabase($row);
+        }
+
+        $articulo->setMaterias($materias);
     }
 }

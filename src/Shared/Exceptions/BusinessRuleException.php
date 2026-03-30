@@ -7,27 +7,25 @@ namespace App\Shared\Exceptions;
 class BusinessRuleException extends AppException
 {
     public function __construct(
-        private readonly string $errorCode,
-        private readonly string $safeMsg,
-        string $internalMessage = '',
+        string $message,
         private readonly ?string $field = null
     ) {
-        parent::__construct($internalMessage !== '' ? $internalMessage : $safeMsg);
+        parent::__construct($message);
     }
 
     public function getErrorCode(): string
     {
-        return $this->errorCode;
+        return 'BUSINESS_RULE_VIOLATION';
     }
 
     public function getHttpStatus(): int
     {
-        return 409;
+        return 422;
     }
 
     public function getSafeMessage(): string
     {
-        return $this->safeMsg;
+        return $this->getMessage();
     }
 
     public function getField(): ?string

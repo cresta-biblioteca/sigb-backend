@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use App\Shared\Http\ExceptionHandler;
 use App\Shared\Middlewares\CorsMiddleware;
 use App\Shared\Middlewares\JwtMiddleware;
 use App\Shared\Security\JwtTokenProvider;
@@ -12,6 +13,8 @@ use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
+
+set_exception_handler([new ExceptionHandler(), 'handle']);
 
 $corsMiddleware = new CorsMiddleware();
 $corsMiddleware->handle();

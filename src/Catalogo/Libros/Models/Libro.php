@@ -16,56 +16,66 @@ class Libro extends Entity
     private ?string $isbn = null;
     private ?string $issn = null;
     private ?int $paginas = null;
-    private ?string $autor;
-    private ?string $autores;
-    private ?string $colaboradores;
     private ?string $tituloInformativo;
     private ?int $cdu;
-    private string $exportMarc;
     private ?string $editorial = null;
     private ?string $lugarDePublicacion = null;
+    private ?string $edicion = null;
+    private ?string $dimensiones = null;
+    private ?string $ilustraciones = null;
+    private ?string $serie = null;
+    private ?string $numeroSerie = null;
+    private ?string $notas = null;
+    private ?string $paisPublicacion = null;
 
     private ?Articulo $articulo = null;
+
+    /** @var LibroPersona[] */
+    private array $personas = [];
 
     private function __construct()
     {
     }
 
-    /**
-     * Crea un nuevo Libro (valida datos)
-     */
+    // La entidad ya nace con un ID otorgado por su padre -> Articulo
     public static function create(
         int $articuloId,
         ?string $isbn = null,
         ?string $issn = null,
         ?int $paginas = null,
-        ?string $autor = null,
-        ?string $autores = null,
-        ?string $colaboradores = null,
         ?string $tituloInformativo = null,
         ?int $cdu = null,
         ?string $editorial = null,
-        ?string $lugarDePublicacion = null
+        ?string $lugarDePublicacion = null,
+        ?string $edicion = null,
+        ?string $dimensiones = null,
+        ?string $ilustraciones = null,
+        ?string $serie = null,
+        ?string $numeroSerie = null,
+        ?string $notas = null,
+        ?string $paisPublicacion = null
     ): self {
         $libro = new self();
         $libro->setArticuloId($articuloId);
         $libro->setIsbn($isbn);
         $libro->setIssn($issn);
         $libro->setPaginas($paginas);
-        $libro->setAutor($autor);
-        $libro->setAutores($autores);
-        $libro->setColaboradores($colaboradores);
         $libro->setTituloInformativo($tituloInformativo);
         $libro->setCdu($cdu);
         $libro->setEditorial($editorial);
         $libro->setLugarDePublicacion($lugarDePublicacion);
+        $libro->setEdicion($edicion);
+        $libro->setDimensiones($dimensiones);
+        $libro->setIlustraciones($ilustraciones);
+        $libro->setSerie($serie);
+        $libro->setNumeroSerie($numeroSerie);
+        $libro->setNotas($notas);
+        $libro->setPaisPublicacion($paisPublicacion);
 
         return $libro;
     }
 
     /**
-     * Reconstruye desde base de datos (sin validar)
-     *
      * @param array<string, mixed> $row
      */
     public static function fromDatabase(array $row): self
@@ -76,14 +86,17 @@ class Libro extends Entity
         $libro->isbn = $row['isbn'] ?? null;
         $libro->issn = $row['issn'] ?? null;
         $libro->paginas = isset($row['paginas']) ? (int)$row['paginas'] : null;
-        $libro->autor = $row['autor'];
-        $libro->autores = $row['autores'];
-        $libro->colaboradores = $row['colaboradores'];
-        $libro->tituloInformativo = $row['titulo_informativo'];
-        $libro->cdu = $row['cdu'] !== null ? (int)$row['cdu'] : null;
-        $libro->exportMarc = $row['export_marc'] ?? '';
+        $libro->tituloInformativo = $row['titulo_informativo'] ?? null;
+        $libro->cdu = isset($row['cdu']) ? (int)$row['cdu'] : null;
         $libro->editorial = $row['editorial'] ?? null;
         $libro->lugarDePublicacion = $row['lugar_de_publicacion'] ?? null;
+        $libro->edicion = $row['edicion'] ?? null;
+        $libro->dimensiones = $row['dimensiones'] ?? null;
+        $libro->ilustraciones = $row['ilustraciones'] ?? null;
+        $libro->serie = $row['serie'] ?? null;
+        $libro->numeroSerie = $row['numero_serie'] ?? null;
+        $libro->notas = $row['notas'] ?? null;
+        $libro->paisPublicacion = $row['pais_publicacion'] ?? null;
         $libro->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -161,45 +174,6 @@ class Libro extends Entity
         $this->paginas = $paginas;
     }
 
-    public function getAutor(): ?string
-    {
-        return $this->autor;
-    }
-
-    public function setAutor(?string $autor): void
-    {
-        if ($autor !== null) {
-            $this->assertMaxLength($autor, 255, 'autor');
-        }
-        $this->autor = $autor;
-    }
-
-    public function getAutores(): ?string
-    {
-        return $this->autores;
-    }
-
-    public function setAutores(?string $autores): void
-    {
-        if ($autores !== null) {
-            $this->assertMaxLength($autores, 255, 'autores');
-        }
-        $this->autores = $autores;
-    }
-
-    public function getColaboradores(): ?string
-    {
-        return $this->colaboradores;
-    }
-
-    public function setColaboradores(?string $colaboradores): void
-    {
-        if ($colaboradores !== null) {
-            $this->assertMaxLength($colaboradores, 255, 'colaboradores');
-        }
-        $this->colaboradores = $colaboradores;
-    }
-
     public function getTituloInformativo(): ?string
     {
         return $this->tituloInformativo;
@@ -224,17 +198,6 @@ class Libro extends Entity
             $this->assertNonNegative($cdu, 'cdu');
         }
         $this->cdu = $cdu;
-    }
-
-    public function getExportMarc(): string
-    {
-        return $this->exportMarc;
-    }
-
-    public function setExportMarc(string $exportMarc): void
-    {
-        $this->assertNotEmpty($exportMarc, 'export_marc');
-        $this->exportMarc = $exportMarc;
     }
 
     public function getEditorial(): ?string
@@ -263,6 +226,94 @@ class Libro extends Entity
         $this->lugarDePublicacion = $lugarDePublicacion;
     }
 
+    public function getEdicion(): ?string
+    {
+        return $this->edicion;
+    }
+
+    public function setEdicion(?string $edicion): void
+    {
+        if ($edicion !== null) {
+            $this->assertMaxLength($edicion, 100, 'edicion');
+        }
+        $this->edicion = $edicion;
+    }
+
+    public function getDimensiones(): ?string
+    {
+        return $this->dimensiones;
+    }
+
+    public function setDimensiones(?string $dimensiones): void
+    {
+        if ($dimensiones !== null) {
+            $this->assertMaxLength($dimensiones, 50, 'dimensiones');
+        }
+        $this->dimensiones = $dimensiones;
+    }
+
+    public function getIlustraciones(): ?string
+    {
+        return $this->ilustraciones;
+    }
+
+    public function setIlustraciones(?string $ilustraciones): void
+    {
+        if ($ilustraciones !== null) {
+            $this->assertMaxLength($ilustraciones, 100, 'ilustraciones');
+        }
+        $this->ilustraciones = $ilustraciones;
+    }
+
+    public function getSerie(): ?string
+    {
+        return $this->serie;
+    }
+
+    public function setSerie(?string $serie): void
+    {
+        if ($serie !== null) {
+            $this->assertMaxLength($serie, 255, 'serie');
+        }
+        $this->serie = $serie;
+    }
+
+    public function getNumeroSerie(): ?string
+    {
+        return $this->numeroSerie;
+    }
+
+    public function setNumeroSerie(?string $numeroSerie): void
+    {
+        if ($numeroSerie !== null) {
+            $this->assertMaxLength($numeroSerie, 50, 'numero_serie');
+        }
+        $this->numeroSerie = $numeroSerie;
+    }
+
+    public function getNotas(): ?string
+    {
+        return $this->notas;
+    }
+
+    public function setNotas(?string $notas): void
+    {
+        $this->notas = $notas;
+    }
+
+    public function getPaisPublicacion(): ?string
+    {
+        return $this->paisPublicacion;
+    }
+
+    public function setPaisPublicacion(?string $paisPublicacion): void
+    {
+        if ($paisPublicacion !== null) {
+            $this->assertExactLength($paisPublicacion, 2, 'pais_publicacion');
+        }
+        $this->paisPublicacion = $paisPublicacion;
+    }
+
     public function getArticulo(): ?Articulo
     {
         return $this->articulo;
@@ -276,6 +327,40 @@ class Libro extends Entity
     }
 
     /**
+     * @return LibroPersona[]
+     */
+    public function getPersonas(): array
+    {
+        return $this->personas;
+    }
+
+    /**
+     * @param LibroPersona[] $personas
+     */
+    public function setPersonas(array $personas): void
+    {
+        $this->personas = $personas;
+    }
+
+    public function getAutorPrincipal(): ?Persona
+    {
+        foreach ($this->personas as $libroPersona) {
+            if ($libroPersona->rol === 'autor' && $libroPersona->orden === 0) {
+                return $libroPersona->persona;
+            }
+        }
+
+        // Fallback: primer autor encontrado
+        foreach ($this->personas as $libroPersona) {
+            if ($libroPersona->rol === 'autor') {
+                return $libroPersona->persona;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array
@@ -285,14 +370,17 @@ class Libro extends Entity
             'isbn' => $this->isbn,
             'issn' => $this->issn,
             'paginas' => $this->paginas,
-            'autor' => $this->autor,
-            'autores' => $this->autores,
-            'colaboradores' => $this->colaboradores,
             'titulo_informativo' => $this->tituloInformativo,
             'cdu' => $this->cdu,
-            'export_marc' => $this->exportMarc,
             'editorial' => $this->editorial,
             'lugar_de_publicacion' => $this->lugarDePublicacion,
+            'edicion' => $this->edicion,
+            'dimensiones' => $this->dimensiones,
+            'ilustraciones' => $this->ilustraciones,
+            'serie' => $this->serie,
+            'numero_serie' => $this->numeroSerie,
+            'notas' => $this->notas,
+            'pais_publicacion' => $this->paisPublicacion,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];

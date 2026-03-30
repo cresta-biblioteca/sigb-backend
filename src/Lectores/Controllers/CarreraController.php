@@ -7,10 +7,8 @@ namespace App\Lectores\Controllers;
 use App\Lectores\Mappers\CarreraMapper;
 use App\Lectores\Services\CarreraService;
 use App\Lectores\Validators\CarreraRequestValidator;
-use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use OpenApi\Attributes as OA;
-use Throwable;
 
 class CarreraController
 {
@@ -70,22 +68,18 @@ class CarreraController
     )]
     public function getAll(): void
     {
-        try {
-            $params = array_filter(
-                array_intersect_key($_GET, array_flip(self::SEARCH_PARAMS)),
-                fn($value) => $value !== ''
-            );
+        $params = array_filter(
+            array_intersect_key($_GET, array_flip(self::SEARCH_PARAMS)),
+            fn($value) => $value !== ''
+        );
 
-            if (!empty($params)) {
-                CarreraRequestValidator::validateParams($params);
-                JsonHelper::jsonResponse($this->service->getByParams($params), 200);
-                return;
-            }
-
-            JsonHelper::jsonResponse($this->service->getAll(), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::getAll');
+        if (!empty($params)) {
+            CarreraRequestValidator::validateParams($params);
+            JsonHelper::jsonResponse($this->service->getByParams($params), 200);
+            return;
         }
+
+        JsonHelper::jsonResponse($this->service->getAll(), 200);
     }
 
     #[OA\Get(
@@ -128,12 +122,8 @@ class CarreraController
     )]
     public function getById(string $id): void
     {
-        try {
-            CarreraRequestValidator::validateId($id);
-            JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::getById');
-        }
+        CarreraRequestValidator::validateId($id);
+        JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
     }
 
     #[OA\Get(
@@ -183,13 +173,9 @@ class CarreraController
     )]
     public function getMateriasByCarrera($idCarrera): void
     {
-        try {
-            CarreraRequestValidator::validateId($idCarrera);
-            $materias = $this->service->getMateriasByCarrera((int) $idCarrera);
-            JsonHelper::jsonResponse(["carreraId" => $idCarrera, "materias" => $materias], 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::getMateriasByCarrera');
-        }
+        CarreraRequestValidator::validateId($idCarrera);
+        $materias = $this->service->getMateriasByCarrera((int) $idCarrera);
+        JsonHelper::jsonResponse(["carreraId" => $idCarrera, "materias" => $materias], 200);
     }
 
     #[OA\Post(
@@ -234,14 +220,10 @@ class CarreraController
     )]
     public function createCarrera(): void
     {
-        try {
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            CarreraRequestValidator::validateInput($input);
-            $carrera = $this->service->createCarrera(CarreraMapper::fromArrayToCreate($input));
-            JsonHelper::jsonResponse($carrera, 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::createCarrera');
-        }
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        CarreraRequestValidator::validateInput($input);
+        $carrera = $this->service->createCarrera(CarreraMapper::fromArrayToCreate($input));
+        JsonHelper::jsonResponse($carrera, 201);
     }
 
     #[OA\Patch(
@@ -302,15 +284,11 @@ class CarreraController
     )]
     public function updateCarrera(string $id): void
     {
-        try {
-            CarreraRequestValidator::validateId($id);
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            CarreraRequestValidator::validateUpdateInput($input);
-            $carrera = $this->service->updateCarrera((int) $id, CarreraMapper::fromArrayToUpdate($input));
-            JsonHelper::jsonResponse($carrera, 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::updateCarrera');
-        }
+        CarreraRequestValidator::validateId($id);
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        CarreraRequestValidator::validateUpdateInput($input);
+        $carrera = $this->service->updateCarrera((int) $id, CarreraMapper::fromArrayToUpdate($input));
+        JsonHelper::jsonResponse($carrera, 200);
     }
 
     #[OA\Delete(
@@ -349,13 +327,9 @@ class CarreraController
     )]
     public function deleteCarrera(string $id): void
     {
-        try {
-            CarreraRequestValidator::validateId($id);
-            $this->service->deleteCarrera((int) $id);
-            http_response_code(204);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::deleteCarrera');
-        }
+        CarreraRequestValidator::validateId($id);
+        $this->service->deleteCarrera((int) $id);
+        http_response_code(204);
     }
 
     #[OA\Post(
@@ -414,14 +388,10 @@ class CarreraController
     )]
     public function addMateriaToCarrera(string $idCarrera, string $idMateria): void
     {
-        try {
-            CarreraRequestValidator::validateId($idCarrera);
-            CarreraRequestValidator::validateId($idMateria);
-            $this->service->addMateriaToCarrera((int) $idCarrera, (int) $idMateria);
-            JsonHelper::jsonResponse(["message" => "La materia ha sido agregada!"], 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::addMateriaToCarrera');
-        }
+        CarreraRequestValidator::validateId($idCarrera);
+        CarreraRequestValidator::validateId($idMateria);
+        $this->service->addMateriaToCarrera((int) $idCarrera, (int) $idMateria);
+        JsonHelper::jsonResponse(["message" => "La materia ha sido agregada!"], 201);
     }
 
     #[OA\Delete(
@@ -480,13 +450,9 @@ class CarreraController
     )]
     public function deleteMateriaFromCarrera(string $idCarrera, string $idMateria): void
     {
-        try {
-            CarreraRequestValidator::validateId($idCarrera);
-            CarreraRequestValidator::validateId($idMateria);
-            $this->service->deleteMateriaFromCarrera((int) $idCarrera, (int) $idMateria);
-            JsonHelper::jsonResponse(["message" => "Materia eliminada correctamente!"], 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'CarreraController::deleteMateriaFromCarrera');
-        }
+        CarreraRequestValidator::validateId($idCarrera);
+        CarreraRequestValidator::validateId($idMateria);
+        $this->service->deleteMateriaFromCarrera((int) $idCarrera, (int) $idMateria);
+        JsonHelper::jsonResponse(["message" => "Materia eliminada correctamente!"], 200);
     }
 }

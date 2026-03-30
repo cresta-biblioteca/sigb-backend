@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class LibroNotFoundException extends NotFoundException
 {
-    public function __construct(int $articuloId)
+    public function __construct()
     {
-        parent::__construct('Libro', $articuloId);
+        parent::__construct('Libro no encontrado');
     }
 }

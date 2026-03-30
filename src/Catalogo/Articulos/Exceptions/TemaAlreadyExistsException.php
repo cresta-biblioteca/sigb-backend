@@ -8,12 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class TemaAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(string $tema)
+    public function __construct()
     {
-        parent::__construct(
-            'Tema',
-            'titulo',
-            $tema
-        );
+        parent::__construct('El tema ya existe');
     }
 }

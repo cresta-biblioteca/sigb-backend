@@ -7,10 +7,8 @@ namespace App\Catalogo\Articulos\Controllers;
 use App\Catalogo\Articulos\Mappers\TipoDocumentoMapper;
 use App\Catalogo\Articulos\Services\TipoDocumentoService;
 use App\Catalogo\Articulos\Validators\TipoDocumentoRequestValidator;
-use App\Shared\Http\ExceptionHandler;
 use App\Shared\Http\JsonHelper;
 use OpenApi\Attributes as OA;
-use Throwable;
 
 class TipoDocumentoController
 {
@@ -88,22 +86,18 @@ class TipoDocumentoController
     )]
     public function getAll(): void
     {
-        try {
-            $params = array_filter(
-                array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
-                fn($value) => $value !== ''
-            );
+        $params = array_filter(
+            array_intersect_key($_GET, array_flip(self::ALLOWED_PARAMS)),
+            fn($value) => $value !== ''
+        );
 
-            if (!empty($params)) {
-                TipoDocumentoRequestValidator::validateParams($params);
-                JsonHelper::jsonResponse($this->service->getByParams($params), 200);
-                return;
-            }
-
-            JsonHelper::jsonResponse($this->service->getAll(), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TipoDocumentoController::getAll');
+        if (!empty($params)) {
+            TipoDocumentoRequestValidator::validateParams($params);
+            JsonHelper::jsonResponse($this->service->getByParams($params), 200);
+            return;
         }
+
+        JsonHelper::jsonResponse($this->service->getAll(), 200);
     }
 
     #[OA\Get(
@@ -153,12 +147,8 @@ class TipoDocumentoController
     )]
     public function getById(string $id): void
     {
-        try {
-            TipoDocumentoRequestValidator::validateId($id);
-            JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TipoDocumentoController::getById');
-        }
+        TipoDocumentoRequestValidator::validateId($id);
+        JsonHelper::jsonResponse($this->service->getById((int) $id), 200);
     }
 
     #[OA\Post(
@@ -213,14 +203,10 @@ class TipoDocumentoController
     )]
     public function createTipoDocumento(): void
     {
-        try {
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            TipoDocumentoRequestValidator::validateInputCreate($input);
-            $tipoDocumento = $this->service->createTipoDocumento(TipoDocumentoMapper::fromArrayToCreate($input));
-            JsonHelper::jsonResponse($tipoDocumento, 201);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TipoDocumentoController::createTipoDocumento');
-        }
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        TipoDocumentoRequestValidator::validateInputCreate($input);
+        $tipoDocumento = $this->service->createTipoDocumento(TipoDocumentoMapper::fromArrayToCreate($input));
+        JsonHelper::jsonResponse($tipoDocumento, 201);
     }
 
     #[OA\Put(
@@ -293,18 +279,14 @@ class TipoDocumentoController
     )]
     public function updateTipoDocumento(string $id): void
     {
-        try {
-            TipoDocumentoRequestValidator::validateId($id);
-            $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
-            TipoDocumentoRequestValidator::validateInputUpdate($input);
-            $tipoDocumento = $this->service->updateTipoDocumento(
-                (int) $id,
-                TipoDocumentoMapper::fromArrayToUpdate($input)
-            );
-            JsonHelper::jsonResponse($tipoDocumento, 200);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TipoDocumentoController::updateTipoDocumento');
-        }
+        TipoDocumentoRequestValidator::validateId($id);
+        $input = json_decode(file_get_contents("php://input"), true, 512, JSON_THROW_ON_ERROR) ?? [];
+        TipoDocumentoRequestValidator::validateInputUpdate($input);
+        $tipoDocumento = $this->service->updateTipoDocumento(
+            (int) $id,
+            TipoDocumentoMapper::fromArrayToUpdate($input)
+        );
+        JsonHelper::jsonResponse($tipoDocumento, 200);
     }
 
     #[OA\Delete(
@@ -353,12 +335,8 @@ class TipoDocumentoController
     )]
     public function deleteTipoDocumento(string $id): void
     {
-        try {
-            TipoDocumentoRequestValidator::validateId($id);
-            $this->service->deleteTipoDocumento((int) $id);
-            http_response_code(204);
-        } catch (Throwable $e) {
-            ExceptionHandler::handle($e, 'TipoDocumentoController::deleteTipoDocumento');
-        }
+        TipoDocumentoRequestValidator::validateId($id);
+        $this->service->deleteTipoDocumento((int) $id);
+        http_response_code(204);
     }
 }
