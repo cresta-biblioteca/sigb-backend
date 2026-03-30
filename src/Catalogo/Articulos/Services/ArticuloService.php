@@ -77,7 +77,7 @@ class ArticuloService
         /** @var Articulo $existing */
 
         $newTipoDocumentoId = array_key_exists('tipo_documento_id', $data)
-            ? (int) $data['tipo_documento_id']
+            ? (int)$data['tipo_documento_id']
             : $existing->getTipoDocumentoId();
 
         if (
@@ -85,22 +85,25 @@ class ArticuloService
             && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
             && $this->repository->isLinkedToLibro($id)
         ) {
-            throw new BusinessRuleException('No se puede modificar tipo_documento_id porque el artículo está asociado a un libro', 'tipo_documento_id');
+            throw new BusinessRuleException(
+                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro',
+                'tipo_documento_id'
+            );
         }
 
         $articulo = Articulo::create(
             titulo: array_key_exists('titulo', $data)
-            ? trim((string) $data['titulo'])
-            : $existing->getTitulo(),
+                ? trim((string)$data['titulo'])
+                : $existing->getTitulo(),
             anioPublicacion: array_key_exists('anio_publicacion', $data)
-            ? (int) $data['anio_publicacion']
-            : $existing->getAnioPublicacion(),
+                ? (int)$data['anio_publicacion']
+                : $existing->getAnioPublicacion(),
             tipoDocumentoId: $newTipoDocumentoId,
             idioma: array_key_exists('idioma', $data)
-                ? strtolower((string) $data['idioma'])
+                ? strtolower((string)$data['idioma'])
                 : $existing->getIdioma(),
             descripcion: array_key_exists('descripcion', $data)
-                ? ($data['descripcion'] !== null ? trim((string) $data['descripcion']) : null)
+                ? ($data['descripcion'] !== null ? trim((string)$data['descripcion']) : null)
                 : $existing->getDescripcion()
         );
 
@@ -117,7 +120,10 @@ class ArticuloService
 
         $blockingRelation = $this->repository->getDeleteBlockingRelation($id);
         if ($blockingRelation !== null) {
-            throw new BusinessRuleException("No se puede eliminar el artículo porque tiene {$blockingRelation}", 'id');
+            throw new BusinessRuleException(
+                "No se puede eliminar el artículo porque tiene {$blockingRelation}",
+                'id'
+            );
         }
 
         $this->repository->delete($id);
