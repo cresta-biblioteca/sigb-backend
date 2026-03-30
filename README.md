@@ -12,6 +12,7 @@ API REST para el Sistema de Gestión Bibliotecaria desarrollado como proyecto de
 - **Docker** - Contenedorización
 - **Git** - Control de versiones
 - **GitHub Actions** - CI/CD
+- **zircote/swagger-php** - Documentación de endpoints con OpenAPI 3.0
 
 ## Requisitos Previos
 
@@ -42,9 +43,25 @@ docker-compose up -d --build
 docker-compose exec web composer install
 ```
 
+5. Ejecutar las migraciones de base de datos:
+```bash
+docker-compose exec web composer migrate
+```
+
+6. Ejecutar el seeder de permisos:
+```bash
+docker-compose exec web vendor/bin/phinx seed:run
+
+7. Crear un usuario para realizar las pruebas
+
+8. Ejecutar el seeder de informacion de catalogo para realizar pruebas
+```
+docker-compose exec web php vendor/bin/phinx seed:run -s CatalogoTestDataSeeder
+
 ## Servicios Disponibles
 
 - **API**: http://localhost:8080
+- **Documentación (Swagger UI)**: http://localhost:8080/docs/index.html
 - **PHPMyAdmin**: http://localhost:8081
 - **MySQL**: localhost:3306
 
@@ -79,6 +96,17 @@ sigb-api-cresta/
 └── docker-compose.yml # Orquestación de contenedores
 ```
 
+## Documentación de la API
+
+Los endpoints están documentados con **OpenAPI 3.0** usando la librería `zircote/swagger-php`. La documentación se genera automáticamente en runtime a partir de PHP Attributes declarados en los controllers y DTOs.
+
+- **Swagger UI**: http://localhost:8080/docs/index.html
+- **Spec JSON**: http://localhost:8080/api/v1/docs/openapi.json
+
+La documentación no requiere autenticación. Para probar endpoints protegidos desde Swagger UI, hacer login primero y pegar el token JWT en el botón **Authorize**.
+
+Para documentar un nuevo endpoint, agregar el atributo `#[OA\Get/Post/Put/Delete]` al método del controller y `#[OA\Schema]` a los DTOs de request/response correspondientes. El scanner detecta automáticamente todos los atributos en `src/`.
+
 ## Testing
 
 Ejecutar todos los tests:
@@ -100,6 +128,23 @@ Ejecutar tests con cobertura:
 ```bash
 docker-compose exec web composer test:coverage
 ```
+
+## Validación de Estilo de Código (PSR-12)
+
+El proyecto sigue el estándar PSR-12. Antes de hacer push, verificá que tu código cumpla con el estándar:
+
+```bash
+# Verificar errores de estilo
+docker-compose exec web composer lint
+
+# Corregir errores automáticamente
+docker-compose exec web composer lint:fix
+```
+
+- `lint` analiza el código en `src/` y muestra los errores encontrados.
+- `lint:fix` corrige automáticamente los errores que puede resolver (indentación, espacios, llaves, etc.). Los errores que no se puedan resolver automáticamente se mostrarán para que los corrijas manualmente.
+
+> **Recomendación**: Ejecutá `composer lint` antes de cada push para evitar que el CI falle por errores de estilo.
 
 ## Comandos Útiles
 
@@ -149,6 +194,12 @@ docker-compose exec web composer migrate:rollback
 
 # Crear nueva migración
 docker-compose exec web composer migrate:create NombreMigracion
+
+# Ejecutar seeders
+docker-compose exec web vendor/bin/phinx seed:run
+
+# Ejecutar un seeder específico
+docker-compose exec web vendor/bin/phinx seed:run -s NombreDelSeeder
 ```
 
 ## CI/CD
@@ -195,6 +246,10 @@ El workflow se encuentra en `.github/workflows/php-cli.yml`
 - **PHPMyAdmin**: Interfaz web para administrar bases de datos MySQL/MariaDB, incluida para facilitar la gestión de datos en desarrollo.
 
 - **CI/CD**: Integración Continua y Entrega Continua. GitHub Actions ejecuta automáticamente validaciones y tests en cada push/PR.
+
+- **OpenAPI**: Especificación estándar para describir APIs REST. Define schemas de request/response, autenticación y códigos de estado en formato JSON o YAML.
+
+- **zircote/swagger-php**: Librería PHP que genera una especificación OpenAPI 3.0 a partir de PHP Attributes declarados en el código fuente. El spec se genera en runtime escaneando el directorio `src/`.
 
 ## Licencia
 

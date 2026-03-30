@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Shared;
 
 use App\Shared\Database\Connection;
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 use PDO;
 
 abstract class Repository
@@ -53,16 +53,26 @@ abstract class Repository
     }
 
     /**
+     * Mensaje de error cuando la entidad no es encontrada.
+     * Las subclases pueden sobreescribir para proveer un mensaje específico.
+     */
+    protected function getNotFoundMessage(): string
+    {
+        $parts = explode('\\', $this->getEntityClass());
+        return end($parts) . ' no encontrado';
+    }
+
+    /**
      * Busca una entidad por ID o lanza excepción
      *
-     * @throws EntityNotFoundException
+     * @throws NotFoundException
      */
     public function findByIdOrFail(int $id): Entity
     {
         $entity = $this->findById($id);
 
         if ($entity === null) {
-            throw new EntityNotFoundException($this->getEntityClass(), $id);
+            throw new NotFoundException($this->getNotFoundMessage());
         }
 
         return $entity;
@@ -86,18 +96,6 @@ abstract class Repository
         }
 
         return $entities;
-    }
-
-    /**
-     * Guarda una entidad (insert o update)
-     */
-    public function save(Entity $entity): void
-    {
-        if ($entity->isNew()) {
-            $this->insert($entity);
-        } else {
-            $this->update($entity);
-        }
     }
 
     /**
@@ -138,16 +136,6 @@ abstract class Repository
 
         return $stmt->fetch() !== false;
     }
-
-    /**
-     * Inserta una nueva entidad
-     */
-    abstract protected function insert(Entity $entity): void;
-
-    /**
-     * Actualiza una entidad existente
-     */
-    abstract protected function update(Entity $entity): void;
 
     /**
      * Ejecuta una consulta con parámetros y retorna las entidades

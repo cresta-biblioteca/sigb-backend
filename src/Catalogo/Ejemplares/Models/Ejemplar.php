@@ -14,6 +14,7 @@ class Ejemplar extends Entity
     private ?string $codigoBarras;
     private bool $habilitado;
     private int $articuloId;
+    private ?string $signaturaTopografica = null;
 
     private ?Articulo $articulo = null;
 
@@ -27,12 +28,14 @@ class Ejemplar extends Entity
     public static function create(
         int $articuloId,
         ?string $codigoBarras = null,
-        bool $habilitado = true
+        bool $habilitado = true,
+        ?string $signaturaTopografica = null
     ): self {
         $ejemplar = new self();
         $ejemplar->setArticuloId($articuloId);
         $ejemplar->setCodigoBarras($codigoBarras);
         $ejemplar->habilitado = $habilitado;
+        $ejemplar->setSignaturaTopografica($signaturaTopografica);
 
         return $ejemplar;
     }
@@ -49,6 +52,7 @@ class Ejemplar extends Entity
         $ejemplar->codigoBarras = $row['codigo_barras'];
         $ejemplar->habilitado = (bool) $row['habilitado'];
         $ejemplar->articuloId = (int) $row['articulo_id'];
+        $ejemplar->signaturaTopografica = $row['signatura_topografica'] ?? null;
         $ejemplar->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -106,6 +110,19 @@ class Ejemplar extends Entity
         $this->articuloId = $articuloId;
     }
 
+    public function getSignaturaTopografica(): ?string
+    {
+        return $this->signaturaTopografica;
+    }
+
+    public function setSignaturaTopografica(?string $signaturaTopografica): void
+    {
+        if ($signaturaTopografica !== null) {
+            $this->assertMaxLength($signaturaTopografica, 200, 'signatura_topografica');
+        }
+        $this->signaturaTopografica = $signaturaTopografica;
+    }
+
     public function getArticulo(): ?Articulo
     {
         return $this->articulo;
@@ -127,6 +144,7 @@ class Ejemplar extends Entity
             'codigo_barras' => $this->codigoBarras,
             'habilitado' => $this->habilitado,
             'articulo_id' => $this->articuloId,
+            'signatura_topografica' => $this->signaturaTopografica,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];

@@ -3,7 +3,6 @@
 
 # Composer
 /vendor/
-composer.lock
 
 # IDE
 .idea/
@@ -21,6 +20,7 @@ Thumbs.db
 
 # Testing
 .phpunit.result.cache
+.phpunit.cache/
 .pest/
 coverage/
 
