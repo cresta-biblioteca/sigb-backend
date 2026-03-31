@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace App\Lectores\Services;
 
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyEliminatedException;
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyInCarreraException;
-use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
-use App\Catalogo\Articulos\Mappers\MateriaMapper;
-use App\Catalogo\Articulos\Repository\MateriaRepository;
 use App\Lectores\Dtos\Request\CreateCarreraRequest;
 use App\Lectores\Dtos\Request\UpdateCarreraRequest;
 use App\Lectores\Dtos\Response\CarreraResponse;
@@ -20,7 +15,7 @@ use App\Lectores\Repositories\CarreraRepository;
 
 class CarreraService
 {
-    public function __construct(private CarreraRepository $repo, private MateriaRepository $materiaRepo)
+    public function __construct(private CarreraRepository $repo)
     {
     }
 
@@ -58,17 +53,6 @@ class CarreraService
             fn($carrera) => CarreraMapper::toCarreraResponse($carrera),
             $carreras
         );
-    }
-
-    public function getMateriasByCarrera(int $idCarrera): array
-    {
-        $existeCarrera = $this->repo->exists($idCarrera);
-        if (!$existeCarrera) {
-            throw new CarreraNotFoundException();
-        }
-        $materias = $this->materiaRepo->findMateriasByCarrera($idCarrera);
-        $materiasDTO = array_map(fn($materia) => MateriaMapper::toMateriaResponse($materia), $materias);
-        return $materiasDTO;
     }
 
     public function createCarrera(CreateCarreraRequest $request): CarreraResponse
@@ -125,40 +109,5 @@ class CarreraService
         if (!$borrada) {
             throw new CarreraNotFoundException();
         }
-    }
-
-    public function addMateriaToCarrera(int $idCarrera, int $idMateria): void
-    {
-        $carreraExistente = $this->repo->findById($idCarrera);
-        if (!$carreraExistente) {
-            throw new CarreraNotFoundException();
-        }
-        $materiaExistente = $this->materiaRepo->findById($idMateria);
-        if (!$materiaExistente) {
-            throw new MateriaNotFoundException();
-        }
-        $estaAgregada = $this->repo->isMateriaAdded($idCarrera, $idMateria);
-        if ($estaAgregada) {
-            throw new MateriaAlreadyInCarreraException();
-        }
-
-        $this->repo->addMateriaToCarrera($idCarrera, $idMateria);
-    }
-
-    public function deleteMateriaFromCarrera(int $idCarrera, int $idMateria): void
-    {
-        $carreraExistente = $this->repo->findById($idCarrera);
-        if (!$carreraExistente) {
-            throw new CarreraNotFoundException();
-        }
-        $materiaExistente = $this->materiaRepo->findById($idMateria);
-        if (!$materiaExistente) {
-            throw new MateriaNotFoundException();
-        }
-        $existe = $this->repo->isMateriaAdded($idCarrera, $idMateria);
-        if (!$existe) {
-            throw new MateriaAlreadyEliminatedException();
-        }
-        $this->repo->deleteMateriaFromCarrera($idCarrera, $idMateria);
     }
 }

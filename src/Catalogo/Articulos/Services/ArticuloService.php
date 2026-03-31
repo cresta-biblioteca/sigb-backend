@@ -7,9 +7,6 @@ namespace App\Catalogo\Articulos\Services;
 use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
 use App\Catalogo\Articulos\Dtos\Response\ArticuloResponse;
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyEliminatedException;
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyInArticuloException;
-use App\Catalogo\Articulos\Exceptions\MateriaNotFoundException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
 use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
@@ -173,51 +170,5 @@ class ArticuloService
         }
 
         $this->repository->deleteTemaFromArticulo($articuloId, $temaId);
-    }
-
-    public function addMateriaToArticulo(int $articuloId, int $materiaId): void
-    {
-        if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException();
-        }
-
-        if (!$this->repository->materiaExists($materiaId)) {
-            throw new MateriaNotFoundException();
-        }
-
-        if ($this->repository->isMateriaAdded($articuloId, $materiaId)) {
-            throw new MateriaAlreadyInArticuloException();
-        }
-
-        $this->repository->addMateriaToArticulo($articuloId, $materiaId);
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getMateriaTitlesByArticuloId(int $articuloId): array
-    {
-        if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException();
-        }
-
-        return $this->repository->findMateriaTitlesByArticuloId($articuloId);
-    }
-
-    public function deleteMateriaFromArticulo(int $articuloId, int $materiaId): void
-    {
-        if ($this->repository->findById($articuloId) === null) {
-            throw new ArticuloNotFoundException();
-        }
-
-        if (!$this->repository->materiaExists($materiaId)) {
-            throw new MateriaNotFoundException();
-        }
-
-        if (!$this->repository->isMateriaAdded($articuloId, $materiaId)) {
-            throw new MateriaAlreadyEliminatedException();
-        }
-
-        $this->repository->deleteMateriaFromArticulo($articuloId, $materiaId);
     }
 }

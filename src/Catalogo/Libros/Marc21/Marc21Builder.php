@@ -164,15 +164,6 @@ class Marc21Builder
             ], ' ', ' '));
         }
 
-        // 650 - Materias (ind2='4' = fuente no especificada)
-        if ($articulo !== null) {
-            foreach ($articulo->getMaterias() as $materia) {
-                $raw->appendField(new File_MARC_Data_Field('650', [
-                    new File_MARC_Subfield('a', $materia->getTitulo()),
-                ], ' ', '4'));
-            }
-        }
-
         // 653 - Temas (términos de índice no controlados)
         if ($articulo !== null) {
             foreach ($articulo->getTemas() as $tema) {
