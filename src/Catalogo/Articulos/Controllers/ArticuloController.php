@@ -294,5 +294,4 @@ class ArticuloController
 
         JsonHelper::jsonResponse(['message' => 'El tema ha sido eliminado del artículo'], 200);
     }
-
 }
