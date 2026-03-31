@@ -36,7 +36,7 @@
     "test": "pest",
     "test:unit": "pest --filter=Unit",
     "test:integration": "pest --filter=Integration",
-    "test:coverage": "pest --coverage",
+    "test:coverage": "pest --coverage --coverage-html=coverage/",
     "migrate": "vendor/bin/phinx migrate",
     "migrate:rollback": "vendor/bin/phinx rollback",
     "migrate:create": "vendor/bin/phinx create",
