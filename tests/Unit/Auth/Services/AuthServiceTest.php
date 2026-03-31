@@ -5,9 +5,8 @@ use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
+use App\Auth\Exceptions\InvalidCredentialsException;
 use App\Auth\Exceptions\UserAlreadyExistsException;
-use App\Auth\Exceptions\UserNotFoundException;
-use App\Shared\Exceptions\BusinessRuleException;
 use App\Auth\Models\Role;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -15,9 +14,9 @@ use App\Auth\Repositories\RoleRepository;
 use App\Auth\Services\AuthService;
 use App\Lectores\Models\Lector;
 use App\Lectores\Repositories\LectorRepository;
+use App\Shared\Exceptions\BusinessRuleException;
 use App\Shared\Security\JwtTokenProvider;
 use App\Shared\Security\PasswordEncoder;
-use Mockery\MockInterface;
 
 beforeEach(function () {
     $this->dni = '40123567';
@@ -84,7 +83,7 @@ test('login lanza UserNotFoundException si el usuario no existe', function () {
 
     // Act & Assert
     expect(fn() => $this->service->login($request))
-        ->toThrow(UserNotFoundException::class);
+        ->toThrow(InvalidCredentialsException::class);
 });
 
 test('login lanza UserNotFoundException si la contraseña es incorrecta', function () {
@@ -114,7 +113,7 @@ test('login lanza UserNotFoundException si la contraseña es incorrecta', functi
 
     // Act & Assert
     expect(fn() => $this->service->login($request))
-        ->toThrow(UserNotFoundException::class);
+        ->toThrow(InvalidCredentialsException::class);
 });
 
 test('login lanza RuntimeException si el rol del usuario no existe', function () {
@@ -458,7 +457,7 @@ test('cambio de contraseña exitoso cuando las credenciales son válidas', funct
     $this->service->changePassword($request, $this->savedUser->getId());
 });
 
-test('cambio de contraseña lanza UserNotFoundException si el usuario no existe', function (): void {
+test('cambio de contraseña lanza InvalidCredentialsException si el usuario no existe', function (): void {
     $request = new ChangePasswordRequest($this->password, 'New_password_123');
 
     $this->authRepository
@@ -468,10 +467,10 @@ test('cambio de contraseña lanza UserNotFoundException si el usuario no existe'
         ->andReturnNull();
 
     expect(fn() => $this->service->changePassword($request, 999))
-        ->toThrow(UserNotFoundException::class);
+        ->toThrow(InvalidCredentialsException::class);
 });
 
-test('cambio de contraseña lanza UserNotFoundException si la contraseña actual es incorrecta', function (): void {
+test('cambio de contraseña lanza InvalidCredentialsException si la contraseña actual es incorrecta', function (): void {
     $request = new ChangePasswordRequest('Wrong_password123', 'New_password_123');
 
     $this->authRepository
@@ -487,6 +486,6 @@ test('cambio de contraseña lanza UserNotFoundException si la contraseña actual
         ->andReturn(false);
 
     expect(fn() => $this->service->changePassword($request, $this->savedUser->getId()))
-        ->toThrow(UserNotFoundException::class);
+        ->toThrow(InvalidCredentialsException::class);
 });
 
