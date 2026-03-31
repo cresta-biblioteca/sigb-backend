@@ -171,5 +171,4 @@ class ArticuloService
 
         $this->repository->deleteTemaFromArticulo($articuloId, $temaId);
     }
-
 }

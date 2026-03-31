@@ -169,5 +169,4 @@ class CarreraRepository extends Repository
             'nombre' => $nombre,
         ]);
     }
-
 }

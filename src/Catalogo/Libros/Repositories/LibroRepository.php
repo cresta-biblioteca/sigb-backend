@@ -212,12 +212,12 @@ class LibroRepository extends Repository
     }
 
     private const SORTABLE_COLUMNS = [
-        'titulo'           => 'a.titulo',
+        'titulo' => 'a.titulo',
         'anio_publicacion' => 'a.anio_publicacion',
-        'editorial'        => 'l.editorial',
-        'isbn'             => 'l.isbn',
-        'idioma'           => 'a.idioma',
-        'id'               => 'l.articulo_id',
+        'editorial' => 'l.editorial',
+        'isbn' => 'l.isbn',
+        'idioma' => 'a.idioma',
+        'id' => 'l.articulo_id',
     ];
 
     /**
@@ -254,7 +254,7 @@ class LibroRepository extends Repository
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        $column    = self::SORTABLE_COLUMNS[$sortBy] ?? 'a.titulo';
+        $column = self::SORTABLE_COLUMNS[$sortBy] ?? 'a.titulo';
         $direction = strtoupper($sortDir) === 'DESC' ? 'DESC' : 'ASC';
         $sql .= " ORDER BY {$column} {$direction}, l.articulo_id {$direction} LIMIT :limit OFFSET :offset";
 
@@ -294,7 +294,7 @@ class LibroRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        return (int) $stmt->fetchColumn();
+        return (int)$stmt->fetchColumn();
     }
 
     /**
@@ -322,7 +322,7 @@ class LibroRepository extends Repository
     {
         if (!empty($filters['articulo_id'])) {
             $conditions[] = 'l.articulo_id = :l_articulo_id';
-            $params['l_articulo_id'] = (int) $filters['articulo_id'];
+            $params['l_articulo_id'] = (int)$filters['articulo_id'];
         }
 
         if (!empty($filters['persona'])) {
@@ -382,17 +382,17 @@ class LibroRepository extends Repository
 
         if (!empty($filters['anio_publicacion'])) {
             $conditions[] = 'a.anio_publicacion = :a_anio_publicacion';
-            $params['a_anio_publicacion'] = (int) $filters['anio_publicacion'];
+            $params['a_anio_publicacion'] = (int)$filters['anio_publicacion'];
         }
 
         if (!empty($filters['tipo_documento_id'])) {
             $conditions[] = 'a.tipo_documento_id = :a_tipo_documento_id';
-            $params['a_tipo_documento_id'] = (int) $filters['tipo_documento_id'];
+            $params['a_tipo_documento_id'] = (int)$filters['tipo_documento_id'];
         }
 
         if (!empty($filters['idioma'])) {
             $conditions[] = 'a.idioma = :a_idioma';
-            $params['a_idioma'] = strtolower((string) $filters['idioma']);
+            $params['a_idioma'] = strtolower((string)$filters['idioma']);
         }
     }
 
@@ -405,7 +405,7 @@ class LibroRepository extends Repository
     {
         $temaIds = array_values(array_filter(
             array_map(
-                static fn(mixed $id): int => (int) $id,
+                static fn(mixed $id): int => (int)$id,
                 $this->normalizeFilterAsArray($filters['tema_ids'] ?? null)
             ),
             static fn(int $id): bool => $id > 0
@@ -425,7 +425,7 @@ class LibroRepository extends Repository
 
         $temas = array_values(array_filter(
             array_map(
-                static fn(mixed $tema): string => trim((string) $tema),
+                static fn(mixed $tema): string => trim((string)$tema),
                 $this->normalizeFilterAsArray($filters['temas'] ?? null)
             ),
             static fn(string $tema): bool => $tema !== ''
@@ -444,7 +444,6 @@ class LibroRepository extends Repository
                 relatedIdField: 'tema_id'
             );
         }
-
     }
 
     /**
@@ -570,7 +569,7 @@ class LibroRepository extends Repository
         $personas = [];
         while ($row = $stmt->fetch()) {
             $persona = Persona::fromDatabase($row);
-            $personas[] = new LibroPersona($persona, $row['rol'], (int) $row['orden']);
+            $personas[] = new LibroPersona($persona, $row['rol'], (int)$row['orden']);
         }
 
         $libro->setPersonas($personas);
@@ -599,5 +598,4 @@ class LibroRepository extends Repository
 
         $articulo->setTemas($temas);
     }
-
 }
