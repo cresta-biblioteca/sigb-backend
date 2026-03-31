@@ -8,8 +8,8 @@ use App\Shared\Exceptions\AlreadyExistsException;
 
 class TipoDocumentoAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct()
+    public function __construct(string $codigo)
     {
-        parent::__construct('El tipo de documento ya existe');
+        parent::__construct("TipoDocumento con Codigo \"{$codigo}\" ya existe");
     }
 }
