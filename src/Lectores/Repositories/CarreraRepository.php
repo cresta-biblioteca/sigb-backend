@@ -170,40 +170,4 @@ class CarreraRepository extends Repository
         ]);
     }
 
-    public function isMateriaAdded(int $idCarrera, int $idMateria): bool
-    {
-        $sql = "SELECT 1 FROM carrera_materia WHERE carrera_id = :idCarrera AND materia_id = :idMateria";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            "idCarrera" => $idCarrera,
-            "idMateria" => $idMateria
-        ]);
-        return $stmt->fetch() !== false;
-    }
-
-    public function addMateriaToCarrera(int $idCarrera, int $idMateria): void
-    {
-        $sql = "INSERT INTO carrera_materia(carrera_id, materia_id) VALUES(:idCarrera, :idMateria)";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            "idCarrera" => $idCarrera,
-            "idMateria" => $idMateria,
-        ]);
-        if ($stmt->rowCount() === 0) {
-            throw new Exception("Error al agregar la materia a la carrera");
-        }
-    }
-
-    public function deleteMateriaFromCarrera(int $idCarrera, int $idMateria): void
-    {
-        $sql = "DELETE FROM carrera_materia WHERE carrera_id = :idCarrera AND materia_id = :idMateria";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            "idCarrera" => $idCarrera,
-            "idMateria" => $idMateria,
-        ]);
-        if ($stmt->rowCount() === 0) {
-            throw new Exception("Error al eliminar la materia de la carrera");
-        }
-    }
 }

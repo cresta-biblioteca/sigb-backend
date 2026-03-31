@@ -16,8 +16,7 @@ readonly class ArticuloResponse implements JsonSerializable
         private string $idioma,
         private ?string $descripcion = null,
         private ?array $tipoDocumento = null,
-        private array $temas = [],
-        private array $materias = []
+        private array $temas = []
     ) {
     }
 
@@ -40,7 +39,6 @@ readonly class ArticuloResponse implements JsonSerializable
             'descripcion' => $this->descripcion,
             'tipo_documento' => $this->tipoDocumento,
             'temas' => $this->temas,
-            'materias' => $this->materias,
         ];
     }
 }

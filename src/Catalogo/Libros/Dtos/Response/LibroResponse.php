@@ -34,8 +34,6 @@ readonly class LibroResponse implements JsonSerializable
         private ?string $descripcion = null,
         /** @var array<int, array{id: int, titulo: string}> */
         private array $temas = [],
-        /** @var array<int, array{id: int, titulo: string}> */
-        private array $materias = [],
     ) {
     }
 
@@ -69,7 +67,6 @@ readonly class LibroResponse implements JsonSerializable
                 'idioma' => $this->idioma,
                 'descripcion' => $this->descripcion,
                 'temas' => $this->temas,
-                'materias' => $this->materias,
             ];
         }
 

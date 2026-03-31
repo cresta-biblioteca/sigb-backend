@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Repository;
 
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyEliminatedException;
-use App\Catalogo\Articulos\Exceptions\MateriaAlreadyInArticuloException;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Shared\Repository;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
@@ -289,7 +287,6 @@ class ArticuloRepository extends Repository
             'libro' => 'libro asociado',
             'ejemplar' => 'ejemplar asociado',
             'articulo_tema' => 'tema asociado',
-            'materia_articulo' => 'materia asociada',
         ];
 
         foreach ($relations as $table => $label) {

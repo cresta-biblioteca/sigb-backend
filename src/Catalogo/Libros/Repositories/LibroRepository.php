@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Catalogo\Libros\Repositories;
 
 use App\Catalogo\Articulos\Models\Articulo;
-use App\Catalogo\Articulos\Models\Materia;
 use App\Catalogo\Articulos\Models\Tema;
 use App\Catalogo\Libros\Models\LibroPersona;
 use App\Catalogo\Libros\Models\Persona;
@@ -424,26 +423,6 @@ class LibroRepository extends Repository
             );
         }
 
-        $materiaIds = array_values(array_filter(
-            array_map(
-                static fn(mixed $id): int => (int) $id,
-                $this->normalizeFilterAsArray($filters['materia_ids'] ?? null)
-            ),
-            static fn(int $id): bool => $id > 0
-        ));
-
-        if ($materiaIds !== []) {
-            $this->appendExistsByIdsCondition(
-                conditions: $conditions,
-                params: $params,
-                ids: $materiaIds,
-                prefix: 'materia_id_',
-                pivotTable: 'materia_articulo',
-                pivotAlias: 'ma',
-                foreignKey: 'materia_id'
-            );
-        }
-
         $temas = array_values(array_filter(
             array_map(
                 static fn(mixed $tema): string => trim((string) $tema),
@@ -466,27 +445,6 @@ class LibroRepository extends Repository
             );
         }
 
-        $materias = array_values(array_filter(
-            array_map(
-                static fn(mixed $materia): string => trim((string) $materia),
-                $this->normalizeFilterAsArray($filters['materias'] ?? null)
-            ),
-            static fn(string $materia): bool => $materia !== ''
-        ));
-
-        if ($materias !== []) {
-            $this->appendExistsByTitleCondition(
-                conditions: $conditions,
-                params: $params,
-                values: $materias,
-                prefix: 'materia_titulo_',
-                pivotTable: 'materia_articulo',
-                pivotAlias: 'ma',
-                relatedTable: 'materia',
-                relatedAlias: 'm',
-                relatedIdField: 'materia_id'
-            );
-        }
     }
 
     /**
@@ -594,7 +552,6 @@ class LibroRepository extends Repository
 
         $this->loadPersonas($libro);
         $this->loadTemasForArticulo($libro);
-        $this->loadMateriasForArticulo($libro);
 
         return $libro;
     }
@@ -643,27 +600,4 @@ class LibroRepository extends Repository
         $articulo->setTemas($temas);
     }
 
-    private function loadMateriasForArticulo(Libro $libro): void
-    {
-        $articulo = $libro->getArticulo();
-        if ($articulo === null) {
-            return;
-        }
-
-        $sql = "SELECT m.id, m.titulo
-                FROM materia_articulo ma
-                INNER JOIN materia m ON m.id = ma.materia_id
-                WHERE ma.articulo_id = :articulo_id
-                ORDER BY m.titulo ASC";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['articulo_id' => $articulo->getId()]);
-
-        $materias = [];
-        while ($row = $stmt->fetch()) {
-            $materias[] = Materia::fromDatabase($row);
-        }
-
-        $articulo->setMaterias($materias);
-    }
 }
