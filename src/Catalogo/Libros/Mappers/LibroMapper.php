@@ -21,18 +21,12 @@ class LibroMapper
         ], $libro->getPersonas());
 
         $temas = [];
-        $materias = [];
 
         if ($articulo !== null) {
             $temas = array_map(fn($t) => [
                 'id' => $t->getId(),
                 'titulo' => $t->getTitulo(),
             ], $articulo->getTemas());
-
-            $materias = array_map(fn($m) => [
-                'id' => $m->getId(),
-                'titulo' => $m->getTitulo(),
-            ], $articulo->getMaterias());
         }
 
         return new LibroResponse(
@@ -59,7 +53,6 @@ class LibroMapper
             idioma: $articulo?->getIdioma(),
             descripcion: $articulo?->getDescripcion(),
             temas: $temas,
-            materias: $materias,
         );
     }
 }

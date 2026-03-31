@@ -22,9 +22,6 @@ class Articulo extends Entity
     /** @var Tema[] */
     private array $temas = [];
 
-    /** @var Materia[] */
-    private array $materias = [];
-
     private function __construct()
     {
     }
@@ -171,27 +168,6 @@ class Articulo extends Entity
     }
 
     /**
-     * @return Materia[]
-     */
-    public function getMaterias(): array
-    {
-        return $this->materias;
-    }
-
-    /**
-     * @param Materia[] $materias
-     */
-    public function setMaterias(array $materias): void
-    {
-        $this->materias = $materias;
-    }
-
-    public function addMateria(Materia $materia): void
-    {
-        $this->materias[] = $materia;
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function toArray(): array
@@ -213,10 +189,6 @@ class Articulo extends Entity
 
         if (!empty($this->temas)) {
             $data['temas'] = array_map(fn(Tema $t) => $t->toArray(), $this->temas);
-        }
-
-        if (!empty($this->materias)) {
-            $data['materias'] = array_map(fn(Materia $m) => $m->toArray(), $this->materias);
         }
 
         return $data;

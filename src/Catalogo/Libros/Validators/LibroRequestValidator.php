@@ -133,8 +133,6 @@ class LibroRequestValidator
             'idioma',
             'tema_ids',
             'temas',
-            'materia_ids',
-            'materias',
             'page',
             'per_page',
             'sort_by',
@@ -265,43 +263,6 @@ class LibroRequestValidator
                     if (mb_strlen(trim($tema)) > self::MAX_TEXT_LENGTH) {
                         $errors['temas'] = [
                             'Los elementos de temas no pueden superar ' . self::MAX_TEXT_LENGTH . ' caracteres'
-                        ];
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (isset($params['materia_ids'])) {
-            if (!is_array($params['materia_ids'])) {
-                $errors['materia_ids'] = ['El campo materia_ids debe ser un array'];
-            } elseif (count($params['materia_ids']) > 50) {
-                $errors['materia_ids'] = ['El campo materia_ids no puede tener más de 50 elementos'];
-            } else {
-                foreach ($params['materia_ids'] as $id) {
-                    if (!is_numeric($id) || (int) $id <= 0) {
-                        $errors['materia_ids'] = ['Todos los elementos de materia_ids deben ser números positivos'];
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (isset($params['materias'])) {
-            $materias = is_array($params['materias']) ? $params['materias'] : [$params['materias']];
-
-            if (count($materias) > 50) {
-                $errors['materias'] = ['El campo materias no puede tener más de 50 elementos'];
-            } else {
-                foreach ($materias as $materia) {
-                    if (!is_string($materia) || trim($materia) === '') {
-                        $errors['materias'] = ['Todos los elementos de materias deben ser strings no vacíos'];
-                        break;
-                    }
-
-                    if (mb_strlen(trim($materia)) > self::MAX_TEXT_LENGTH) {
-                        $errors['materias'] = [
-                            'Los elementos de materias no pueden superar ' . self::MAX_TEXT_LENGTH . ' caracteres'
                         ];
                         break;
                     }

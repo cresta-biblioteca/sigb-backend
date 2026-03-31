@@ -22,10 +22,6 @@ class ArticuloMapper
             temas: array_map(
                 fn($tema) => $tema->toArray(),
                 $articulo->getTemas()
-            ),
-            materias: array_map(
-                fn($materia) => $materia->toArray(),
-                $articulo->getMaterias()
             )
         );
     }

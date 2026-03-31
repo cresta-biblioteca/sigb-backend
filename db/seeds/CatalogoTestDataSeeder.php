@@ -45,23 +45,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
         $this->table('tema')->insert($temas)->save();
 
         // ============================================================
-        // MATERIAS
-        // ============================================================
-        $materias = [
-            ['titulo' => 'Programacion I'],
-            ['titulo' => 'Programacion II'],
-            ['titulo' => 'Base de Datos I'],
-            ['titulo' => 'Base de Datos II'],
-            ['titulo' => 'Redes de Computadoras'],
-            ['titulo' => 'Analisis Matematico I'],
-            ['titulo' => 'Algebra'],
-            ['titulo' => 'Fisica I'],
-            ['titulo' => 'Ingenieria de Software I'],
-            ['titulo' => 'Sistemas Operativos'],
-        ];
-        $this->table('materia')->insert($materias)->save();
-
-        // ============================================================
         // CARRERAS
         // ============================================================
         $carreras = [
@@ -70,41 +53,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
             ['codigo' => 'IQ', 'nombre' => 'Ingenieria Quimica'],
         ];
         $this->table('carrera')->insert($carreras)->save();
-
-        // ============================================================
-        // CARRERA - MATERIA (relaciones)
-        // ============================================================
-        $carreraISI = $this->fetchRow("SELECT id FROM carrera WHERE codigo = 'ISI'")['id'];
-        $carreraIEM = $this->fetchRow("SELECT id FROM carrera WHERE codigo = 'IEM'")['id'];
-        $carreraIQ = $this->fetchRow("SELECT id FROM carrera WHERE codigo = 'IQ'")['id'];
-
-        $allMaterias = $this->fetchAll("SELECT id, titulo FROM materia");
-        $materiaMap = [];
-        foreach ($allMaterias as $m) {
-            $materiaMap[$m['titulo']] = $m['id'];
-        }
-
-        $carreraMaterias = [
-            // ISI tiene todas las materias de sistemas
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Programacion I']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Programacion II']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Base de Datos I']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Base de Datos II']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Redes de Computadoras']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Analisis Matematico I']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Algebra']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Ingenieria de Software I']],
-            ['carrera_id' => $carreraISI, 'materia_id' => $materiaMap['Sistemas Operativos']],
-            // IEM comparte matematica y fisica
-            ['carrera_id' => $carreraIEM, 'materia_id' => $materiaMap['Analisis Matematico I']],
-            ['carrera_id' => $carreraIEM, 'materia_id' => $materiaMap['Algebra']],
-            ['carrera_id' => $carreraIEM, 'materia_id' => $materiaMap['Fisica I']],
-            // IQ comparte matematica y fisica
-            ['carrera_id' => $carreraIQ, 'materia_id' => $materiaMap['Analisis Matematico I']],
-            ['carrera_id' => $carreraIQ, 'materia_id' => $materiaMap['Algebra']],
-            ['carrera_id' => $carreraIQ, 'materia_id' => $materiaMap['Fisica I']],
-        ];
-        $this->table('carrera_materia')->insert($carreraMaterias)->save();
 
         // ============================================================
         // ARTICULOS + LIBROS (20 libros variados)
@@ -132,7 +80,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Clifford', 'apellido' => 'Stein', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Algoritmos', 'Programacion', 'Matematicas'],
-                'materias' => ['Programacion I', 'Programacion II'],
             ],
             [
                 'titulo' => 'Sistemas de Base de Datos',
@@ -150,7 +97,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Shamkant B.', 'apellido' => 'Navathe', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Base de Datos', 'Programacion'],
-                'materias' => ['Base de Datos I', 'Base de Datos II'],
             ],
             [
                 'titulo' => 'Redes de Computadoras',
@@ -167,7 +113,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Keith W.', 'apellido' => 'Ross', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Redes', 'Seguridad Informatica'],
-                'materias' => ['Redes de Computadoras'],
             ],
             [
                 'titulo' => 'Inteligencia Artificial: Un Enfoque Moderno',
@@ -187,7 +132,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Peter', 'apellido' => 'Norvig', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Inteligencia Artificial', 'Algoritmos', 'Matematicas'],
-                'materias' => ['Programacion II'],
             ],
             [
                 'titulo' => 'Calculo de una Variable',
@@ -204,7 +148,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'James', 'apellido' => 'Stewart', 'rol' => 'autor'],
                 ],
                 'temas' => ['Matematicas'],
-                'materias' => ['Analisis Matematico I'],
             ],
             [
                 'titulo' => 'Algebra Lineal y sus Aplicaciones',
@@ -222,7 +165,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Judi J.', 'apellido' => 'McDonald', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Matematicas'],
-                'materias' => ['Algebra'],
             ],
             [
                 'titulo' => 'Fisica Universitaria',
@@ -242,7 +184,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Roger A.', 'apellido' => 'Freedman', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Fisica', 'Matematicas'],
-                'materias' => ['Fisica I'],
             ],
             [
                 'titulo' => 'Clean Code',
@@ -259,7 +200,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Robert C.', 'apellido' => 'Martin', 'rol' => 'autor'],
                 ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
-                'materias' => ['Ingenieria de Software I', 'Programacion II'],
             ],
             [
                 'titulo' => 'Design Patterns',
@@ -278,7 +218,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'John', 'apellido' => 'Vlissides', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
-                'materias' => ['Ingenieria de Software I'],
             ],
             [
                 'titulo' => 'Sistemas Operativos Modernos',
@@ -296,7 +235,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Herbert', 'apellido' => 'Bos', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Sistemas Operativos', 'Programacion'],
-                'materias' => ['Sistemas Operativos'],
             ],
             [
                 'titulo' => 'Ingenieria de Software',
@@ -313,7 +251,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Ian', 'apellido' => 'Sommerville', 'rol' => 'autor'],
                 ],
                 'temas' => ['Ingenieria de Software'],
-                'materias' => ['Ingenieria de Software I'],
             ],
             [
                 'titulo' => 'The Pragmatic Programmer',
@@ -331,7 +268,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Andrew', 'apellido' => 'Hunt', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
-                'materias' => ['Programacion II', 'Ingenieria de Software I'],
             ],
             [
                 'titulo' => 'Estructuras de Datos y Algoritmos en Java',
@@ -348,7 +284,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Roberto', 'apellido' => 'Tamassia', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Algoritmos', 'Programacion'],
-                'materias' => ['Programacion I', 'Programacion II'],
             ],
             [
                 'titulo' => 'Fundamentos de Bases de Datos',
@@ -367,7 +302,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'S.', 'apellido' => 'Sudarshan', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Base de Datos'],
-                'materias' => ['Base de Datos I', 'Base de Datos II'],
             ],
             [
                 'titulo' => 'Computer Networking: A Top-Down Approach',
@@ -385,7 +319,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Keith W.', 'apellido' => 'Ross', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Redes'],
-                'materias' => ['Redes de Computadoras'],
             ],
             [
                 'titulo' => 'Deep Learning',
@@ -405,7 +338,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Aaron', 'apellido' => 'Courville', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Inteligencia Artificial', 'Matematicas', 'Algoritmos'],
-                'materias' => ['Programacion II'],
             ],
             [
                 'titulo' => 'Calculo: Trascendentes Tempranas',
@@ -423,7 +355,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Warren S.', 'apellido' => 'Wright', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Matematicas'],
-                'materias' => ['Analisis Matematico I'],
             ],
             [
                 'titulo' => 'Seguridad Informatica',
@@ -440,7 +371,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Lawrie', 'apellido' => 'Brown', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Seguridad Informatica', 'Redes'],
-                'materias' => ['Redes de Computadoras'],
             ],
             [
                 'titulo' => 'Refactoring',
@@ -458,7 +388,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'Martin', 'apellido' => 'Fowler', 'rol' => 'autor'],
                 ],
                 'temas' => ['Programacion', 'Ingenieria de Software'],
-                'materias' => ['Ingenieria de Software I'],
             ],
             [
                 'titulo' => 'Fisica para Ciencias e Ingenieria',
@@ -478,11 +407,10 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     ['nombre' => 'John W.', 'apellido' => 'Jewett', 'rol' => 'coautor'],
                 ],
                 'temas' => ['Fisica', 'Matematicas'],
-                'materias' => ['Fisica I'],
             ],
         ];
 
-        // Obtener mapas de IDs para temas y materias
+        // Obtener mapa de IDs para temas
         $allTemas = $this->fetchAll("SELECT id, titulo FROM tema");
         $temaMap = [];
         foreach ($allTemas as $t) {
@@ -512,7 +440,7 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 addslashes($libroData['titulo']) . "'"
             )['id'];
 
-            // 2. Insertar libro (sin autor/autores/colaboradores)
+            // 2. Insertar libro
             $libroRow = [
                 'articulo_id' => $articuloId,
                 'isbn' => $libroData['isbn'],
@@ -535,7 +463,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
                     $cacheKey = $personaData['nombre'] . '|' . $personaData['apellido'];
 
                     if (!isset($personaCache[$cacheKey])) {
-                        // Verificar si ya existe
                         $existing = $this->fetchRow(
                             "SELECT id FROM persona WHERE nombre = '" .
                             addslashes($personaData['nombre']) . "' AND apellido = '" .
@@ -574,14 +501,13 @@ class CatalogoTestDataSeeder extends AbstractSeed
             }
 
             // 4. Insertar ejemplares (entre 1 y 4 por libro)
-            $cantEjemplares = ($index % 4) + 1; // 1, 2, 3, 4, 1, 2, ...
+            $cantEjemplares = ($index % 4) + 1;
             $ejemplares = [];
             for ($e = 1; $e <= $cantEjemplares; $e++) {
                 $barcode = str_pad((string)(($index + 1) * 100 + $e), 13, '0', STR_PAD_LEFT);
                 $ejemplares[] = [
                     'codigo_barras' => $barcode,
                     'habilitado' => ($e <= $cantEjemplares - 1 || $cantEjemplares === 1) ? true : false,
-                    // El ultimo ejemplar de libros con >1 copia esta deshabilitado
                     'articulo_id' => $articuloId,
                     'signatura_topografica' => sprintf('CDU-%03d.%d', $index + 1, $e),
                 ];
@@ -600,20 +526,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
             }
             if (!empty($articuloTemas)) {
                 $this->table('articulo_tema')->insert($articuloTemas)->save();
-            }
-
-            // 6. Asociar materias
-            $articuloMaterias = [];
-            foreach ($libroData['materias'] as $materiaNombre) {
-                if (isset($materiaMap[$materiaNombre])) {
-                    $articuloMaterias[] = [
-                        'articulo_id' => $articuloId,
-                        'materia_id' => $materiaMap[$materiaNombre],
-                    ];
-                }
-            }
-            if (!empty($articuloMaterias)) {
-                $this->table('materia_articulo')->insert($articuloMaterias)->save();
             }
         }
     }
