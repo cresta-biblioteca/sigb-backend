@@ -8,8 +8,8 @@ use App\Shared\Exceptions\NotFoundException;
 
 class TipoDocumentoNotFoundException extends NotFoundException
 {
-    public function __construct()
+    public function __construct(int $id)
     {
-        parent::__construct('Tipo de documento no encontrado');
+        parent::__construct("TipoDocumento con identificador \"{$id}\" no encontrado");
     }
 }
