@@ -7,6 +7,8 @@ namespace App\Auth\Controllers;
 use App\Auth\Dtos\Request\ChangePasswordRequest;
 use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
+use App\Auth\Mappers\UserMapper;
+use App\Auth\Models\User;
 use App\Auth\Services\AuthService;
 use App\Auth\Validators\UserChangePasswordValidator;
 use App\Auth\Validators\UserLoginValidator;
@@ -72,20 +74,7 @@ readonly class AuthController
 
         UserRegisterValidator::validate($data);
 
-        $request = new UserRegisterRequest(
-            $data['dni'],
-            $data['password'],
-            $data['nombre'],
-            $data['apellido'],
-            $data['legajo'] ?? null,
-            $data['genero'] ?? null,
-            new DateTimeImmutable($data['fecha_nacimiento']),
-            $data['telefono'],
-            $data['email'],
-            $data['cresta_id'] ?? null
-        );
-
-        $response = $this->authService->register($request);
+        $response = $this->authService->register(UserMapper::toRegisterRequest($data));
         JsonHelper::jsonResponse($response, 201);
     }
 
@@ -132,12 +121,7 @@ readonly class AuthController
         $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR) ?? [];
         UserChangePasswordValidator::validate($data);
 
-        $request = new ChangePasswordRequest(
-            $data['current_password'] ?? '',
-            $data['new_password'] ?? ''
-        );
-
-        $this->authService->changePassword($request, $_SERVER['USER_ID']);
+        $this->authService->changePassword(UserMapper::toChangePasswordRequest($data), $_SERVER['USER_ID']);
         JsonHelper::jsonResponse(['message' => 'Contraseña actualizada correctamente'], 200);
     }
 
@@ -172,12 +156,7 @@ readonly class AuthController
 
         UserLoginValidator::validate($data);
 
-        $request = new UserLoginRequest(
-            $data['dni'] ?? '',
-            $data['password'] ?? ''
-        );
-
-        $response = $this->authService->login($request);
+        $response = $this->authService->login(UserMapper::toLoginRequest($data));
         JsonHelper::jsonResponse($response, 200);
     }
 }
