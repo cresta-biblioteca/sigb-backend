@@ -8,7 +8,6 @@ use App\Auth\Dtos\Request\ChangePasswordRequest;
 use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Mappers\UserMapper;
-use App\Auth\Models\User;
 use App\Auth\Services\AuthService;
 use App\Auth\Validators\UserChangePasswordValidator;
 use App\Auth\Validators\UserLoginValidator;
