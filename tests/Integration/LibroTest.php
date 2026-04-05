@@ -509,3 +509,50 @@ test('searchPaginated filtra libros por multiples temas', function () {
         ->and($response['data'])->toHaveCount(2)
         ->and($response['pagination']['total'])->toBe(2);
 });
+
+test('search filtra libros por persona', function () {
+    $tipoDocumentoId = $this->insertInto('tipo_documento', [
+        'codigo' => 'LIB',
+        'descripcion' => 'Libro',
+        'renovable' => 1,
+        'detalle' => 'Material bibliografico',
+    ]);
+
+    $articuloId = $this->insertInto('articulo', [
+        'titulo' => 'Introduction to Algorithms',
+        'anio_publicacion' => 2009,
+        'tipo_documento_id' => $tipoDocumentoId,
+        'idioma' => 'en',
+    ]);
+
+    $this->insertInto('libro', [
+        'articulo_id' => $articuloId,
+        'isbn' => '9780262033848',
+        'titulo_informativo' => null,
+        'cdu' => null,
+    ]);
+
+    $personaId = $this->insertInto('persona', [
+        'nombre' => 'Thomas H.',
+        'apellido' => 'Cormen',
+    ]);
+
+    $this->insertInto('libro_persona', [
+        'libro_id' => $articuloId,
+        'persona_id' => $personaId,
+        'rol' => 'autor',
+        'orden' => 0,
+    ]);
+
+    $_GET = ['persona' => 'Cormen'];
+
+    ob_start();
+    $this->controller->searchPaginated();
+    $output = ob_get_clean();
+
+    $response = json_decode($output, true);
+
+    expect($response)->toHaveKey('data')
+        ->and($response['data'])->toHaveCount(1)
+        ->and($response['data'][0]['articulo']['titulo'])->toBe('Introduction to Algorithms');
+});

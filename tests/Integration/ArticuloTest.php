@@ -413,3 +413,4 @@ test('getTemaTitlesByArticulo devuelve 400 cuando idArticulo no es numerico', fu
     expect($response['errors'])->toHaveKey('id');
     expect(http_response_code())->toBe(400);
 });
+

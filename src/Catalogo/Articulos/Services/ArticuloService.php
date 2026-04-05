@@ -29,7 +29,7 @@ class ArticuloService
         $articulos = $this->repository->findAll();
 
         return array_map(
-            fn (Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
+            fn(Articulo $articulo) => ArticuloMapper::toArticuloResponse($articulo),
             $articulos
         );
     }
@@ -90,10 +90,10 @@ class ArticuloService
 
         $articulo = Articulo::create(
             titulo: array_key_exists('titulo', $data)
-                ? trim((string) $data['titulo'])
+                ? trim((string)$data['titulo'])
                 : $existing->getTitulo(),
             anioPublicacion: array_key_exists('anio_publicacion', $data)
-                ? (int) $data['anio_publicacion']
+                ? (int)$data['anio_publicacion']
                 : $existing->getAnioPublicacion(),
             tipoDocumentoId: $newTipoDocumentoId,
             idioma: array_key_exists('idioma', $data)
