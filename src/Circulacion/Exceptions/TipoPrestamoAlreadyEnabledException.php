@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Circulacion\Exceptions;
 
-use App\Shared\Exceptions\BusinessValidationException;
+use App\Shared\Exceptions\BusinessRuleException;
 
-/**
- * Excepcion lanzada cuando se intenta habilitar un tipo de prestamo que ya esta habilitado.
- */
-class TipoPrestamoAlreadyEnabledException extends BusinessValidationException
+class TipoPrestamoAlreadyEnabledException extends BusinessRuleException
 {
-    public function __construct(string $field, string $message)
+    public function __construct()
     {
-        parent::__construct($field, $message);
+        parent::__construct("EL tipo de prestamo ya se encuentra habilitado");
+    }
+
+    public function getErrorCode(): string
+    {
+        return "TIPO_PRESTAMO_YA_HABILITADO";
     }
 }

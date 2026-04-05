@@ -110,13 +110,9 @@ class TipoPrestamoRepository extends Repository
 			UPDATE tipo_prestamo SET habilitado = 0
 			WHERE id = :id;
 		");
-        $success = $stmtDisable->execute([
+        $stmtDisable->execute([
             "id" => $id
         ]);
-
-        if ($success === false || $stmtDisable->rowCount() === 0) {
-            throw new \Exception("Error al inhabilitar el tipo de prestamo");
-        }
     }
 
     public function enableTipoPrestamo(int $id): void
@@ -125,12 +121,8 @@ class TipoPrestamoRepository extends Repository
 			UPDATE tipo_prestamo SET habilitado = 1
 			WHERE id = :id;
 		");
-        $success = $stmtEnable->execute([
+        $stmtEnable->execute([
             "id" => $id
         ]);
-
-        if ($success === false || $stmtEnable->rowCount() === 0) {
-            throw new \Exception("Error al habilitar el tipo de prestamo");
-        }
     }
 }

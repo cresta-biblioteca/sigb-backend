@@ -12,20 +12,11 @@ use App\Circulacion\Exceptions\TipoPrestamoAlreadyEnabledException;
 use App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException;
 use App\Circulacion\Exceptions\TipoPrestamoNotFoundException;
 use App\Circulacion\Mappers\TipoPrestamoMapper;
+use App\Circulacion\Models\TipoPrestamo;
 use App\Circulacion\Repositories\TipoPrestamoRepository;
 
 class TipoPrestamoService
 {
-    private const FIELD_MAPPING = [
-        'codigo' => ['setCodigo', 'getCodigo'],
-        'descripcion' => ['setDescripcion', 'getDescripcion'],
-        'maxCantidadPrestamos' => ['setMaxCantidadPrestamos', 'getMaxCantidadPrestamos'],
-        'duracionPrestamo' => ['setDuracionPrestamo', 'getDuracionPrestamo'],
-        'renovaciones' => ['setRenovaciones', 'getRenovaciones'],
-        'diasRenovacion' => ['setDiasRenovacion', 'getDiasRenovacion'],
-        'cantDiasRenovar' => ['setCantDiasRenovar', 'getCantDiasRenovar'],
-    ];
-
     public function __construct(private TipoPrestamoRepository $repo)
     {
     }
@@ -41,7 +32,7 @@ class TipoPrestamoService
     {
         $tipo = $this->repo->findById($id);
         if (!$tipo) {
-            throw new TipoPrestamoNotFoundException($id);
+            throw new TipoPrestamoNotFoundException();
         }
         return TipoPrestamoMapper::toResponse($tipo);
     }
@@ -52,9 +43,9 @@ class TipoPrestamoService
         $coincidence = $this->repo->findCoincidence($tipo->getCodigo(), $tipo->getDescripcion());
         if ($coincidence) {
             if ($coincidence->getCodigo() === $tipo->getCodigo()) {
-                throw new TipoPrestamoAlreadyExistsException("codigo", $tipo->getCodigo());
+                throw new TipoPrestamoAlreadyExistsException();
             }
-            throw new TipoPrestamoAlreadyExistsException("descripcion", $tipo->getDescripcion());
+            throw new TipoPrestamoAlreadyExistsException();
         }
 
         $tipoCreated = $this->repo->insertTipoPrestamo($tipo);
@@ -63,21 +54,39 @@ class TipoPrestamoService
 
     public function updateTipoPrestamo(int $id, UpdateTipoPrestamoRequest $request): TipoPrestamoResponse
     {
+        /** @var TipoPrestamo $tipoExistente */
         $tipoExistente = $this->repo->findById($id);
         if (!$tipoExistente) {
-            throw new TipoPrestamoNotFoundException($id);
+            throw new TipoPrestamoNotFoundException();
         }
-        foreach (self::FIELD_MAPPING as $property => [$setter, $getter]) {
-            if ($request->$property === null) {
-                $request->$setter($tipoExistente->$getter());
-            }
+        if ($request->codigo !== null) {
+            $tipoExistente->setCodigo($request->codigo);
         }
+        if ($request->descripcion !== null) {
+            $tipoExistente->setDescripcion($request->descripcion);
+        }
+        if ($request->maxCantidadPrestamos !== null) {
+            $tipoExistente->setMaxCantidadPrestamos($request->maxCantidadPrestamos);
+        }
+        if ($request->duracionPrestamo !== null) {
+            $tipoExistente->setDuracionPrestamo($request->duracionPrestamo);
+        }
+        if ($request->renovaciones !== null) {
+            $tipoExistente->setRenovaciones($request->renovaciones);
+        }
+        if ($request->diasRenovacion !== null) {
+            $tipoExistente->setDiasRenovacion($request->diasRenovacion);
+        }
+        if ($request->cantDiasRenovar !== null) {
+            $tipoExistente->setCantDiasRenovar($request->cantDiasRenovar);
+        }
+
         $coincidence = $this->repo->findCoincidence($request->codigo, $request->descripcion);
         if ($coincidence && $coincidence->getId() !== $id) {
             if ($coincidence->getCodigo() === strtoupper($request->codigo)) {
-                throw new TipoPrestamoAlreadyExistsException("codigo", $request->codigo);
+                throw new TipoPrestamoAlreadyExistsException();
             }
-            throw new TipoPrestamoAlreadyExistsException("descripcion", $request->descripcion);
+            throw new TipoPrestamoAlreadyExistsException();
         }
         $tipoPrestamo = TipoPrestamoMapper::fromRequest($request);
 
@@ -91,13 +100,10 @@ class TipoPrestamoService
         /** @var TipoPrestamo $tipoExistente */
         $tipoExistente = $this->repo->findById($id);
         if (!$tipoExistente) {
-            throw new TipoPrestamoNotFoundException($id);
+            throw new TipoPrestamoNotFoundException();
         }
         if ($tipoExistente->isHabilitado() === false) {
-            throw new TipoPrestamoAlreadyDisabledException(
-                "tipoPrestamo",
-                "El tipo de prestamo ya se encuentra deshabilitado"
-            );
+            throw new TipoPrestamoAlreadyDisabledException();
         }
         $this->repo->disableTipoPrestamo($id);
     }
@@ -107,13 +113,10 @@ class TipoPrestamoService
         /** @var TipoPrestamo $tipoExistente */
         $tipoExistente = $this->repo->findById($id);
         if (!$tipoExistente) {
-            throw new TipoPrestamoNotFoundException($id);
+            throw new TipoPrestamoNotFoundException();
         }
         if ($tipoExistente->isHabilitado() === true) {
-            throw new TipoPrestamoAlreadyEnabledException(
-                "tipoPrestamo",
-                "El tipo de prestamo ya se encuentra habilitado"
-            );
+            throw new TipoPrestamoAlreadyEnabledException();
         }
         $this->repo->enableTipoPrestamo($id);
     }

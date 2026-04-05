@@ -42,12 +42,8 @@ class TipoPrestamoController
     )]
     public function getAll(): void
     {
-        try {
-            $tiposPrestamo = $this->service->getAll();
-            JsonHelper::jsonResponse($tiposPrestamo, 200);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "getAll");
-        }
+        $tiposPrestamo = $this->service->getAll();
+        JsonHelper::jsonResponse($tiposPrestamo, 200);
     }
 
     #[OA\Get(
@@ -97,20 +93,10 @@ class TipoPrestamoController
     )]
     public function getById(string $id): void
     {
-        try {
-            TipoPrestamoRequestValidator::validateId($id);
+        TipoPrestamoRequestValidator::validateId($id);
 
-            $tipoPrestamo = $this->service->getById((int) $id);
-            JsonHelper::jsonResponse($tipoPrestamo, 200);
-        } catch (TipoPrestamoNotFoundException $e) {
-            $this->notFoundResponse($e);
-        } catch (ValidationException $e) {
-            $this->validationResponse($e);
-        } catch (BusinessValidationException $e) {
-            $this->businessValidationResponse($e);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "getById");
-        }
+        $tipoPrestamo = $this->service->getById((int) $id);
+        JsonHelper::jsonResponse($tipoPrestamo, 200);
     }
 
     #[OA\Post(
@@ -164,27 +150,17 @@ class TipoPrestamoController
     )]
     public function createTipoPrestamo(): void
     {
-        try {
-            $input = json_decode(file_get_contents("php://input"), true) ?? [];
-            TipoPrestamoRequestValidator::validateInput($input);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
+        TipoPrestamoRequestValidator::validateInput($input);
 
-            $request = TipoPrestamoMapper::fromArrayToCreate($input);
+        $request = TipoPrestamoMapper::fromArrayToCreate($input);
 
-            $tipoPrestamo = $this->service->createTipoPrestamo($request);
+        $tipoPrestamo = $this->service->createTipoPrestamo($request);
 
-            JsonHelper::jsonResponse($tipoPrestamo, 201);
-        } catch (TipoPrestamoAlreadyExistsException $e) {
-            $this->alreadyExistsResponse($e);
-        } catch (ValidationException $e) {
-            $this->validationResponse($e);
-        } catch (BusinessValidationException $e) {
-            $this->businessValidationResponse($e);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "createTipoPrestamo");
-        }
+        JsonHelper::jsonResponse($tipoPrestamo, 201);
     }
 
-    #[OA\Put(
+    #[OA\Patch(
         path: "/tipos-prestamos/{id}",
         description: "Actualizar la informacion de un tipo de prestamo existente",
         summary: "Actualizar tipo de prestamo",
@@ -253,27 +229,15 @@ class TipoPrestamoController
     )]
     public function updateTipoPrestamo(string $id): void
     {
-        try {
-            TipoPrestamoRequestValidator::validateId($id);
+        TipoPrestamoRequestValidator::validateId($id);
 
-            $input = json_decode(file_get_contents("php://input"), true) ?? [];
-            TipoPrestamoRequestValidator::validateUpdateInput($input);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
+        TipoPrestamoRequestValidator::validateUpdateInput($input);
 
-            $request = TipoPrestamoMapper::fromArrayToUpdate($input);
+        $request = TipoPrestamoMapper::fromArrayToUpdate($input);
 
-            $tipoPrestamoActualizado = $this->service->updateTipoPrestamo((int) $id, $request);
-            JsonHelper::jsonResponse($tipoPrestamoActualizado, 200);
-        } catch (TipoPrestamoNotFoundException $e) {
-            $this->notFoundResponse($e);
-        } catch (TipoPrestamoAlreadyExistsException $e) {
-            $this->alreadyExistsResponse($e);
-        } catch (ValidationException $e) {
-            $this->validationResponse($e);
-        } catch (BusinessValidationException $e) {
-            $this->businessValidationResponse($e);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "updateTipoPrestamo");
-        }
+        $tipoPrestamoActualizado = $this->service->updateTipoPrestamo((int) $id, $request);
+        JsonHelper::jsonResponse($tipoPrestamoActualizado, 200);
     }
 
     #[OA\Patch(
@@ -331,20 +295,10 @@ class TipoPrestamoController
     )]
     public function disableTipoPrestamo(string $id): void
     {
-        try {
-            TipoPrestamoRequestValidator::validateId($id);
+        TipoPrestamoRequestValidator::validateId($id);
 
-            $this->service->disableTipoPrestamo((int) $id);
-            http_response_code(204);
-        } catch (TipoPrestamoNotFoundException $e) {
-            $this->notFoundResponse($e);
-        } catch (ValidationException $e) {
-            $this->validationResponse($e);
-        } catch (BusinessValidationException $e) {
-            $this->businessValidationResponse($e);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "deleteTipoPrestamo");
-        }
+        $this->service->disableTipoPrestamo((int) $id);
+        http_response_code(204);
     }
 
     #[OA\Patch(
@@ -402,57 +356,9 @@ class TipoPrestamoController
     )]
     public function enableTipoPrestamo(string $id): void
     {
-        try {
-            TipoPrestamoRequestValidator::validateId($id);
+        TipoPrestamoRequestValidator::validateId($id);
 
-            $this->service->enableTipoPrestamo((int) $id);
-            http_response_code(204);
-        } catch (TipoPrestamoNotFoundException $e) {
-            $this->notFoundResponse($e);
-        } catch (ValidationException $e) {
-            $this->validationResponse($e);
-        } catch (BusinessValidationException $e) {
-            $this->businessValidationResponse($e);
-        } catch (\Exception $e) {
-            $this->exceptionResponse($e, "enableTipoPrestamo");
-        }
-    }
-
-    private function notFoundResponse(TipoPrestamoNotFoundException $e): void
-    {
-        JsonHelper::jsonResponse([
-            "message" => $e->getMessage()
-        ], 404);
-    }
-
-    private function alreadyExistsResponse(TipoPrestamoAlreadyExistsException $e): void
-    {
-        JsonHelper::jsonResponse([
-            "message" => $e->getMessage()
-        ], 409);
-    }
-
-    private function validationResponse(ValidationException $e): void
-    {
-        JsonHelper::jsonResponse([
-            "message" => $e->getMessage(),
-            "errors" => $e->getErrors()
-        ], 400);
-    }
-
-    private function businessValidationResponse(BusinessValidationException $e): void
-    {
-        JsonHelper::jsonResponse([
-            "message" => $e->getMessage()
-        ], 422);
-    }
-
-    private function exceptionResponse(\Exception $e, string $method): void
-    {
-        JsonHelper::jsonResponse([
-            "message" => "Error interno del servidor"
-        ], 500);
-        error_log("[TipoPrestamoController::{$method}] {$e->getMessage()} in {$e->getFile()}: {$e->getLine()}");
-        error_log($e->getTraceAsString());
+        $this->service->enableTipoPrestamo((int) $id);
+        http_response_code(204);
     }
 }

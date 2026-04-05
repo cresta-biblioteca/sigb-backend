@@ -21,7 +21,7 @@ $router->post('/tipos-prestamos', function () use ($tipoPrestamoController) {
     $tipoPrestamoController->createTipoPrestamo();
 });
 
-$router->put('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
+$router->patch('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->updateTipoPrestamo($id);
 });
 

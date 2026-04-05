@@ -136,18 +136,10 @@ class TipoPrestamoRequestValidator
 
     public static function validateId(string $id): void
     {
-        $errors = [];
-
-        if (!is_numeric($id)) {
-            $errors["id"] = ["El id debe ser un numero"];
-        } elseif ((int) $id < 1) {
-            $errors["id"] = ["ID invalido. El ID debe ser un entero positivo mayor que 0."];
-        } elseif (!ctype_digit($id)) {
-            $errors["id"] = ["El id debe ser un numero valido"];
-        }
-
-        if (!empty($errors)) {
-            throw new ValidationException($errors);
+        if (!ctype_digit($id) || (int) $id < 1) {
+            throw new ValidationException([
+                "id" => ["El id debe ser un entero positivo mayor que 0"]
+            ]);
         }
     }
 }

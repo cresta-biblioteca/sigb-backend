@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Circulacion\Exceptions;
 
-use App\Shared\Exceptions\EntityAlreadyExistsException;
+use App\Shared\Exceptions\AlreadyExistsException;
 
-class TipoPrestamoAlreadyExistsException extends EntityAlreadyExistsException
+class TipoPrestamoAlreadyExistsException extends AlreadyExistsException
 {
-    public function __construct(string $field, mixed $value)
+    public function __construct()
     {
-        parent::__construct("TipoPrestamo", $field, $value);
+        parent::__construct("El tipo de prestamo ya existe");
     }
 }

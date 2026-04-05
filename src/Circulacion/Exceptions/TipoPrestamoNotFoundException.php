@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Circulacion\Exceptions;
 
-use App\Shared\Exceptions\EntityNotFoundException;
+use App\Shared\Exceptions\NotFoundException;
 
-class TipoPrestamoNotFoundException extends EntityNotFoundException
+class TipoPrestamoNotFoundException extends NotFoundException
 {
-    public function __construct(mixed $identifier)
+    public function __construct()
     {
-        parent::__construct("TipoPrestamo", $identifier);
+        parent::__construct("Tipo de prestamo no encontrado");
     }
 }
