@@ -349,6 +349,18 @@ class LibroRequestValidator
             }
         }
 
+        // Validar editorial y lugar_de_publicacion (max 200)
+        foreach (['editorial', 'lugar_de_publicacion'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null) {
+                if (!is_string($data[$field])) {
+                    $errors[$field] = ["El campo {$field} debe ser un string"];
+                } elseif (mb_strlen(trim($data[$field])) > self::MAX_TEXT_LENGTH_200) {
+                    $errors[$field] = ["El campo {$field} no puede tener más de " . self::MAX_TEXT_LENGTH_200 .
+                     " caracteres"];
+                }
+            }
+        }
+
         // Validar cdu solo si está presente
         if (array_key_exists('cdu', $data) && $data['cdu'] !== null) {
             if (!is_numeric($data['cdu'])) {

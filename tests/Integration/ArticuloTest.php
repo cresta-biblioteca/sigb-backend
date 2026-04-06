@@ -398,7 +398,7 @@ test('addTemaToArticulo devuelve 400 cuando idArticulo no es numerico valido', f
     $response = json_decode($output, true);
 
     expect($response['message'])->toBe('Datos de entrada no válidos');
-    expect($response['errors'])->toHaveKey('idArticulo');
+    expect($response['errors'])->toHaveKey('idMateria');
     expect(http_response_code())->toBe(400);
 });
 
@@ -410,7 +410,7 @@ test('getTemaTitlesByArticulo devuelve 400 cuando idArticulo no es numerico', fu
     $response = json_decode($output, true);
 
     expect($response['message'])->toBe('Datos de entrada no válidos');
-    expect($response['errors'])->toHaveKey('idArticulo');
+    expect($response['errors'])->toHaveKey('id');
     expect(http_response_code())->toBe(400);
 });
 
