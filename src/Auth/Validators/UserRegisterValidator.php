@@ -49,14 +49,20 @@ class UserRegisterValidator
 
         if (!is_string($data['nombre'])) {
             $errors['nombre'] = ['El campo nombre debe ser un string'];
+        } elseif (!preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/', $data['nombre'])) {
+            $errors['nombre'] = ['El campo nombre solo puede contener letras y espacios'];
         }
 
         if (!is_string($data['apellido'])) {
             $errors['apellido'] = ['El campo apellido debe ser un string'];
+        } elseif (!preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/', $data['apellido'])) {
+            $errors['apellido'] = ['El campo apellido solo puede contener letras y espacios'];
         }
 
         if (!is_string($data['telefono'])) {
             $errors['telefono'] = ['El campo telefono debe ser un string'];
+        } elseif (!preg_match("/^\d{7,15}$/", $data["telefono"])) {
+            $errors['telefono'] = ['El campo telefono debe contener entre 7 y 15 dígitos'];
         }
 
         if (!is_string($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {

@@ -83,7 +83,7 @@ test('login lanza UserNotFoundException si el usuario no existe', function () {
 
     // Act & Assert
     expect(fn() => $this->service->login($request))
-        ->toThrow(InvalidCredentialsException::class);
+        ->toThrow(InvalidCredentialsException::class, "Credenciales inválidas");
 });
 
 test('login lanza UserNotFoundException si la contraseña es incorrecta', function () {
@@ -113,7 +113,7 @@ test('login lanza UserNotFoundException si la contraseña es incorrecta', functi
 
     // Act & Assert
     expect(fn() => $this->service->login($request))
-        ->toThrow(InvalidCredentialsException::class);
+        ->toThrow(InvalidCredentialsException::class, "Credenciales inválidas");
 });
 
 test('login lanza RuntimeException si el rol del usuario no existe', function () {
@@ -149,7 +149,7 @@ test('login lanza RuntimeException si el rol del usuario no existe', function ()
 
     // Act & Assert
     expect(fn() => $this->service->login($request))
-        ->toThrow(\RuntimeException::class);
+        ->toThrow(\RuntimeException::class, "Role not found for user {$user->getId()}, role_id: {$user->getRoleId()}");
 });
 
 test('login retorna un token cuando las credenciales son válidas', function () {
@@ -280,7 +280,7 @@ test('registro lanza UserAlreadyExistsException si el DNI ya está en uso', func
         ->andReturn($this->savedUser);
 
     expect(fn() => $this->service->register($this->userRequest))
-        ->toThrow(UserAlreadyExistsException::class);
+        ->toThrow(UserAlreadyExistsException::class, 'El usuario ya existe');
 });
 
 test('registro lanza UserAlreadyExistsException si el email ya está en uso', function (): void {
@@ -297,7 +297,7 @@ test('registro lanza UserAlreadyExistsException si el email ya está en uso', fu
         ->andReturn(true);
 
     expect(fn() => $this->service->register($this->userRequest))
-        ->toThrow(UserAlreadyExistsException::class);
+        ->toThrow(UserAlreadyExistsException::class, 'El usuario ya existe');
 });
 
 test('registro lanza RuntimeException si el rol lector no existe en la base de datos', function (): void {
@@ -328,7 +328,7 @@ test('registro lanza RuntimeException si el rol lector no existe en la base de d
         ->once();
 
     expect(fn() => $this->service->register($this->userRequest))
-        ->toThrow(\RuntimeException::class);
+        ->toThrow(\RuntimeException::class, "Role 'lector' not found in database");
 });
 
 test('registro lanza RuntimeException y hace rollback si se superan los 10 intentos de generar tarjeta ID', function (): void {
@@ -381,7 +381,7 @@ test('registro lanza RuntimeException y hace rollback si se superan los 10 inten
         ->once();
 
     expect(fn() => $this->service->register($this->userRequest))
-        ->toThrow(\RuntimeException::class);
+        ->toThrow(\RuntimeException::class, 'No se pudo generar una tarjeta ID única');
 });
 
 test('registro hace rollback y lanza BusinessRuleException cuando el dominio rechaza los datos', function (): void {
@@ -425,7 +425,7 @@ test('registro hace rollback y lanza BusinessRuleException cuando el dominio rec
         ->once();
 
     expect(fn() => $this->service->register($requestConDniInvalido))
-        ->toThrow(BusinessRuleException::class);
+        ->toThrow(BusinessRuleException::class, 'El DNI debe contener 7 u 8 digitos');
 });
 
 test('cambio de contraseña exitoso cuando las credenciales son válidas', function (): void {
@@ -467,7 +467,7 @@ test('cambio de contraseña lanza InvalidCredentialsException si el usuario no e
         ->andReturnNull();
 
     expect(fn() => $this->service->changePassword($request, 999))
-        ->toThrow(InvalidCredentialsException::class);
+        ->toThrow(InvalidCredentialsException::class, "Credenciales inválidas");
 });
 
 test('cambio de contraseña lanza InvalidCredentialsException si la contraseña actual es incorrecta', function (): void {
@@ -486,6 +486,6 @@ test('cambio de contraseña lanza InvalidCredentialsException si la contraseña 
         ->andReturn(false);
 
     expect(fn() => $this->service->changePassword($request, $this->savedUser->getId()))
-        ->toThrow(InvalidCredentialsException::class);
+        ->toThrow(InvalidCredentialsException::class, "Credenciales inválidas");
 });
 
