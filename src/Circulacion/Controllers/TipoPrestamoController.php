@@ -9,7 +9,6 @@ use App\Circulacion\Exceptions\TipoPrestamoNotFoundException;
 use App\Circulacion\Mappers\TipoPrestamoMapper;
 use App\Circulacion\Services\TipoPrestamoService;
 use App\Circulacion\Validators\TipoPrestamoRequestValidator;
-use App\Shared\Exceptions\BusinessValidationException;
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use OpenApi\Attributes as OA;

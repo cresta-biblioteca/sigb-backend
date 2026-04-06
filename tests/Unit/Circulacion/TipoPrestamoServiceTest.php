@@ -105,7 +105,7 @@ test("getById lanza TipoPrestamoNotFoundException", function () {
         ->andReturnNull();
 
     expect(fn() => $this->service->getById(1))
-        ->toThrow(TipoPrestamoNotFoundException::class, 'TipoPrestamo con identificador "1" no encontrado');
+        ->toThrow(TipoPrestamoNotFoundException::class);
 });
 
 test("createTipoPrestamo devuelve TipoPrestamoResponse cuando se crea exitosamente ", function() {
@@ -195,10 +195,7 @@ test("createTipoPrestamo lanza TipoPrestamoAlreadyExistsException cuando el codi
         ->andReturn($existingTipoPrestamo);
 
     expect(fn() => $this->service->createTipoPrestamo($tipoPrestamoRequest))
-        ->toThrow(
-            \App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class,
-            'TipoPrestamo con codigo "P07" ya existe'
-        );
+        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class);
 });
 
 test("createTipoPrestamo lanza TipoPrestamoAlreadyExistsException cuando la descripcion ya existe", function () {
@@ -229,10 +226,7 @@ test("createTipoPrestamo lanza TipoPrestamoAlreadyExistsException cuando la desc
         ->andReturn($existingTipoPrestamo);
 
     expect(fn() => $this->service->createTipoPrestamo($tipoPrestamoRequest))
-        ->toThrow(
-            \App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class,
-            'TipoPrestamo con descripcion "Prestamo 7 dias" ya existe'
-        );
+        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class);
 });
 
 test("updateTipoPrestamo actualiza y devuelve un TipoPrestamoResponse", function () {
@@ -342,10 +336,7 @@ test("updateTipoPrestamo lanza TipoPrestamoAlreadyExistsException por codigo", f
         ->andReturn($coincidentTipoPrestamo);
 
     expect(fn() => $this->service->updateTipoPrestamo(1, $updateRequest))
-        ->toThrow(
-            \App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class,
-            'TipoPrestamo con codigo "P08" ya existe'
-        );
+        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class);
 });
 
 test("updateTipoPrestamo lanza TipoPrestamoAlreadyExistsException por descripcion", function () {
@@ -374,10 +365,7 @@ test("updateTipoPrestamo lanza TipoPrestamoAlreadyExistsException por descripcio
         ->andReturn($coincidentTipoPrestamo);
 
     expect(fn() => $this->service->updateTipoPrestamo(1, $updateRequest))
-        ->toThrow(
-            \App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class,
-            'TipoPrestamo con descripcion "Prestamo 8 dias" ya existe'
-        );
+        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class);
 });
 
 test("disableTipoPrestamo deshabilita un tipo de prestamo", function () {

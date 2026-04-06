@@ -81,16 +81,15 @@ class TipoPrestamoService
             $tipoExistente->setCantDiasRenovar($request->cantDiasRenovar);
         }
 
-        $coincidence = $this->repo->findCoincidence($request->codigo, $request->descripcion);
+        $coincidence = $this->repo->findCoincidence($tipoExistente->getCodigo(), $tipoExistente->getDescripcion());
         if ($coincidence && $coincidence->getId() !== $id) {
-            if ($coincidence->getCodigo() === strtoupper($request->codigo)) {
+            if ($coincidence->getCodigo() === $tipoExistente->getCodigo()) {
                 throw new TipoPrestamoAlreadyExistsException();
             }
             throw new TipoPrestamoAlreadyExistsException();
         }
-        $tipoPrestamo = TipoPrestamoMapper::fromRequest($request);
 
-        $tipoUpdated = $this->repo->updateTipoPrestamo($id, $tipoPrestamo);
+        $tipoUpdated = $this->repo->updateTipoPrestamo($id, $tipoExistente);
 
         return TipoPrestamoMapper::toResponse($tipoUpdated);
     }
