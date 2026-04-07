@@ -3,6 +3,7 @@
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Catalogo\Libros\Repositories\LibroRepository;
+use App\Circulacion\Dtos\Request\CreateReservaRequest;
 use App\Circulacion\Exceptions\ReservaNotFoundException;
 use App\Circulacion\Models\EstadoReserva;
 use App\Circulacion\Models\Reserva;
@@ -78,5 +79,11 @@ test("findById lanza una excepcion al no encontrar resultado", function () {
 
 
 test("addReserva lanza excepcion not found por no encontrar el articulo de la request", function () {
-    $this->libroRepositoryMock
+    $this->articuloRepositoryMock
+        ->shouldReceive('addReserva')
+        ->once()
+        ->with(1)
+        ->andReturn(null);
+
+    expect(fn => $this->reservaService->addReserva(new CreateReservaRequest()))
 });
