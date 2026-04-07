@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Circulacion\Services;
 
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
+use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
-use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Circulacion\Dtos\Request\CreateReservaRequest;
 use App\Circulacion\Dtos\Response\ReservaResponse;
 use App\Circulacion\Exceptions\LectorYaTieneReservaOPrestamoException;
@@ -25,7 +25,7 @@ readonly class ReservaService
         private ReservaRepository  $reservaRepository,
         private PrestamoRepository $prestamoRepository,
         private EjemplarRepository $ejemplarRepository,
-        private LibroRepository    $libroRepository
+        private ArticuloRepository $articuloRepository
     )
     {
     }
@@ -45,7 +45,7 @@ readonly class ReservaService
      */
     public function addReserva(CreateReservaRequest $request): ReservaResponse
     {
-        if (!$this->libroRepository->exists($request->articuloId)) {
+        if (!$this->articuloRepository->exists($request->articuloId)) {
             throw new ArticuloNotFoundException();
         }
 
@@ -87,15 +87,14 @@ readonly class ReservaService
             throw new ReservaNotFoundException();
         }
         if (!$reserva->isPendiente()) {
-            throw new ReservaCannotBeCanceledException();
+            throw new ReservaCannotBeCanceledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
         }
-
-        if ($this->isFechaDeCancelacionValida($reserva, new DateTimeImmutable())) {
-            $reserva->cancelar();
-            $this->reservaRepository->save($reserva);
-        } else {
+        if ($reserva->isVencida()) {
             throw new ReservaCannotBeCanceledException("La reserva no puede ser cancelada porque ya venció el plazo para hacerlo.");
         }
+
+        $reserva->cancelar();
+        $this->reservaRepository->save($reserva);
 
         // TODO: enviar mail al usuario cuando se implemente mail sender
     }
@@ -128,15 +127,5 @@ readonly class ReservaService
                 throw $e;
             }
         }
-    }
-
-    private function isFechaDeCancelacionValida(Reserva $reserva, DateTimeImmutable $fechaActual): bool
-    {
-        // Si aun no la reserva sigue en cola de espera podra cancelarse sin problema
-        if ($reserva->getFechaVencimiento() === null) {
-            return true;
-        }
-
-        return $fechaActual <= $reserva->getFechaVencimiento();
     }
 }

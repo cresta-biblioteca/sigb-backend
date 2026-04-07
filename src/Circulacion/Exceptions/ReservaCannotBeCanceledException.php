@@ -6,9 +6,9 @@ use App\Shared\Exceptions\BusinessRuleException;
 
 class ReservaCannotBeCanceledException extends BusinessRuleException
 {
-    public function __construct()
+    public function __construct(string $message = "La reserva no puede ser cancelada")
     {
-        parent::__construct("Solo pueden cancelarse reservas en estado PENDIENTE");
+        parent::__construct($message);
     }
 
     public function getErrorCode(): string
