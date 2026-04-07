@@ -43,6 +43,22 @@ services:
     networks:
       - sigb-network
 
+  # SERVICIO DE CRON JOBS
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigb-api-cron
+    volumes:
+      - ./:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - sigb-network
+    command: ["cron", "-f"]
+
   # GESTOR DE BASE DE DATOS (PHPMYADMIN)
   phpmyadmin:
     image: phpmyadmin:latest

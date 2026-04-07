@@ -77,4 +77,11 @@ readonly class ReservaController
 
         JsonHelper::jsonResponse($response, 201);
     }
+
+    public function cancelarReserva($idReserva): void
+    {
+        $this->reservaService->cancelarReserva((int)$idReserva);
+
+        JsonHelper::jsonResponse(["message" => "Reserva cancelada exitosamente"], 200);
+    }
 }

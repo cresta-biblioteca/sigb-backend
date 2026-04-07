@@ -4,6 +4,7 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    cron \
     libzip-dev \
     libpng-dev \
     libjpeg-dev \
@@ -38,6 +39,9 @@ RUN chown -R www-data:www-data /var/www/html
 
 # Marcar directorio como seguro para git (evita error de dubious ownership)
 RUN git config --global --add safe.directory /var/www/html
+
+COPY docker/cron/sigb-crontab /etc/cron.d/sigb-crontab
+RUN chmod 0644 /etc/cron.d/sigb-crontab
 
 WORKDIR /var/www/html
 
