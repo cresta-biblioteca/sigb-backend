@@ -4,7 +4,7 @@ namespace App\Circulacion\Exceptions;
 
 use App\Shared\Exceptions\BusinessRuleException;
 
-class ReservaCannotBeCanceledException extends BusinessRuleException
+class ReservaCannotBeCancelledException extends BusinessRuleException
 {
     public function __construct(string $message = "La reserva no puede ser cancelada")
     {

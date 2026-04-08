@@ -10,7 +10,7 @@ use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Circulacion\Dtos\Request\CreateReservaRequest;
 use App\Circulacion\Dtos\Response\ReservaResponse;
 use App\Circulacion\Exceptions\LectorYaTieneReservaOPrestamoException;
-use App\Circulacion\Exceptions\ReservaCannotBeCanceledException;
+use App\Circulacion\Exceptions\ReservaCannotBeCancelledException;
 use App\Circulacion\Exceptions\ReservaNotFoundException;
 use App\Circulacion\Models\Reserva;
 use App\Circulacion\Repositories\PrestamoRepository;
@@ -55,6 +55,7 @@ readonly class ReservaService
         $tienePrestamo = $this->prestamoRepository
             ->lectorTienePrestamoActivoParaArticulo($request->lectorId, $request->articuloId);
 
+        // Las dos condiciones son exclusivas, nunca ambas podran dar true
         if ($tieneReserva || $tienePrestamo) {
             throw new LectorYaTieneReservaOPrestamoException($request->lectorId, $request->articuloId);
         }
@@ -87,10 +88,10 @@ readonly class ReservaService
             throw new ReservaNotFoundException();
         }
         if (!$reserva->isPendiente()) {
-            throw new ReservaCannotBeCanceledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
+            throw new ReservaCannotBeCancelledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
         }
         if ($reserva->isVencida()) {
-            throw new ReservaCannotBeCanceledException("La reserva no puede ser cancelada porque ya venció el plazo para hacerlo.");
+            throw new ReservaCannotBeCancelledException("La reserva no puede ser cancelada porque ya venció el plazo para hacerlo.");
         }
 
         $reserva->cancelar();
