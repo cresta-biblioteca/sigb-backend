@@ -22,12 +22,11 @@ use DateTimeImmutable;
 readonly class ReservaService
 {
     public function __construct(
-        private ReservaRepository  $reservaRepository,
+        private ReservaRepository $reservaRepository,
         private PrestamoRepository $prestamoRepository,
         private EjemplarRepository $ejemplarRepository,
         private ArticuloRepository $articuloRepository
-    )
-    {
+    ) {
     }
 
     public function getReservaById(int $reservaId): ReservaResponse
@@ -91,7 +90,9 @@ readonly class ReservaService
             throw new ReservaCannotBeCancelledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
         }
         if ($reserva->isVencida()) {
-            throw new ReservaCannotBeCancelledException("La reserva no puede ser cancelada porque ya venció el plazo para hacerlo.");
+            throw new ReservaCannotBeCancelledException(
+                "La reserva no puede ser cancelada porque ya venció el plazo para hacerlo."
+            );
         }
 
         $reserva->cancelar();

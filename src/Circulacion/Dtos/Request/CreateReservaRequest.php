@@ -17,8 +17,7 @@ readonly class CreateReservaRequest
         public int $lectorId,
         #[OA\Property(description: "ID del articulo a reservar", type: "integer", example: 5)]
         public int $articuloId
-    )
-    {
+    ) {
     }
 
     public static function fromArray(array $data): self

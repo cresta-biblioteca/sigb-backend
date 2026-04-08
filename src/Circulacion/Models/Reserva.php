@@ -29,13 +29,12 @@ class Reserva extends Entity
      * Crea una nueva Reserva (valida datos)
      */
     public static function create(
-        int                $lectorId,
-        int                $articuloId,
-        ?int               $ejemplarId = null,
+        int $lectorId,
+        int $articuloId,
+        ?int $ejemplarId = null,
         ?DateTimeImmutable $fechaVencimiento = null,
-        EstadoReserva      $estado = EstadoReserva::PENDIENTE
-    ): self
-    {
+        EstadoReserva $estado = EstadoReserva::PENDIENTE
+    ): self {
         $reserva = new self();
         $reserva->setFechaReserva(new DateTimeImmutable());
         $reserva->setFechaVencimiento($fechaVencimiento);

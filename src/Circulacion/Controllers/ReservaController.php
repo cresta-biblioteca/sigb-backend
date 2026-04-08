@@ -18,7 +18,8 @@ readonly class ReservaController
 
     #[OA\Post(
         path: "/reservas",
-        description: "Crear una nueva reserva para un articulo. Si hay ejemplares disponibles se asigna uno de inmediato con fecha de vencimiento; si no, queda en cola de espera.",
+        description: "Crear una nueva reserva para un articulo. Si hay ejemplares disponibles se asigna uno" .
+            " de inmediato con fecha de vencimiento; si no, queda en cola de espera.",
         summary: "Crear reserva",
         tags: ["Reservas"],
         requestBody: new OA\RequestBody(
