@@ -8,6 +8,7 @@ use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Circulacion\Dtos\Request\CreateReservaRequest;
+use App\Circulacion\Models\EstadoReserva;
 use App\Circulacion\Dtos\Response\ReservaResponse;
 use App\Circulacion\Exceptions\LectorYaTieneReservaOPrestamoException;
 use App\Circulacion\Exceptions\ReservaCannotBeCancelledException;
@@ -27,6 +28,41 @@ readonly class ReservaService
         private EjemplarRepository $ejemplarRepository,
         private ArticuloRepository $articuloRepository
     ) {
+    }
+
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     * @return ReservaResponse[]
+     */
+    public function getReservas(array $filters): array
+    {
+        return array_map(
+            fn(Reserva $r) => ReservaResponse::fromReserva($r),
+            $this->reservaRepository->findByFilters($filters)
+        );
+    }
+
+    /**
+     * @return ReservaResponse[]
+     */
+    public function getMisReservas(int $lectorId, ?EstadoReserva $estado): array
+    {
+        $filters = ['lector_id' => $lectorId];
+        if ($estado !== null) {
+            $filters['estado'] = $estado->value;
+        }
+
+        return array_map(
+            fn(Reserva $r) => ReservaResponse::fromReserva($r),
+            $this->reservaRepository->findByFilters($filters)
+        );
     }
 
     public function getReservaById(int $reservaId): ReservaResponse

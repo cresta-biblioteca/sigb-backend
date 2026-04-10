@@ -69,6 +69,62 @@ class ReservaRepository extends Repository
         return $this->findOneByQuery($sql, ['articulo_id' => $articuloId]);
     }
 
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     * @return Reserva[]
+     */
+    public function findByFilters(array $filters): array
+    {
+        $conditions = [];
+        $params = [];
+
+        if (isset($filters['estado'])) {
+            $conditions[] = 'estado = :estado';
+            $params['estado'] = $filters['estado'];
+        }
+
+        if (isset($filters['lector_id'])) {
+            $conditions[] = 'lector_id = :lector_id';
+            $params['lector_id'] = $filters['lector_id'];
+        }
+
+        if (isset($filters['articulo_id'])) {
+            $conditions[] = 'articulo_id = :articulo_id';
+            $params['articulo_id'] = $filters['articulo_id'];
+        }
+
+        if (isset($filters['ejemplar_id'])) {
+            $conditions[] = 'ejemplar_id = :ejemplar_id';
+            $params['ejemplar_id'] = $filters['ejemplar_id'];
+        }
+
+        if (isset($filters['fecha_desde'])) {
+            $conditions[] = 'fecha_reserva >= :fecha_desde';
+            $params['fecha_desde'] = $filters['fecha_desde'];
+        }
+
+        if (isset($filters['fecha_hasta'])) {
+            $conditions[] = 'fecha_reserva <= :fecha_hasta';
+            $params['fecha_hasta'] = $filters['fecha_hasta'] . ' 23:59:59';
+        }
+
+        $sql = 'SELECT * FROM reserva';
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+        $sql .= ' ORDER BY fecha_reserva DESC';
+
+        /** @var Reserva[] */
+        return $this->findByQuery($sql, $params);
+    }
+
     public function update(Reserva $reserva): void
     {
         $sql = "UPDATE reserva
