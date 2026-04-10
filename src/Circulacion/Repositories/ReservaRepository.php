@@ -6,6 +6,7 @@ namespace App\Circulacion\Repositories;
 
 use App\Circulacion\Models\Reserva;
 use App\Shared\Repository;
+use PDO;
 
 class ReservaRepository extends Repository
 {
@@ -80,7 +81,63 @@ class ReservaRepository extends Repository
      * } $filters
      * @return Reserva[]
      */
-    public function findByFilters(array $filters): array
+    public function findByFilters(array $filters, int $limit, int $offset): array
+    {
+        [$conditions, $params] = $this->buildConditionsAndParams($filters);
+
+        $sql = 'SELECT * FROM reserva';
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+        $sql .= ' ORDER BY fecha_reserva DESC LIMIT :limit OFFSET :offset';
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue(':' . $name, $value);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $reservas = [];
+        while ($row = $stmt->fetch()) {
+            $reservas[] = Reserva::fromDatabase($row);
+        }
+
+        /** @var Reserva[] */
+        return $reservas;
+    }
+
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     */
+    public function countByFilters(array $filters): int
+    {
+        [$conditions, $params] = $this->buildConditionsAndParams($filters);
+
+        $sql = 'SELECT COUNT(*) FROM reserva';
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{0: string[], 1: array<string, mixed>}
+     */
+    private function buildConditionsAndParams(array $filters): array
     {
         $conditions = [];
         $params = [];
@@ -115,14 +172,7 @@ class ReservaRepository extends Repository
             $params['fecha_hasta'] = $filters['fecha_hasta'] . ' 23:59:59';
         }
 
-        $sql = 'SELECT * FROM reserva';
-        if ($conditions !== []) {
-            $sql .= ' WHERE ' . implode(' AND ', $conditions);
-        }
-        $sql .= ' ORDER BY fecha_reserva DESC';
-
-        /** @var Reserva[] */
-        return $this->findByQuery($sql, $params);
+        return [$conditions, $params];
     }
 
     public function update(Reserva $reserva): void

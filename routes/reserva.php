@@ -15,6 +15,14 @@ $articuloRepository = new ArticuloRepository();
 $reservaService = new ReservaService($reservaRepository, $prestamoRepository, $ejemplarRepository, $articuloRepository);
 $reservaController = new ReservaController($reservaService);
 
+$router->get('/reservas', function () use ($reservaController) {
+    $reservaController->getReservas();
+});
+
+$router->get('/lectores/me/reservas', function () use ($reservaController) {
+    $reservaController->getMisReservas();
+});
+
 $router->post('/reservas', function () use ($reservaController) {
     $reservaController->addReserva();
 });
