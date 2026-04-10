@@ -1,0 +1,2 @@
+*/30 * * * * root php /var/www/html/bin/expire-reservas.php >> /var/log/sigb-cron.log 2>&1
+

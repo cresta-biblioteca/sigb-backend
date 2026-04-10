@@ -40,6 +40,53 @@ class ReservaRepository extends Repository
         return $stmt->fetch() !== false;
     }
 
+    /**
+     * @return Reserva[]
+     */
+    public function getVencidasPendientes(): array
+    {
+        $sql = "SELECT *
+                FROM reserva
+                WHERE estado = 'PENDIENTE'
+                  AND fecha_vencimiento IS NOT NULL
+                  AND fecha_vencimiento < NOW()";
+
+        /** @var Reserva[] */
+        return $this->findByQuery($sql);
+    }
+
+    public function getProximaEnCola(int $articuloId): ?Reserva
+    {
+        $sql = "SELECT *
+                FROM reserva
+                WHERE estado = 'PENDIENTE'
+                  AND articulo_id = :articulo_id
+                  AND ejemplar_id IS NULL
+                ORDER BY created_at ASC
+                LIMIT 1";
+
+        /** @var ?Reserva */
+        return $this->findOneByQuery($sql, ['articulo_id' => $articuloId]);
+    }
+
+    public function update(Reserva $reserva): void
+    {
+        $sql = "UPDATE reserva
+                SET estado            = :estado,
+                    ejemplar_id       = :ejemplar_id,
+                    fecha_vencimiento = :fecha_vencimiento,
+                    updated_at        = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'estado'            => $reserva->getEstado()->value,
+            'ejemplar_id'       => $reserva->getEjemplarId(),
+            'fecha_vencimiento' => $reserva->getFechaVencimiento()?->format('Y-m-d H:i:s'),
+            'id'                => $reserva->getId(),
+        ]);
+    }
+
     public function save(Reserva $reserva): void
     {
         $sql = "

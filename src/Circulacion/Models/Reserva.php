@@ -54,15 +54,15 @@ class Reserva extends Entity
     public static function fromDatabase(array $row): self
     {
         $reserva = new self();
-        $reserva->id = (int) $row['id'];
+        $reserva->id = (int)$row['id'];
         $reserva->fechaReserva = new DateTimeImmutable($row['fecha_reserva']);
         $reserva->fechaVencimiento = isset($row['fecha_vencimiento'])
             ? new DateTimeImmutable($row['fecha_vencimiento'])
             : null;
         $reserva->estado = EstadoReserva::from($row['estado']);
-        $reserva->lectorId = (int) $row['lector_id'];
-        $reserva->articuloId = (int) $row['articulo_id'];
-        $reserva->ejemplarId = isset($row['ejemplar_id']) ? (int) $row['ejemplar_id'] : null;
+        $reserva->lectorId = (int)$row['lector_id'];
+        $reserva->articuloId = (int)$row['articulo_id'];
+        $reserva->ejemplarId = isset($row['ejemplar_id']) ? (int)$row['ejemplar_id'] : null;
         $reserva->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null

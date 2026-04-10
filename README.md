@@ -55,8 +55,9 @@ docker-compose exec web vendor/bin/phinx seed:run
 7. Crear un usuario para realizar las pruebas
 
 8. Ejecutar el seeder de informacion de catalogo para realizar pruebas
+
+9. docker-compose exec web php vendor/bin/phinx seed:run -s CatalogoTestDataSeeder
 ```
-docker-compose exec web php vendor/bin/phinx seed:run -s CatalogoTestDataSeeder
 
 ## Servicios Disponibles
 

@@ -24,6 +24,16 @@ class LibroRepository extends Repository
         return Libro::class;
     }
 
+    /** Sobrescribimos porque el PK es articulo_id y no id */
+    public function exists(int $id): bool
+    {
+        $sql = 'SELECT 1 FROM libro WHERE articulo_id = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch() !== false;
+    }
+
     /**Sobrescribimos porque el PK es articulo_id y no id
      **/
     public function findById(int $id): ?Libro

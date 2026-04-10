@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace App\Circulacion\Services;
 
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
+use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
-use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Circulacion\Dtos\Request\CreateReservaRequest;
 use App\Circulacion\Dtos\Response\ReservaResponse;
 use App\Circulacion\Exceptions\LectorYaTieneReservaOPrestamoException;
+use App\Circulacion\Exceptions\ReservaCannotBeCancelledException;
 use App\Circulacion\Exceptions\ReservaNotFoundException;
 use App\Circulacion\Models\Reserva;
 use App\Circulacion\Repositories\PrestamoRepository;
 use App\Circulacion\Repositories\ReservaRepository;
+use App\Shared\Database\Connection;
 use App\Shared\HorarioBiblioteca;
 use DateTimeImmutable;
 
@@ -23,7 +25,7 @@ readonly class ReservaService
         private ReservaRepository $reservaRepository,
         private PrestamoRepository $prestamoRepository,
         private EjemplarRepository $ejemplarRepository,
-        private LibroRepository $libroRepository
+        private ArticuloRepository $articuloRepository
     ) {
     }
 
@@ -42,7 +44,7 @@ readonly class ReservaService
      */
     public function addReserva(CreateReservaRequest $request): ReservaResponse
     {
-        if (!$this->libroRepository->exists($request->articuloId)) {
+        if (!$this->articuloRepository->exists($request->articuloId)) {
             throw new ArticuloNotFoundException();
         }
 
@@ -52,6 +54,7 @@ readonly class ReservaService
         $tienePrestamo = $this->prestamoRepository
             ->lectorTienePrestamoActivoParaArticulo($request->lectorId, $request->articuloId);
 
+        // Las dos condiciones son exclusivas, nunca ambas podran dar true
         if ($tieneReserva || $tienePrestamo) {
             throw new LectorYaTieneReservaOPrestamoException($request->lectorId, $request->articuloId);
         }
@@ -75,5 +78,56 @@ readonly class ReservaService
         $this->reservaRepository->save($reserva);
 
         return ReservaResponse::fromReserva($reserva);
+    }
+
+    public function cancelarReserva(int $idReserva): void
+    {
+        $reserva = $this->reservaRepository->findById($idReserva);
+        if ($reserva === null) {
+            throw new ReservaNotFoundException();
+        }
+        if (!$reserva->isPendiente()) {
+            throw new ReservaCannotBeCancelledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
+        }
+        if ($reserva->isVencida()) {
+            throw new ReservaCannotBeCancelledException(
+                "La reserva no puede ser cancelada porque ya venció el plazo para hacerlo."
+            );
+        }
+
+        $reserva->cancelar();
+        $this->reservaRepository->save($reserva);
+
+        // TODO: enviar mail al usuario cuando se implemente mail sender
+    }
+
+    public function expirarReservasVencidas(): void
+    {
+        $vencidas = $this->reservaRepository->getVencidasPendientes();
+        $pdo = Connection::getInstance();
+
+        foreach ($vencidas as $reserva) {
+            $pdo->beginTransaction();
+            try {
+                $reserva->marcarVencida();
+                $this->reservaRepository->update($reserva);
+
+                $proximaEnCola = $this->reservaRepository->getProximaEnCola($reserva->getArticuloId());
+
+                // Si hay un usuario en cola de espera le asignamos el ejemplar que dejamos libre
+                if ($proximaEnCola !== null) {
+                    $proximaEnCola->setEjemplarId($reserva->getEjemplarId());
+                    $proximaEnCola->setFechaVencimiento(
+                        HorarioBiblioteca::calcularVencimientoReserva(new DateTimeImmutable())
+                    );
+                    $this->reservaRepository->update($proximaEnCola);
+                }
+
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+        }
     }
 }
