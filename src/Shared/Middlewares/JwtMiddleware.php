@@ -27,6 +27,7 @@ readonly class JwtMiddleware
             $decodedJwt = $this->jwtTokenProvider->validateToken($token);
             $_SERVER['USER_ID'] = $decodedJwt->sub;
             $_SERVER['USER_ROLE'] = $decodedJwt->role;
+            $_SERVER['USER_DNI'] = $decodedJwt->dni;
 
             return true;
         } catch (Exception $e) {
