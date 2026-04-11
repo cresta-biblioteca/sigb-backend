@@ -25,12 +25,11 @@ use Throwable;
 readonly class ReservaService
 {
     public function __construct(
-        private ReservaRepository  $reservaRepository,
+        private ReservaRepository $reservaRepository,
         private PrestamoRepository $prestamoRepository,
         private EjemplarRepository $ejemplarRepository,
         private ArticuloRepository $articuloRepository
-    )
-    {
+    ) {
     }
 
     /**
