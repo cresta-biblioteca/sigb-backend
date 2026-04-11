@@ -12,12 +12,15 @@ use App\Circulacion\Dtos\Response\ReservaResponse;
 use App\Circulacion\Exceptions\LectorYaTieneReservaOPrestamoException;
 use App\Circulacion\Exceptions\ReservaCannotBeCancelledException;
 use App\Circulacion\Exceptions\ReservaNotFoundException;
+use App\Circulacion\Models\EstadoReserva;
 use App\Circulacion\Models\Reserva;
 use App\Circulacion\Repositories\PrestamoRepository;
 use App\Circulacion\Repositories\ReservaRepository;
 use App\Shared\Database\Connection;
 use App\Shared\HorarioBiblioteca;
+use DateMalformedStringException;
 use DateTimeImmutable;
+use Throwable;
 
 readonly class ReservaService
 {
@@ -27,6 +30,62 @@ readonly class ReservaService
         private EjemplarRepository $ejemplarRepository,
         private ArticuloRepository $articuloRepository
     ) {
+    }
+
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     * @return array{items: ReservaResponse[], pagination: array<string, int>}
+     */
+    public function getReservas(array $filters, int $page, int $perPage): array
+    {
+        return $this->paginate($filters, $page, $perPage);
+    }
+
+    /**
+     * @return array{items: ReservaResponse[], pagination: array<string, int>}
+     */
+    public function getMisReservas(int $lectorId, ?EstadoReserva $estado, int $page, int $perPage): array
+    {
+        $filters = ['lector_id' => $lectorId];
+        if ($estado !== null) {
+            $filters['estado'] = $estado->value;
+        }
+
+        return $this->paginate($filters, $page, $perPage);
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{items: ReservaResponse[], pagination: array<string, int>}
+     */
+    private function paginate(array $filters, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min($perPage, 100));
+        $offset = ($page - 1) * $perPage;
+
+        $total = $this->reservaRepository->countByFilters($filters);
+        $items = array_map(
+            fn(Reserva $r) => ReservaResponse::fromReserva($r),
+            $this->reservaRepository->findByFilters($filters, $perPage, $offset)
+        );
+
+        return [
+            'items' => $items,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => $total > 0 ? (int)ceil($total / $perPage) : 1,
+            ],
+        ];
     }
 
     public function getReservaById(int $reservaId): ReservaResponse
@@ -56,7 +115,7 @@ readonly class ReservaService
 
         // Las dos condiciones son exclusivas, nunca ambas podran dar true
         if ($tieneReserva || $tienePrestamo) {
-            throw new LectorYaTieneReservaOPrestamoException($request->lectorId, $request->articuloId);
+            throw new LectorYaTieneReservaOPrestamoException();
         }
 
         $ejemplarDisponible = $this->ejemplarRepository->getEjemplarDisponibleByArticuloId($request->articuloId);
@@ -101,6 +160,10 @@ readonly class ReservaService
         // TODO: enviar mail al usuario cuando se implemente mail sender
     }
 
+    /**
+     * @throws DateMalformedStringException
+     * @throws Throwable
+     */
     public function expirarReservasVencidas(): void
     {
         $vencidas = $this->reservaRepository->getVencidasPendientes();
@@ -124,7 +187,7 @@ readonly class ReservaService
                 }
 
                 $pdo->commit();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $pdo->rollBack();
                 throw $e;
             }
