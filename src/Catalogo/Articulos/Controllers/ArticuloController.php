@@ -17,18 +17,58 @@ class ArticuloController
     {
     }
 
-    /**
-     * GET /articulos
-     */
+    #[OA\Get(
+        path: "/articulos",
+        description: "Listado de todos los artículos registrados en el sistema",
+        summary: "Listar artículos",
+        security: [["bearerAuth" => []]],
+        tags: ["Articulos"],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Listado obtenido exitosamente",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(ref: "#/components/schemas/ArticuloResponse")
+                )
+            ),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function getAll(): void
     {
         $articulos = $this->service->getAll();
         JsonHelper::jsonResponse($articulos, 200);
     }
 
-    /**
-     * GET /articulos/{id}
-     */
+    #[OA\Get(
+        path: "/articulos/{id}",
+        description: "Obtener la información de un artículo por su ID",
+        summary: "Obtener artículo por ID",
+        security: [["bearerAuth" => []]],
+        tags: ["Articulos"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Artículo obtenido exitosamente",
+                content: new OA\JsonContent(ref: "#/components/schemas/ArticuloResponse")
+            ),
+            new OA\Response(response: 400, description: "ID inválido"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Artículo no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function getById($id): void
     {
         ArticuloRequestValidator::validateId($id);
@@ -36,9 +76,45 @@ class ArticuloController
         JsonHelper::jsonResponse($articulo, 200);
     }
 
-    /**
-     * PATCH /articulos/{id}
-     */
+    #[OA\Patch(
+        path: "/articulos/{id}",
+        description: "Actualiza parcialmente los campos de un artículo. Solo se actualizan los campos enviados.",
+        summary: "Actualizar artículo",
+        security: [["bearerAuth" => []]],
+        tags: ["Articulos"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: "titulo", type: "string", nullable: true, example: "Algorithms"),
+                    new OA\Property(property: "anio_publicacion", type: "integer", nullable: true, example: 2011),
+                    new OA\Property(property: "tipo_documento_id", type: "integer", nullable: true, example: 1),
+                    new OA\Property(property: "idioma", type: "string", nullable: true, example: "en"),
+                    new OA\Property(property: "descripcion", type: "string", nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Artículo actualizado exitosamente",
+                content: new OA\JsonContent(ref: "#/components/schemas/ArticuloResponse")
+            ),
+            new OA\Response(response: 400, description: "Datos de entrada inválidos"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Artículo no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function patchArticulo($id): void
     {
         ArticuloRequestValidator::validateId($id);
@@ -48,9 +124,29 @@ class ArticuloController
         JsonHelper::jsonResponse($articulo, 200);
     }
 
-    /**
-     * DELETE /articulos/{id}
-     */
+    #[OA\Delete(
+        path: "/articulos/{id}",
+        description: "Elimina un artículo por su ID",
+        summary: "Eliminar artículo",
+        security: [["bearerAuth" => []]],
+        tags: ["Articulos"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 204, description: "Artículo eliminado exitosamente"),
+            new OA\Response(response: 400, description: "ID inválido"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Artículo no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function deleteArticulo($id): void
     {
         ArticuloRequestValidator::validateId($id);

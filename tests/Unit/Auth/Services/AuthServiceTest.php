@@ -175,7 +175,7 @@ test('login retorna un token cuando las credenciales son válidas', function () 
 
     $this->jwtProvider
         ->shouldReceive('generateToken')
-        ->with($this->savedUser->getId(), $this->role->getNombre())
+        ->with($this->savedUser->getId(), $this->role->getNombre(), $this->savedUser->getDni())
         ->once()
         ->andReturn('jwt.token.aqui');
 
