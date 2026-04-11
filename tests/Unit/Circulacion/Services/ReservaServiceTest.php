@@ -26,7 +26,7 @@ function makeReserva(array $override = []): Reserva
     return Reserva::fromDatabase(array_merge([
         'id' => 1,
         'fecha_reserva' => '2026-04-07 10:00:00',
-        'fecha_vencimiento' => '2026-04-8 10:00:00',
+        'fecha_vencimiento' => (new DateTimeImmutable())->modify('+7 days')->format('Y-m-d H:i:s'),
         'estado' => EstadoReserva::PENDIENTE->value,
         'lector_id' => 1,
         'articulo_id' => 1,
