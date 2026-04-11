@@ -6,6 +6,7 @@ namespace App\Circulacion\Repositories;
 
 use App\Circulacion\Models\Reserva;
 use App\Shared\Repository;
+use PDO;
 
 class ReservaRepository extends Repository
 {
@@ -67,6 +68,111 @@ class ReservaRepository extends Repository
 
         /** @var ?Reserva */
         return $this->findOneByQuery($sql, ['articulo_id' => $articuloId]);
+    }
+
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     * @return Reserva[]
+     */
+    public function findByFilters(array $filters, int $limit, int $offset): array
+    {
+        [$conditions, $params] = $this->buildConditionsAndParams($filters);
+
+        $sql = 'SELECT * FROM reserva';
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+        $sql .= ' ORDER BY fecha_reserva DESC LIMIT :limit OFFSET :offset';
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue(':' . $name, $value);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $reservas = [];
+        while ($row = $stmt->fetch()) {
+            $reservas[] = Reserva::fromDatabase($row);
+        }
+
+        /** @var Reserva[] */
+        return $reservas;
+    }
+
+    /**
+     * @param array{
+     *     estado?: string,
+     *     lector_id?: int,
+     *     articulo_id?: int,
+     *     ejemplar_id?: int,
+     *     fecha_desde?: string,
+     *     fecha_hasta?: string
+     * } $filters
+     */
+    public function countByFilters(array $filters): int
+    {
+        [$conditions, $params] = $this->buildConditionsAndParams($filters);
+
+        $sql = 'SELECT COUNT(*) FROM reserva';
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{0: string[], 1: array<string, mixed>}
+     */
+    private function buildConditionsAndParams(array $filters): array
+    {
+        $conditions = [];
+        $params = [];
+
+        if (isset($filters['estado'])) {
+            $conditions[] = 'estado = :estado';
+            $params['estado'] = $filters['estado'];
+        }
+
+        if (isset($filters['lector_id'])) {
+            $conditions[] = 'lector_id = :lector_id';
+            $params['lector_id'] = $filters['lector_id'];
+        }
+
+        if (isset($filters['articulo_id'])) {
+            $conditions[] = 'articulo_id = :articulo_id';
+            $params['articulo_id'] = $filters['articulo_id'];
+        }
+
+        if (isset($filters['ejemplar_id'])) {
+            $conditions[] = 'ejemplar_id = :ejemplar_id';
+            $params['ejemplar_id'] = $filters['ejemplar_id'];
+        }
+
+        if (isset($filters['fecha_desde'])) {
+            $conditions[] = 'fecha_reserva >= :fecha_desde';
+            $params['fecha_desde'] = $filters['fecha_desde'];
+        }
+
+        if (isset($filters['fecha_hasta'])) {
+            $conditions[] = 'fecha_reserva <= :fecha_hasta';
+            $params['fecha_hasta'] = $filters['fecha_hasta'] . ' 23:59:59';
+        }
+
+        return [$conditions, $params];
     }
 
     public function update(Reserva $reserva): void
