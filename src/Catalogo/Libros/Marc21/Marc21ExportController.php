@@ -21,7 +21,13 @@ readonly class Marc21ExportController
         security: [["bearerAuth" => []]],
         tags: ["Libros"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del libro", required: true, schema: new OA\Schema(type: "integer", minimum: 1)),
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del libro",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            ),
             new OA\Parameter(
                 name: "format",
                 in: "query",
@@ -64,7 +70,9 @@ readonly class Marc21ExportController
 
     #[OA\Get(
         path: "/libros/marc21",
-        description: "Exporta todos los libros (o los que coincidan con los filtros) en formato MARC21. Por defecto XML; con `format=iso` retorna ISO 2709. Acepta los mismos filtros que el listado de libros.",
+        description: "Exporta todos los libros (o los que coincidan con los filtros) en formato MARC21."
+            . " Por defecto XML; con `format=iso` retorna ISO 2709."
+            . " Acepta los mismos filtros que el listado de libros.",
         summary: "Exportar libros en MARC21 (bulk)",
         security: [["bearerAuth" => []]],
         tags: ["Libros"],
@@ -76,9 +84,27 @@ readonly class Marc21ExportController
                 required: false,
                 schema: new OA\Schema(type: "string", enum: ["xml", "iso"], default: "xml")
             ),
-            new OA\Parameter(name: "titulo", in: "query", description: "Filtrar por título", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "isbn", in: "query", description: "Filtrar por ISBN", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "editorial", in: "query", description: "Filtrar por editorial", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(
+                name: "titulo",
+                in: "query",
+                description: "Filtrar por título",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "isbn",
+                in: "query",
+                description: "Filtrar por ISBN",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "editorial",
+                in: "query",
+                description: "Filtrar por editorial",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
         ],
         responses: [
             new OA\Response(

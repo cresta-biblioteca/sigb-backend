@@ -81,7 +81,8 @@ readonly class ReservaController
 
     #[OA\Delete(
         path: "/reservas/{idReserva}",
-        description: "Cancela una reserva activa. Libera el ejemplar asignado si lo tiene y promueve la siguiente reserva en cola.",
+        description: "Cancela una reserva activa. Libera el ejemplar asignado si"
+            . " lo tiene y promueve la siguiente reserva en cola.",
         summary: "Cancelar reserva",
         security: [["bearerAuth" => []]],
         tags: ["Reservas"],

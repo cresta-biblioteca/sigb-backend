@@ -49,7 +49,13 @@ class ArticuloController
         security: [["bearerAuth" => []]],
         tags: ["Articulos"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del artículo", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -77,7 +83,13 @@ class ArticuloController
         security: [["bearerAuth" => []]],
         tags: ["Articulos"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del artículo", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -119,7 +131,13 @@ class ArticuloController
         security: [["bearerAuth" => []]],
         tags: ["Articulos"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del artículo", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(response: 204, description: "Artículo eliminado exitosamente"),

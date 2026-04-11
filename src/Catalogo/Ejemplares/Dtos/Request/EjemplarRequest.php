@@ -15,11 +15,20 @@ readonly class EjemplarRequest
     public function __construct(
         #[OA\Property(description: "ID del artículo al que pertenece el ejemplar", type: "integer", example: 1)]
         private int $articuloId,
-        #[OA\Property(description: "Código de barras del ejemplar (solo dígitos, máximo 13)", type: "string", example: "9780321573513")]
+        #[OA\Property(
+            description: "Código de barras del ejemplar (solo dígitos, máximo 13)",
+            type: "string",
+            example: "9780321573513"
+        )]
         private string $codigoBarras,
         #[OA\Property(description: "Indica si el ejemplar está habilitado", type: "boolean", example: true)]
         private bool $habilitado = true,
-        #[OA\Property(description: "Signatura topográfica del ejemplar", type: "string", nullable: true, example: "001 SED")]
+        #[OA\Property(
+            description: "Signatura topográfica del ejemplar",
+            type: "string",
+            nullable: true,
+            example: "001 SED"
+        )]
         private ?string $signaturaTopografica = null
     ) {
     }

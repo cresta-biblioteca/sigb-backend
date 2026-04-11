@@ -19,14 +19,34 @@ class EjemplarController
 
     #[OA\Get(
         path: "/ejemplares",
-        description: "Listado de ejemplares con filtros opcionales. Si se provee `codigo_barras` retorna el ejemplar exacto. Si se provee `articulo_id` retorna los ejemplares de ese artículo (con `habilitado=true` solo los habilitados). Si se provee `habilitado` filtra por estado.",
+        description: "Listado de ejemplares con filtros opcionales. Si se provee `codigo_barras` retorna el ejemplar"
+            . " exacto. Si se provee `articulo_id` retorna los ejemplares de ese artículo"
+            . " (con `habilitado=true` solo los habilitados). Si se provee `habilitado` filtra por estado.",
         summary: "Listar ejemplares",
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "codigo_barras", in: "query", description: "Código de barras exacto", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "articulo_id", in: "query", description: "ID del artículo", required: false, schema: new OA\Schema(type: "integer")),
-            new OA\Parameter(name: "habilitado", in: "query", description: "Filtrar por estado habilitado", required: false, schema: new OA\Schema(type: "boolean")),
+            new OA\Parameter(
+                name: "codigo_barras",
+                in: "query",
+                description: "Código de barras exacto",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "articulo_id",
+                in: "query",
+                description: "ID del artículo",
+                required: false,
+                schema: new OA\Schema(type: "integer")
+            ),
+            new OA\Parameter(
+                name: "habilitado",
+                in: "query",
+                description: "Filtrar por estado habilitado",
+                required: false,
+                schema: new OA\Schema(type: "boolean")
+            ),
         ],
         responses: [
             new OA\Response(
@@ -34,7 +54,11 @@ class EjemplarController
                 description: "Listado obtenido",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "data", type: "array", items: new OA\Items(ref: "#/components/schemas/EjemplarResponse"))
+                        new OA\Property(
+                            property: "data",
+                            type: "array",
+                            items: new OA\Items(ref: "#/components/schemas/EjemplarResponse")
+                        )
                     ]
                 )
             ),
@@ -94,7 +118,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del ejemplar", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del ejemplar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -169,7 +199,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del ejemplar", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del ejemplar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -216,7 +252,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del ejemplar", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del ejemplar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -244,7 +286,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "articuloId", in: "path", description: "ID del artículo", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "articuloId",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -252,7 +300,11 @@ class EjemplarController
                 description: "Listado obtenido",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "data", type: "array", items: new OA\Items(ref: "#/components/schemas/EjemplarResponse"))
+                        new OA\Property(
+                            property: "data",
+                            type: "array",
+                            items: new OA\Items(ref: "#/components/schemas/EjemplarResponse")
+                        )
                     ]
                 )
             ),
@@ -273,7 +325,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "articuloId", in: "path", description: "ID del artículo", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "articuloId",
+                in: "path",
+                description: "ID del artículo",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -281,7 +339,11 @@ class EjemplarController
                 description: "Listado obtenido",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "data", type: "array", items: new OA\Items(ref: "#/components/schemas/EjemplarResponse"))
+                        new OA\Property(
+                            property: "data",
+                            type: "array",
+                            items: new OA\Items(ref: "#/components/schemas/EjemplarResponse")
+                        )
                     ]
                 )
             ),
@@ -301,7 +363,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del ejemplar", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del ejemplar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(
@@ -329,7 +397,13 @@ class EjemplarController
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
         parameters: [
-            new OA\Parameter(name: "id", in: "path", description: "ID del ejemplar", required: true, schema: new OA\Schema(type: "integer", minimum: 1))
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del ejemplar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
         ],
         responses: [
             new OA\Response(

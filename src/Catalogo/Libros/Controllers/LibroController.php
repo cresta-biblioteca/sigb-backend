@@ -86,7 +86,12 @@ readonly class LibroController
                             new OA\Property(property: "isbn", type: "string", nullable: true, example: "9780321573513"),
                             new OA\Property(property: "issn", type: "string", nullable: true),
                             new OA\Property(property: "paginas", type: "integer", nullable: true, example: 955),
-                            new OA\Property(property: "editorial", type: "string", nullable: true, example: "Addison-Wesley"),
+                            new OA\Property(
+                                property: "editorial",
+                                type: "string",
+                                nullable: true,
+                                example: "Addison-Wesley"
+                            ),
                             new OA\Property(property: "lugar_de_publicacion", type: "string", nullable: true),
                             new OA\Property(property: "edicion", type: "string", nullable: true),
                             new OA\Property(property: "cdu", type: "integer", nullable: true),
@@ -251,14 +256,62 @@ readonly class LibroController
         security: [["bearerAuth" => []]],
         tags: ["Libros"],
         parameters: [
-            new OA\Parameter(name: "page", in: "query", description: "Número de página", required: false, schema: new OA\Schema(type: "integer", default: 1)),
-            new OA\Parameter(name: "per_page", in: "query", description: "Resultados por página", required: false, schema: new OA\Schema(type: "integer", default: 10)),
-            new OA\Parameter(name: "sort_by", in: "query", description: "Campo de ordenamiento", required: false, schema: new OA\Schema(type: "string", default: "titulo")),
-            new OA\Parameter(name: "sort_dir", in: "query", description: "Dirección del ordenamiento (asc/desc)", required: false, schema: new OA\Schema(type: "string", default: "asc")),
-            new OA\Parameter(name: "titulo", in: "query", description: "Filtrar por título", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "isbn", in: "query", description: "Filtrar por ISBN", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "editorial", in: "query", description: "Filtrar por editorial", required: false, schema: new OA\Schema(type: "string")),
-            new OA\Parameter(name: "idioma", in: "query", description: "Filtrar por idioma", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(
+                name: "page",
+                in: "query",
+                description: "Número de página",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 1)
+            ),
+            new OA\Parameter(
+                name: "per_page",
+                in: "query",
+                description: "Resultados por página",
+                required: false,
+                schema: new OA\Schema(type: "integer", default: 10)
+            ),
+            new OA\Parameter(
+                name: "sort_by",
+                in: "query",
+                description: "Campo de ordenamiento",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "titulo")
+            ),
+            new OA\Parameter(
+                name: "sort_dir",
+                in: "query",
+                description: "Dirección del ordenamiento (asc/desc)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "asc")
+            ),
+            new OA\Parameter(
+                name: "titulo",
+                in: "query",
+                description: "Filtrar por título",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "isbn",
+                in: "query",
+                description: "Filtrar por ISBN",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "editorial",
+                in: "query",
+                description: "Filtrar por editorial",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "idioma",
+                in: "query",
+                description: "Filtrar por idioma",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
         ],
         responses: [
             new OA\Response(
