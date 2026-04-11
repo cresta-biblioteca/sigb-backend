@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Libros\Dtos\Request;
 
+use OpenApi\Attributes as OA;
+
+#[OA\Schema(
+    schema: "CreateLibroRequest",
+    required: ["articulo", "libro"]
+)]
 readonly class CreateLibroRequest
 {
     private function __construct(

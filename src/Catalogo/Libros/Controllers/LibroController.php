@@ -10,6 +10,7 @@ use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
 use App\Catalogo\Libros\Services\LibroService;
 use App\Catalogo\Libros\Validators\LibroRequestValidator;
 use App\Shared\Http\JsonHelper;
+use OpenApi\Attributes as OA;
 
 readonly class LibroController
 {
@@ -18,9 +19,37 @@ readonly class LibroController
     ) {
     }
 
-    /**
-     * GET /libros/{id}
-     */
+    #[OA\Get(
+        path: "/libros/{id}",
+        description: "Obtener la información completa de un libro por su ID",
+        summary: "Obtener libro por ID",
+        security: [["bearerAuth" => []]],
+        tags: ["Libros"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del libro",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Libro obtenido exitosamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "data", ref: "#/components/schemas/LibroResponse")
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: "ID inválido"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Libro no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function getById($id): void
     {
         LibroRequestValidator::validateId((int)$id);
@@ -28,10 +57,90 @@ readonly class LibroController
         JsonHelper::jsonResponse(['data' => $libro]);
     }
 
-    /**
-     * POST /libros
-     * Crea un libro completo con artículo y libro en una sola transacción
-     */
+    #[OA\Post(
+        path: "/libros",
+        description: "Crea un libro completo con su artículo y personas en una sola transacción",
+        summary: "Crear libro",
+        security: [["bearerAuth" => []]],
+        tags: ["Libros"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["articulo", "libro"],
+                properties: [
+                    new OA\Property(
+                        property: "articulo",
+                        required: ["titulo", "anio_publicacion", "tipo_documento_id"],
+                        properties: [
+                            new OA\Property(property: "titulo", type: "string", example: "Algorithms"),
+                            new OA\Property(property: "anio_publicacion", type: "integer", example: 2011),
+                            new OA\Property(property: "tipo_documento_id", type: "integer", example: 1),
+                            new OA\Property(property: "idioma", type: "string", example: "en"),
+                            new OA\Property(property: "descripcion", type: "string", nullable: true),
+                        ],
+                        type: "object"
+                    ),
+                    new OA\Property(
+                        property: "libro",
+                        properties: [
+                            new OA\Property(property: "isbn", type: "string", nullable: true, example: "9780321573513"),
+                            new OA\Property(property: "issn", type: "string", nullable: true),
+                            new OA\Property(property: "paginas", type: "integer", nullable: true, example: 955),
+                            new OA\Property(property: "editorial", type: "string", nullable: true, example: "Addison-Wesley"),
+                            new OA\Property(property: "lugar_de_publicacion", type: "string", nullable: true),
+                            new OA\Property(property: "edicion", type: "string", nullable: true),
+                            new OA\Property(property: "cdu", type: "integer", nullable: true),
+                            new OA\Property(property: "titulo_informativo", type: "string", nullable: true),
+                            new OA\Property(property: "dimensiones", type: "string", nullable: true),
+                            new OA\Property(property: "ilustraciones", type: "string", nullable: true),
+                            new OA\Property(property: "serie", type: "string", nullable: true),
+                            new OA\Property(property: "numero_serie", type: "string", nullable: true),
+                            new OA\Property(property: "notas", type: "string", nullable: true),
+                            new OA\Property(property: "pais_publicacion", type: "string", nullable: true),
+                            new OA\Property(
+                                property: "personas",
+                                type: "array",
+                                items: new OA\Items(
+                                    required: ["nombre", "apellido", "rol", "orden"],
+                                    properties: [
+                                        new OA\Property(property: "nombre", type: "string", example: "Robert"),
+                                        new OA\Property(property: "apellido", type: "string", example: "Sedgewick"),
+                                        new OA\Property(property: "rol", type: "string", example: "autor"),
+                                        new OA\Property(property: "orden", type: "integer", example: 0),
+                                    ]
+                                )
+                            ),
+                        ],
+                        type: "object"
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "Libro creado exitosamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "data", ref: "#/components/schemas/LibroResponse"),
+                        new OA\Property(property: "message", type: "string"),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada inválidos",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "message", type: "string"),
+                        new OA\Property(property: "errors", type: "object"),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function create(): void
     {
         $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
@@ -49,9 +158,42 @@ readonly class LibroController
         JsonHelper::jsonResponse(['data' => $libro, 'message' => 'Libro creado exitosamente'], 201);
     }
 
-    /**
-     * PUT/PATCH /libros/{id}
-     */
+    #[OA\Patch(
+        path: "/libros/{id}",
+        description: "Actualiza parcialmente los campos del libro. Solo se actualizan los campos enviados.",
+        summary: "Actualizar libro",
+        security: [["bearerAuth" => []]],
+        tags: ["Libros"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del libro a actualizar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: "#/components/schemas/PatchLibroRequest")
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Libro actualizado exitosamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "data", ref: "#/components/schemas/LibroResponse"),
+                        new OA\Property(property: "message", type: "string"),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: "Datos de entrada inválidos"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Libro no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function updateLibro($id): void
     {
         LibroRequestValidator::validateId((int)$id);
@@ -66,9 +208,35 @@ readonly class LibroController
         JsonHelper::jsonResponse(['data' => $response, 'message' => 'Libro actualizado exitosamente']);
     }
 
-    /**
-     * DELETE /libros/{id}
-     */
+    #[OA\Delete(
+        path: "/libros/{id}",
+        description: "Elimina un libro y su artículo asociado",
+        summary: "Eliminar libro",
+        security: [["bearerAuth" => []]],
+        tags: ["Libros"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "ID del libro a eliminar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Libro eliminado exitosamente",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "message", type: "string")]
+                )
+            ),
+            new OA\Response(response: 400, description: "ID inválido"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Libro no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function deleteLibro($id): void
     {
         LibroRequestValidator::validateId((int)$id);
@@ -76,9 +244,51 @@ readonly class LibroController
         JsonHelper::jsonResponse(['message' => 'Libro eliminado exitosamente']);
     }
 
-    /**
-     * GET /libros
-     */
+    #[OA\Get(
+        path: "/libros",
+        description: "Listado paginado de libros con filtros y ordenamiento",
+        summary: "Buscar libros",
+        security: [["bearerAuth" => []]],
+        tags: ["Libros"],
+        parameters: [
+            new OA\Parameter(name: "page", in: "query", description: "Número de página", required: false, schema: new OA\Schema(type: "integer", default: 1)),
+            new OA\Parameter(name: "per_page", in: "query", description: "Resultados por página", required: false, schema: new OA\Schema(type: "integer", default: 10)),
+            new OA\Parameter(name: "sort_by", in: "query", description: "Campo de ordenamiento", required: false, schema: new OA\Schema(type: "string", default: "titulo")),
+            new OA\Parameter(name: "sort_dir", in: "query", description: "Dirección del ordenamiento (asc/desc)", required: false, schema: new OA\Schema(type: "string", default: "asc")),
+            new OA\Parameter(name: "titulo", in: "query", description: "Filtrar por título", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "isbn", in: "query", description: "Filtrar por ISBN", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "editorial", in: "query", description: "Filtrar por editorial", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "idioma", in: "query", description: "Filtrar por idioma", required: false, schema: new OA\Schema(type: "string")),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Listado obtenido exitosamente",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: "data",
+                            type: "array",
+                            items: new OA\Items(ref: "#/components/schemas/LibroResponse")
+                        ),
+                        new OA\Property(
+                            property: "pagination",
+                            properties: [
+                                new OA\Property(property: "total", type: "integer"),
+                                new OA\Property(property: "per_page", type: "integer"),
+                                new OA\Property(property: "current_page", type: "integer"),
+                                new OA\Property(property: "last_page", type: "integer"),
+                            ],
+                            type: "object"
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: "Parámetros de búsqueda inválidos"),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function searchPaginated(): void
     {
         // Aplica valores por defecto ante la ausencia de paginacion y filtros de sorting

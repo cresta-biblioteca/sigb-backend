@@ -79,6 +79,35 @@ readonly class ReservaController
         JsonHelper::jsonResponse($response, 201);
     }
 
+    #[OA\Delete(
+        path: "/reservas/{idReserva}",
+        description: "Cancela una reserva activa. Libera el ejemplar asignado si lo tiene y promueve la siguiente reserva en cola.",
+        summary: "Cancelar reserva",
+        security: [["bearerAuth" => []]],
+        tags: ["Reservas"],
+        parameters: [
+            new OA\Parameter(
+                name: "idReserva",
+                in: "path",
+                description: "ID de la reserva a cancelar",
+                required: true,
+                schema: new OA\Schema(type: "integer", minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Reserva cancelada exitosamente",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "message", type: "string")]
+                )
+            ),
+            new OA\Response(response: 401, description: "No autenticado"),
+            new OA\Response(response: 404, description: "Reserva no encontrada"),
+            new OA\Response(response: 422, description: "La reserva no puede ser cancelada"),
+            new OA\Response(response: 500, description: "Error interno del servidor"),
+        ]
+    )]
     public function cancelarReserva($idReserva): void
     {
         $this->reservaService->cancelarReserva((int)$idReserva);

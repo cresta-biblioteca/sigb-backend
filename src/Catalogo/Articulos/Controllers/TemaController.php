@@ -80,7 +80,7 @@ class TemaController
     }
 
     #[OA\Get(
-        path: "temas/{id}",
+        path: "/temas/{id}",
         description: "Mostrar la informacion de un tema especifico",
         summary: "Obtener un tema",
         tags: ["Temas"],
