@@ -124,6 +124,7 @@ class AuthService
             throw new InvalidCredentialsException();
         }
 
+
         $role = $this->roleRepository->findById($user->getRoleId());
         if ($role === null) {
             throw new \RuntimeException(
@@ -131,7 +132,7 @@ class AuthService
             );
         }
 
-        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre());
+        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre(), $user->getDni());
 
         return UserMapper::toLoginResponse($token);
     }

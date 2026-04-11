@@ -34,7 +34,7 @@ class JwtTokenProvider
         return JWT::decode($token, new Key($this->secretKey, self::ALGORITHM));
     }
 
-    public function generateToken(int $userId, string $role): string
+    public function generateToken(int $userId, string $role, string $dni): string
     {
         $issuedAt = time();
         $expirationTime = $issuedAt + self::EXPIRATION_TIME;
@@ -43,7 +43,8 @@ class JwtTokenProvider
             'iat' => $issuedAt,
             'exp' => $expirationTime,
             'sub' => $userId,
-            'role' => $role
+            'role' => $role,
+            'dni' => $dni
         ];
 
         return JWT::encode($payload, $this->secretKey, self::ALGORITHM);

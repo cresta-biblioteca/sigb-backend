@@ -53,4 +53,10 @@ class LectorRepository extends Repository
         $stmt->execute(['email' => $email]);
         return (int)$stmt->fetchColumn() > 0;
     }
+
+    public function findByUserId(int $userId): ?Lector
+    {
+        $sql = "SELECT * FROM {$this->getTableName()} WHERE user_id = :user_id LIMIT 1";
+        return $this->findOneByQuery($sql, ['user_id' => $userId]);
+    }
 }
