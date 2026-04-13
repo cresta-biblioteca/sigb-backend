@@ -155,7 +155,7 @@ readonly class ReservaService
         }
 
         $reserva->cancelar();
-        $this->reservaRepository->save($reserva);
+        $this->reservaRepository->update($reserva);
 
         // TODO: enviar mail al usuario cuando se implemente mail sender
     }
