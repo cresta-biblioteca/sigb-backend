@@ -69,7 +69,13 @@ class LectorController
             ),
         ],
         responses: [
-            new OA\Response(response: 201, description: "Carrera asignada exitosamente"),
+            new OA\Response(
+                response: 201,
+                description: "Carrera asignada exitosamente",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "message", type: "string")]
+                )
+            ),
             new OA\Response(response: 400, description: "Datos inválidos"),
             new OA\Response(response: 404, description: "Lector o carrera no encontrados"),
             new OA\Response(response: 409, description: "La carrera ya está asignada"),
@@ -82,7 +88,7 @@ class LectorController
         LectorRequestValidator::validateId($carreraId, 'carreraId');
 
         $this->lectorService->assignCarrera((int) $lectorId, (int) $carreraId);
-        http_response_code(201);
+        JsonHelper::jsonResponse(['message' => 'La carrera ha sido asignada al lector'], 201);
     }
 
     #[OA\Delete(
