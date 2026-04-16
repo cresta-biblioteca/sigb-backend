@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Http;
 
+use App\Shared\Exceptions\AlreadyExistsException;
 use App\Shared\Exceptions\AppException;
 use App\Shared\Exceptions\BusinessRuleException;
 use App\Shared\Exceptions\ValidationException;
@@ -71,8 +72,8 @@ class ExceptionHandler
                 $body['error']['fields'] = $e->getErrors();
             }
 
-            // BusinessRuleException agrega el campo que falló (si existe)
-            if ($e instanceof BusinessRuleException && $e->getField() !== null) {
+            // BusinessRuleException y AlreadyExistsException agregan el campo que falló (si existe)
+            if (($e instanceof BusinessRuleException || $e instanceof AlreadyExistsException) && $e->getField() !== null) {
                 $body['error']['field'] = $e->getField();
             }
 

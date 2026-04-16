@@ -41,11 +41,11 @@ class AuthService
     public function register(UserRegisterRequest $request): ?UserRegisterResponse
     {
         if ($this->authRepository->findByDni($request->getDni()) !== null) {
-            throw new UserAlreadyExistsException();
+            throw new UserAlreadyExistsException('dni');
         }
 
         if ($this->lectorRepository->existsByEmail($request->getEmail())) {
-            throw new UserAlreadyExistsException();
+            throw new UserAlreadyExistsException('email');
         }
 
         $this->pdo->beginTransaction();
