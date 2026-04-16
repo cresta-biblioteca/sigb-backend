@@ -108,9 +108,10 @@ class LectorController
             ),
         ],
         responses: [
-            new OA\Response(response: 204, description: "Carrera quitada exitosamente"),
+            new OA\Response(response: 200, description: "Carrera quitada exitosamente"),
             new OA\Response(response: 400, description: "Datos inválidos"),
             new OA\Response(response: 404, description: "Lector o carrera no encontrados"),
+            new OA\Response(response: 409, description: "La carrera no está asignada al lector"),
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
@@ -120,6 +121,6 @@ class LectorController
         LectorRequestValidator::validateId($carreraId, 'carreraId');
 
         $this->lectorService->removeCarrera((int) $lectorId, (int) $carreraId);
-        http_response_code(204);
+        JsonHelper::jsonResponse(['message' => 'La carrera ha sido quitada del lector'], 200);
     }
 }
