@@ -199,7 +199,7 @@ class Prestamo extends Entity
     {
         $ahora = new DateTimeImmutable();
         $this->fechaDevolucion = $ahora;
-        
+
         if ($huboInconveniente) {
             $this->estado = EstadoPrestamo::INCONVENIENTE;
         } elseif ($ahora > $this->fechaVencimiento) {

@@ -219,7 +219,11 @@ class PrestamoRepository extends Repository
 
         // Obtener página
         $offset = ($page - 1) * $perPage;
-        $dataSql = "SELECT * FROM prestamo {$whereClause} ORDER BY fecha_prestamo DESC LIMIT {$perPage} OFFSET {$offset}";
+        $dataSql = "SELECT * FROM prestamo 
+                    {$whereClause} 
+                    ORDER BY fecha_prestamo DESC 
+                    LIMIT {$perPage} 
+                    OFFSET {$offset}";
         $dataStmt = $this->pdo->prepare($dataSql);
         $dataStmt->execute($params);
 

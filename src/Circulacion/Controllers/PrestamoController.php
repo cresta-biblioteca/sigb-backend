@@ -105,7 +105,13 @@ class PrestamoController
                 required: false,
                 schema: new OA\Schema(
                     type: "string",
-                    enum: ["VIGENTE", "COMPLETADO_EXITO", "COMPLETADO_VENCIDO", "INCONVENIENTE_VENCIDO", "INCONVENIENTE"]
+                    enum: [
+                        "VIGENTE",
+                        "COMPLETADO_EXITO",
+                        "COMPLETADO_VENCIDO",
+                        "INCONVENIENTE_VENCIDO",
+                        "INCONVENIENTE"
+                    ]
                 )
             ),
             new OA\Parameter(
@@ -262,6 +268,7 @@ class PrestamoController
         PrestamoRequestValidator::validateLectorId($lectorId);
 
         $estado = $_GET['estado'] ?? null;
+        PrestamoRequestValidator::validarFiltroEstado($estado);
 
         $response = $this->service->getByLectorId((int) $lectorId, $estado);
 

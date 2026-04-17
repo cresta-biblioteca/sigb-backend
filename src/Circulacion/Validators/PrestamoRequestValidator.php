@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Circulacion\Validators;
 
+use App\Circulacion\Models\EstadoPrestamo;
 use App\Shared\Exceptions\ValidationException;
 
 class PrestamoRequestValidator
@@ -60,7 +61,16 @@ class PrestamoRequestValidator
 
     public static function validarInputReturn(array $input): void
     {
-        if (isset($input['hubo_inconveniente']) && !is_bool(filter_var($input['hubo_inconveniente'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE))) {
+        if (
+            isset($input['hubo_inconveniente']) &&
+            !is_bool(
+                filter_var(
+                    $input['hubo_inconveniente'],
+                    FILTER_VALIDATE_BOOLEAN,
+                    FILTER_NULL_ON_FAILURE
+                )
+            )
+        ) {
             throw new ValidationException([
                 'hubo_inconveniente' => ['El campo hubo_inconveniente debe ser un booleano'],
             ]);
@@ -69,10 +79,25 @@ class PrestamoRequestValidator
 
     public static function validarInputRenew(array $input): void
     {
-        if (isset($input['tipo_prestamo_id']) && (!ctype_digit((string) $input['tipo_prestamo_id']) || (int) $input['tipo_prestamo_id'] < 1)) {
+        if (
+            isset($input['tipo_prestamo_id']) &&
+            (!ctype_digit((string) $input['tipo_prestamo_id']) || (int) $input['tipo_prestamo_id'] < 1)
+        ) {
             throw new ValidationException([
                 'tipo_prestamo_id' => ['El campo tipo_prestamo_id debe ser un entero positivo mayor que 0'],
             ]);
+        }
+    }
+
+    public static function validarFiltroEstado(?string $estado): void
+    {
+        $estadosValidos = array_map(fn($e) => $e->name, EstadoPrestamo::cases());
+        if ($estado !== null) {
+            if (!in_array(strtoupper($estado), $estadosValidos)) {
+                throw new ValidationException([
+                    'estado' => ['El campo estado debe ser uno de los siguientes: ' . implode(', ', $estadosValidos)],
+                ]);
+            }
         }
     }
 }

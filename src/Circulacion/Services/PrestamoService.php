@@ -77,7 +77,7 @@ class PrestamoService
             throw new UserNotFoundException();
         }
 
-        $estadoEnum = $estado !== null ? EstadoPrestamo::from($estado) : null;
+        $estadoEnum = $estado !== null ? EstadoPrestamo::from(strtoupper($estado)) : null;
         $prestamos = $this->prestamoRepo->findByLectorId($lectorId, $estadoEnum);
 
         return array_map(
@@ -102,10 +102,10 @@ class PrestamoService
         }
         /** @var Ejemplar $ejemplar */
         $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
-        if(!$ejemplar->isHabilitado()) {
+        if (!$ejemplar->isHabilitado()) {
             throw new EjemplarNoDisponibleException();
         }
-        
+
         /** @var ?TipoPrestamo $tipoPrestamo */
         $tipoPrestamo = $this->tipoPrestamoRepo->findById($request->tipoPrestamoId);
         if ($tipoPrestamo === null) {
@@ -144,9 +144,9 @@ class PrestamoService
 
         try {
             $this->prestamoRepo->insertPrestamo($prestamo);
-    
+
             $this->reservaRepo->completeReserva($reserva->getId(), EstadoReserva::COMPLETADA);
-    
+
             // Cargar relaciones para la respuesta
             $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($prestamo->getId());
 
@@ -192,15 +192,15 @@ class PrestamoService
             throw new RenovacionNoPermitidaException('el préstamo ya fue devuelto');
         }
 
-        if($prestamo->isVencido()) {
+        if ($prestamo->isVencido()) {
             throw new RenovacionNoPermitidaException('el préstamo está vencido');
         }
 
         if (!$prestamo->isActivo()) {
             throw new RenovacionNoPermitidaException('el préstamo no está en un estado renovable');
         }
-        
-        if($tipoPrestamoId) {
+
+        if ($tipoPrestamoId) {
             /** @var ?TipoPrestamo $tipoPrestamo */
             $tipoPrestamo = $this->tipoPrestamoRepo->findById($tipoPrestamoId);
             if ($tipoPrestamo === null) {
@@ -263,6 +263,4 @@ class PrestamoService
 
         return PrestamoMapper::toResponse($prestamoConRelaciones);
     }
-
-    
 }
