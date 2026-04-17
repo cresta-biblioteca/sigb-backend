@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Circulacion\Repositories;
 
+use App\Circulacion\Models\EstadoReserva;
 use App\Circulacion\Models\Reserva;
 use App\Shared\Repository;
 use PDO;
@@ -211,5 +212,33 @@ class ReservaRepository extends Repository
         ]);
 
         $reserva->setId((int) $this->pdo->lastInsertId());
+    }
+
+    public function existeReservaPendienteParaArticulo(int $articuloId): bool
+    {
+        $sql = 'SELECT 1
+                FROM reserva
+                WHERE articulo_id = :articulo_id
+                  AND estado = \'PENDIENTE\'
+                LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'articulo_id' => $articuloId
+        ]);
+
+        return $stmt->fetch() !== false;
+    }
+
+
+    public function completeReserva(int $id, EstadoReserva $estado): void
+    {
+        $sql = "UPDATE reserva SET estado = :estado WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'estado' => $estado->value,
+            'id'     => $id,
+        ]);
     }
 }
