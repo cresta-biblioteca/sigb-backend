@@ -13,8 +13,8 @@ class PrestamoMapper
     public static function toCreateRequest(array $data): CreatePrestamoRequest
     {
         return new CreatePrestamoRequest(
-            reservaId: $data["reserva_id"],
-            tipoPrestamoId: $data["tipo_prestamo_id"]
+            reservaId: (int) $data["reserva_id"],
+            tipoPrestamoId: (int) $data["tipo_prestamo_id"]
         );
     }
 

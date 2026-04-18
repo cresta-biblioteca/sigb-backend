@@ -59,7 +59,7 @@ class PrestamoRequestValidator
         }
     }
 
-    public static function validarInputReturn(array $input): void
+    public static function validateInputReturn(array $input): void
     {
         if (
             isset($input['hubo_inconveniente']) &&
@@ -77,7 +77,7 @@ class PrestamoRequestValidator
         }
     }
 
-    public static function validarInputRenew(array $input): void
+    public static function validateInputRenew(array $input): void
     {
         if (
             isset($input['tipo_prestamo_id']) &&
@@ -89,7 +89,7 @@ class PrestamoRequestValidator
         }
     }
 
-    public static function validarFiltroEstado(?string $estado): void
+    public static function validateFiltroEstado(?string $estado): void
     {
         $estadosValidos = array_map(fn($e) => $e->name, EstadoPrestamo::cases());
         if ($estado !== null) {

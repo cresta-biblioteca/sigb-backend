@@ -100,8 +100,11 @@ class PrestamoService
         if ($ejemplarId === null) {
             throw new EjemplarNoDisponibleException();
         }
-        /** @var Ejemplar $ejemplar */
+        /** @var ?Ejemplar $ejemplar */
         $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
+        if (!$ejemplar) {
+            throw new EjemplarNotFoundException();
+        }
         if (!$ejemplar->isHabilitado()) {
             throw new EjemplarNoDisponibleException();
         }
@@ -121,11 +124,6 @@ class PrestamoService
 
         if ($prestamosActivos >= $tipoPrestamo->getMaxCantidadPrestamos()) {
             throw new LimitePrestamosSuperadoException($tipoPrestamo->getMaxCantidadPrestamos());
-        }
-
-        $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
-        if ($ejemplar === null) {
-            throw new EjemplarNotFoundException();
         }
 
         $fechaPrestamo = new DateTimeImmutable();
@@ -149,6 +147,9 @@ class PrestamoService
 
             // Cargar relaciones para la respuesta
             $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($prestamo->getId());
+            if (!$prestamoConRelaciones) {
+                throw new PrestamoNotFoundException();
+            }
 
             $this->pdo->commit();
 
@@ -176,6 +177,9 @@ class PrestamoService
 
         // Recargar con relaciones
         $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($id);
+        if (!$prestamoConRelaciones) {
+            throw new PrestamoNotFoundException();
+        }
 
         return PrestamoMapper::toResponse($prestamoConRelaciones);
     }
@@ -259,6 +263,9 @@ class PrestamoService
 
         // Recargar con relaciones
         $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($prestamoId);
+        if (!$prestamoConRelaciones) {
+            throw new PrestamoNotFoundException();
+        }
 
         return PrestamoMapper::toResponse($prestamoConRelaciones);
     }

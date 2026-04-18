@@ -941,7 +941,7 @@ test("renovar renueva correctamente un prestamo", function () {
         ->andReturn(1);
 
     // --- Repositorios ---
-    $this->prestamoRep
+    $this->prestamoRepo
         ->expects('findById')
         ->once()
         ->with(1)

@@ -109,7 +109,6 @@ class PrestamoController
                         "VIGENTE",
                         "COMPLETADO_EXITO",
                         "COMPLETADO_VENCIDO",
-                        "INCONVENIENTE_VENCIDO",
                         "INCONVENIENTE"
                     ]
                 )
@@ -159,6 +158,8 @@ class PrestamoController
 
         $filters = [];
         if (!empty($_GET['estado'])) {
+            $estado = strtoupper((string) $_GET['estado']);
+            PrestamoRequestValidator::validateFiltroEstado($estado);
             $filters['estado'] = $_GET['estado'];
         }
         if (!empty($_GET['lector_id'])) {
@@ -236,7 +237,7 @@ class PrestamoController
                 required: false,
                 schema: new OA\Schema(
                     type: "string",
-                    enum: ["ACTIVO", "DEVUELTO", "VENCIDO", "RENOVADO"]
+                    enum: ["VIGENTE", "COMPLETADO_EXITO", "COMPLETADO_VENCIDO", "INCONVENIENTE"]
                 )
             )
         ],
@@ -268,7 +269,7 @@ class PrestamoController
         PrestamoRequestValidator::validateLectorId($lectorId);
 
         $estado = $_GET['estado'] ?? null;
-        PrestamoRequestValidator::validarFiltroEstado($estado);
+        PrestamoRequestValidator::validateFiltroEstado($estado);
 
         $response = $this->service->getByLectorId((int) $lectorId, $estado);
 
@@ -318,9 +319,9 @@ class PrestamoController
         PrestamoRequestValidator::validateId($id);
 
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        PrestamoRequestValidator::validarInputReturn($input);
+        PrestamoRequestValidator::validateInputReturn($input);
 
-        $response = $this->service->devolver((int) $id, $input['hubo_inconveniente']);
+        $response = $this->service->devolver((int) $id, $input['hubo_inconveniente'] ?? false);
 
         JsonHelper::jsonResponse($response, 200);
     }
@@ -368,7 +369,7 @@ class PrestamoController
     {
         PrestamoRequestValidator::validateId($id);
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        PrestamoRequestValidator::validarInputRenew($input);
+        PrestamoRequestValidator::validateInputRenew($input);
         $response = $this->service->renovar((int) $id, $input['tipo_prestamo_id'] ?? null);
 
         JsonHelper::jsonResponse($response, 200);
