@@ -369,7 +369,7 @@ class PrestamoController
         PrestamoRequestValidator::validateId($id);
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         PrestamoRequestValidator::validarInputRenew($input);
-        $response = $this->service->renovar((int) $id, $input['tipo_prestamo_id']);
+        $response = $this->service->renovar((int) $id, $input['tipo_prestamo_id'] ?? null);
 
         JsonHelper::jsonResponse($response, 200);
     }
