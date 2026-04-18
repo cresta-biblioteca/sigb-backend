@@ -216,12 +216,11 @@ class PrestamoService
             if ($tipoPrestamo === null) {
                 throw new TipoPrestamoNotFoundException();
             }
-        }
-
-        if ($tipoPrestamo->getRenovaciones() === 0) {
-            throw new RenovacionNoPermitidaException(
-                'el tipo de préstamo no permite renovaciones'
-            );
+            if ($tipoPrestamo->getRenovaciones() === 0) {
+                throw new RenovacionNoPermitidaException(
+                    'el tipo de préstamo no permite renovaciones'
+                );
+            }
         }
 
         // Validar período de renovación (cant_dias_renovar antes del vencimiento)
