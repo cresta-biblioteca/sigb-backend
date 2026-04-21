@@ -92,7 +92,7 @@ class PrestamoService
         $reserva = $this->reservaRepo->findById($request->reservaId);
         if ($reserva === null) {
             throw new ReservaNotFoundException();
-        } 
+        }
         if (!$reserva->isPendiente()) {
             throw new ReservaNoCompletableException();
         }
@@ -145,7 +145,7 @@ class PrestamoService
             lectorId:         $reserva->getLectorId(),
             maxRenovaciones:  $tipoPrestamo->getRenovaciones(),
         );
-        
+
         $this->pdo->beginTransaction();
         try {
             $this->prestamoRepo->insertPrestamo($prestamo);

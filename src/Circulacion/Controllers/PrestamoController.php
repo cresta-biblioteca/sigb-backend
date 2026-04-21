@@ -218,9 +218,57 @@ class PrestamoController
     }
 
     #[OA\Get(
+        path: "/lectores/me/prestamos",
+        description: "Obtiene los préstamos del lector autenticado. El ID del lector se obtiene del token JWT.",
+        summary: "Mis préstamos",
+        tags: ["Préstamos"],
+        parameters: [
+            new OA\Parameter(
+                name: "estado",
+                in: "query",
+                description: "Filtrar por estado",
+                required: false,
+                schema: new OA\Schema(
+                    type: "string",
+                    enum: ["VIGENTE", "COMPLETADO_EXITO", "COMPLETADO_VENCIDO", "INCONVENIENTE"]
+                )
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Listado obtenido exitosamente",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(ref: "#/components/schemas/PrestamoResponse")
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Datos de entrada inválidos"
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Error interno del servidor"
+            )
+        ]
+    )]
+    public function getMisPrestamos(): void
+    {
+        $lectorId = (int) $_SERVER['USER_ID'];
+
+        $estado = $_GET['estado'] ?? null;
+        PrestamoRequestValidator::validateFiltroEstado($estado);
+
+        $response = $this->service->getByLectorId($lectorId, $estado);
+
+        JsonHelper::jsonResponse($response, 200);
+    }
+
+    #[OA\Get(
         path: "/lector/{lectorId}/prestamos",
-        description: "Obtiene todos los préstamos de un lector, opcionalmente filtrados por estado",
-        summary: "Préstamos de un lector",
+        description: "Obtiene todos los préstamos de un lector, opcionalmente filtrados por estado. Solo para administradores.",
+        summary: "Préstamos de un lector (admin)",
         tags: ["Préstamos"],
         parameters: [
             new OA\Parameter(
