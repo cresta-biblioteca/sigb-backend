@@ -496,6 +496,9 @@ test("createPrestamo crea un prestamo correctamente", function () {
     $tipoPrestamo
         ->shouldReceive('getDuracionPrestamo')
         ->andReturn(14);
+    $tipoPrestamo
+        ->shouldReceive('getRenovaciones')
+        ->andReturn(3);
 
     $this->prestamoRepo
         ->shouldReceive('countPrestamosActivosByLectorAndTipo')
@@ -513,7 +516,8 @@ test("createPrestamo crea un prestamo correctamente", function () {
             $p->setId(1);
             return $p->getTipoPrestamoId() === $prestamo->getTipoPrestamoId()
                 && $p->getEjemplarId() === $prestamo->getEjemplarId()
-                && $p->getLectorId() === $prestamo->getLectorId();
+                && $p->getLectorId() === $prestamo->getLectorId()
+                && $p->getMaxRenovaciones() === 3;
         })
         ->once();
 
@@ -611,7 +615,7 @@ test('renovar falla si el prestamo no existe', function () {
     $this->service->renovar(1);
 })->throws(PrestamoNotFoundException::class);
 
-test('renovar falla si el prestamo no esta activo', function () {
+test('renovar falla si el tipo inicial no permitia renovaciones', function () {
     $prestamo = Mockery::mock(Prestamo::class)->makePartial();
     $this->prestamoRepo
         ->shouldReceive('findById')
@@ -619,18 +623,9 @@ test('renovar falla si el prestamo no esta activo', function () {
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(false);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(0);
 
     $this->service->renovar(1);
 })->throws(RenovacionNoPermitidaException::class);
@@ -679,18 +674,10 @@ test("renovar falla si el nuevo tipo de prestamo no existe", function() {
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(true);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(2);
+    $prestamo->shouldReceive('getCantRenovaciones')->andReturn(0);
 
     $this->tipoPrestamoRepo
         ->shouldReceive('findById')
@@ -709,18 +696,10 @@ test("renovar falla si el nuevo tipo de prestamo no esta habilitado", function()
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(true);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(2);
+    $prestamo->shouldReceive('getCantRenovaciones')->andReturn(0);
 
     $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
     $this->tipoPrestamoRepo
@@ -737,56 +716,26 @@ test("renovar falla si el nuevo tipo de prestamo no esta habilitado", function()
     $this->service->renovar(1, 2);
 })->throws(TipoPrestamoDeshabilitadoException::class);
 
-test("renovar falla si el nuevo tipo de prestamo no permite renovaciones", function() {
+test("renovar falla si se alcanzo el limite de renovaciones", function() {
     $prestamo = Mockery::mock(Prestamo::class)->makePartial();
-    $prestamo
-        ->shouldReceive('getTipoPrestamoId')
-        ->once()
-        ->andReturn(2);
     $this->prestamoRepo
         ->shouldReceive('findById')
         ->once()
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(true);
-
-    $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
-
-    $this->tipoPrestamoRepo
-        ->shouldReceive('findById')
-        ->once()
-        ->with(2)
-        ->andReturn($tipoPrestamo);
-
-    $tipoPrestamo
-        ->shouldReceive('getRenovaciones')
-        ->once()
-        ->andReturn(0);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(3);
+    $prestamo->shouldReceive('getCantRenovaciones')->andReturn(3);
 
     $this->service->renovar(1);
 })->throws(RenovacionNoPermitidaException::class);
 
 test("renovar falla si los dias previos a la renovacion ya fueron superados", function() {
     $prestamo = Mockery::mock(Prestamo::class)->makePartial();
-    $prestamo
-        ->shouldReceive('getTipoPrestamoId')
-        ->once()
-        ->andReturn(2);
-    $prestamo
-        ->shouldReceive('getFechaVencimiento')
-        ->once()
+    $prestamo->shouldReceive('getTipoPrestamoId')->andReturn(2);
+    $prestamo->shouldReceive('getFechaVencimiento')
         ->andReturn((new DateTimeImmutable())->add(new DateInterval('P5D')));
     $this->prestamoRepo
         ->shouldReceive('findById')
@@ -794,18 +743,10 @@ test("renovar falla si los dias previos a la renovacion ya fueron superados", fu
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(true);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(2);
+    $prestamo->shouldReceive('getCantRenovaciones')->andReturn(0);
 
     $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
 
@@ -815,49 +756,27 @@ test("renovar falla si los dias previos a la renovacion ya fueron superados", fu
         ->with(2)
         ->andReturn($tipoPrestamo);
 
-    $tipoPrestamo
-        ->shouldReceive('getRenovaciones')
-        ->once()
-        ->andReturn(2);
-    $tipoPrestamo
-        ->shouldReceive('getCantDiasRenovar')
-        ->andReturn(3);
+    $tipoPrestamo->shouldReceive('getCantDiasRenovar')->andReturn(3);
 
     $this->service->renovar(1);
 })->throws(RenovacionNoPermitidaException::class);
 
 test("renovar falla si ya hay una reserva pendiente para el ejemplar", function() {
     $prestamo = Mockery::mock(Prestamo::class)->makePartial();
-    $prestamo
-        ->shouldReceive('getTipoPrestamoId')
-        ->once()
-        ->andReturn(2);
-    $prestamo
-        ->shouldReceive('getFechaVencimiento')
-        ->once()
+    $prestamo->shouldReceive('getTipoPrestamoId')->andReturn(2);
+    $prestamo->shouldReceive('getFechaVencimiento')
         ->andReturn((new DateTimeImmutable())->add(new DateInterval('P2D')));
-    $prestamo
-        ->shouldReceive('getEjemplarId')
-        ->once()
-        ->andReturn(10);
+    $prestamo->shouldReceive('getEjemplarId')->andReturn(10);
     $this->prestamoRepo
         ->shouldReceive('findById')
         ->once()
         ->with(1)
         ->andReturn($prestamo);
 
-    $prestamo
-        ->shouldReceive('isDevuelto')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isVencido')
-        ->once()
-        ->andReturn(false);
-    $prestamo
-        ->shouldReceive('isActivo')
-        ->once()
-        ->andReturn(true);
+    $prestamo->shouldReceive('isDevuelto')->once()->andReturn(false);
+    $prestamo->shouldReceive('isVencido')->once()->andReturn(false);
+    $prestamo->shouldReceive('getMaxRenovaciones')->andReturn(2);
+    $prestamo->shouldReceive('getCantRenovaciones')->andReturn(0);
 
     $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
 
@@ -867,13 +786,7 @@ test("renovar falla si ya hay una reserva pendiente para el ejemplar", function(
         ->with(2)
         ->andReturn($tipoPrestamo);
 
-    $tipoPrestamo
-        ->shouldReceive('getRenovaciones')
-        ->once()
-        ->andReturn(2);
-    $tipoPrestamo
-        ->shouldReceive('getCantDiasRenovar')
-        ->andReturn(3);
+    $tipoPrestamo->shouldReceive('getCantDiasRenovar')->andReturn(3);
 
     $ejemplar = Mockery::mock(Ejemplar::class)->makePartial();
     $this->ejemplarRepo
@@ -907,6 +820,8 @@ test("renovar renueva correctamente un prestamo", function () {
         'getFechaVencimiento'  => (new DateTimeImmutable())->add(new DateInterval('P2D')),
         'getFechaDevolucion'   => null,
         'getEstado'            => EstadoPrestamo::VIGENTE,
+        'getMaxRenovaciones'   => 2,
+        'getCantRenovaciones'  => 0,
     ]);
     $prestamo
         ->expects('isDevuelto')
@@ -917,10 +832,6 @@ test("renovar renueva correctamente un prestamo", function () {
         ->once()
         ->andReturn(false);
     $prestamo
-        ->expects('isActivo')
-        ->once()
-        ->andReturn(true);
-    $prestamo
         ->expects('renovar')
         ->once()
         ->withArgs(fn($d) => $d instanceof DateTimeImmutable);
@@ -928,7 +839,6 @@ test("renovar renueva correctamente un prestamo", function () {
     // --- TipoPrestamo ---
     $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
     $tipoPrestamo->allows([
-        'getRenovaciones'    => 2,
         'getCantDiasRenovar' => 3,
         'getDiasRenovacion'  => 7,
     ]);

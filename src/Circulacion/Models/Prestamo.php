@@ -18,6 +18,8 @@ class Prestamo extends Entity
     private int $tipoPrestamoId;
     private int $ejemplarId;
     private int $lectorId;
+    private int $cantRenovaciones = 0;
+    private int $maxRenovaciones  = 0;
 
     private ?TipoPrestamo $tipoPrestamo = null;
     private ?Ejemplar $ejemplar = null;
@@ -36,6 +38,7 @@ class Prestamo extends Entity
         int $tipoPrestamoId,
         int $ejemplarId,
         int $lectorId,
+        int $maxRenovaciones = 0,
         EstadoPrestamo $estado = EstadoPrestamo::VIGENTE
     ): self {
         $prestamo = new self();
@@ -44,6 +47,8 @@ class Prestamo extends Entity
         $prestamo->setTipoPrestamoId($tipoPrestamoId);
         $prestamo->setEjemplarId($ejemplarId);
         $prestamo->setLectorId($lectorId);
+        $prestamo->cantRenovaciones = 0;
+        $prestamo->maxRenovaciones  = $maxRenovaciones;
         $prestamo->setEstado($estado);
 
         return $prestamo;
@@ -67,6 +72,8 @@ class Prestamo extends Entity
         $prestamo->tipoPrestamoId = (int) $row['tipo_prestamo_id'];
         $prestamo->ejemplarId = (int) $row['ejemplar_id'];
         $prestamo->lectorId = (int) $row['lector_id'];
+        $prestamo->cantRenovaciones = (int) $row['cant_renovaciones'];
+        $prestamo->maxRenovaciones  = (int) $row['max_renovaciones'];
         $prestamo->setTimestamps(
             $row['created_at'] ?? null,
             $row['updated_at'] ?? null
@@ -209,10 +216,21 @@ class Prestamo extends Entity
         }
     }
 
+    public function getCantRenovaciones(): int
+    {
+        return $this->cantRenovaciones;
+    }
+
+    public function getMaxRenovaciones(): int
+    {
+        return $this->maxRenovaciones;
+    }
+
     public function renovar(DateTimeImmutable $nuevaFechaVencimiento): void
     {
-        $this->estado = EstadoPrestamo::VIGENTE;
+        $this->estado           = EstadoPrestamo::VIGENTE;
         $this->fechaVencimiento = $nuevaFechaVencimiento;
+        $this->cantRenovaciones++;
     }
 
     /**
@@ -229,6 +247,8 @@ class Prestamo extends Entity
             'tipo_prestamo_id' => $this->tipoPrestamoId,
             'ejemplar_id' => $this->ejemplarId,
             'lector_id' => $this->lectorId,
+            'cant_renovaciones' => $this->cantRenovaciones,
+            'max_renovaciones'  => $this->maxRenovaciones,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];

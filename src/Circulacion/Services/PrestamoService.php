@@ -138,11 +138,12 @@ class PrestamoService
         );
 
         $prestamo = Prestamo::create(
-            fechaPrestamo: $fechaPrestamo,
+            fechaPrestamo:    $fechaPrestamo,
             fechaVencimiento: $fechaVencimiento,
-            tipoPrestamoId: $tipoPrestamo->getId(),
-            ejemplarId: $ejemplarId,
-            lectorId: $reserva->getLectorId()
+            tipoPrestamoId:   $tipoPrestamo->getId(),
+            ejemplarId:       $ejemplarId,
+            lectorId:         $reserva->getLectorId(),
+            maxRenovaciones:  $tipoPrestamo->getRenovaciones(),
         );
         
         $this->pdo->beginTransaction();
@@ -206,8 +207,17 @@ class PrestamoService
             throw new RenovacionNoPermitidaException('el préstamo está vencido');
         }
 
-        if (!$prestamo->isActivo()) {
-            throw new RenovacionNoPermitidaException('el préstamo no está en un estado renovable');
+        // edge case: tipo inicial sin renovaciones
+        if ($prestamo->getMaxRenovaciones() === 0) {
+            throw new RenovacionNoPermitidaException(
+                'el tipo de préstamo no permite renovaciones'
+            );
+        }
+        // límite alcanzado
+        if ($prestamo->getCantRenovaciones() >= $prestamo->getMaxRenovaciones()) {
+            throw new RenovacionNoPermitidaException(
+                "se alcanzó el límite de {$prestamo->getMaxRenovaciones()} renovaciones permitidas"
+            );
         }
 
         if ($tipoPrestamoId) {
@@ -225,11 +235,6 @@ class PrestamoService
             $tipoPrestamo = $this->tipoPrestamoRepo->findById($prestamo->getTipoPrestamoId());
             if ($tipoPrestamo === null) {
                 throw new TipoPrestamoNotFoundException();
-            }
-            if ($tipoPrestamo->getRenovaciones() === 0) {
-                throw new RenovacionNoPermitidaException(
-                    'el tipo de préstamo no permite renovaciones'
-                );
             }
         }
 

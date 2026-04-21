@@ -38,6 +38,10 @@ readonly class PrestamoResponse implements JsonSerializable
         private int $ejemplarId,
         #[OA\Property(type: "integer", example: 3)]
         private int $lectorId,
+        #[OA\Property(type: "integer", example: 0)]
+        private int $cantRenovaciones = 0,
+        #[OA\Property(type: "integer", example: 2)]
+        private int $maxRenovaciones = 0,
         #[OA\Property(type: "object", nullable: true)]
         private ?array $tipoPrestamo = null,
         #[OA\Property(type: "object", nullable: true)]
@@ -55,9 +59,11 @@ readonly class PrestamoResponse implements JsonSerializable
             'fecha_vencimiento' => $this->fechaVencimiento,
             'fecha_devolucion' => $this->fechaDevolucion,
             'estado' => $this->estado,
-            'tipo_prestamo_id' => $this->tipoPrestamoId,
-            'ejemplar_id' => $this->ejemplarId,
-            'lector_id' => $this->lectorId,
+            'tipo_prestamo_id'   => $this->tipoPrestamoId,
+            'ejemplar_id'        => $this->ejemplarId,
+            'lector_id'          => $this->lectorId,
+            'cant_renovaciones'  => $this->cantRenovaciones,
+            'max_renovaciones'   => $this->maxRenovaciones,
         ];
 
         if ($this->tipoPrestamo !== null) {
