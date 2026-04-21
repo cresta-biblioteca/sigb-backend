@@ -92,7 +92,8 @@ class PrestamoService
         $reserva = $this->reservaRepo->findById($request->reservaId);
         if ($reserva === null) {
             throw new ReservaNotFoundException();
-        } elseif (!$reserva->isPendiente() || $reserva->isVencida()) {
+        } 
+        if (!$reserva->isPendiente()) {
             throw new ReservaNoCompletableException();
         }
 
@@ -100,20 +101,13 @@ class PrestamoService
         if ($ejemplarId === null) {
             throw new EjemplarNoDisponibleException();
         }
-        /** @var ?Ejemplar $ejemplar */
-        $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
-        if (!$ejemplar) {
-            throw new EjemplarNotFoundException();
-        }
-        if (!$ejemplar->isHabilitado()) {
-            throw new EjemplarNoDisponibleException();
-        }
 
         /** @var ?TipoPrestamo $tipoPrestamo */
         $tipoPrestamo = $this->tipoPrestamoRepo->findById($request->tipoPrestamoId);
         if ($tipoPrestamo === null) {
             throw new TipoPrestamoNotFoundException();
-        } elseif (!$tipoPrestamo->isHabilitado()) {
+        }
+        if (!$tipoPrestamo->isHabilitado()) {
             throw new TipoPrestamoDeshabilitadoException();
         }
 
@@ -138,8 +132,8 @@ class PrestamoService
             ejemplarId: $ejemplarId,
             lectorId: $reserva->getLectorId()
         );
+        
         $this->pdo->beginTransaction();
-
         try {
             $this->prestamoRepo->insertPrestamo($prestamo);
 
@@ -160,16 +154,16 @@ class PrestamoService
         }
     }
 
-    public function devolver(int $id, bool $huboInconveniente = false): PrestamoResponse
+    public function devolver(int $prestamoId, bool $huboInconveniente = false): PrestamoResponse
     {
         /** @var ?Prestamo $prestamo */
-        $prestamo = $this->prestamoRepo->findById($id);
+        $prestamo = $this->prestamoRepo->findById($prestamoId);
         if ($prestamo === null) {
             throw new PrestamoNotFoundException();
         }
 
-        if ($prestamo->isDevuelto()) {
-            throw new PrestamoYaDevueltoException();
+        if (!$prestamo->isActivo()) {
+            throw new PrestamoYaDevueltoException(); // TODO: cambiar excepcion
         }
 
         $prestamo->devolver($huboInconveniente);
