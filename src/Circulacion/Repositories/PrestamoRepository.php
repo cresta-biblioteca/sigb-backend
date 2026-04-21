@@ -83,7 +83,8 @@ class PrestamoRepository extends Repository
             UPDATE prestamo
             SET estado             = :estado,
                 fecha_vencimiento  = :fecha_vencimiento,
-                fecha_devolucion   = :fecha_devolucion
+                fecha_devolucion   = :fecha_devolucion,
+                tipo_prestamo_id   = :tipo_prestamo_id
             WHERE id = :id
         ";
 
@@ -92,6 +93,7 @@ class PrestamoRepository extends Repository
             'estado'            => $prestamo->getEstado()->value,
             'fecha_vencimiento' => $prestamo->getFechaVencimiento()->format('Y-m-d H:i:s'),
             'fecha_devolucion'  => $prestamo->getFechaDevolucion()?->format('Y-m-d H:i:s'),
+            'tipo_prestamo_id'  => $prestamo->getTipoPrestamoId(),
             'id'                => $prestamo->getId(),
         ]);
     }

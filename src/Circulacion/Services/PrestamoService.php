@@ -96,9 +96,21 @@ class PrestamoService
         if (!$reserva->isPendiente()) {
             throw new ReservaNoCompletableException();
         }
+        if ($reserva->isVencida()) {
+            throw new ReservaNoCompletableException();
+        }
 
         $ejemplarId = $reserva->getEjemplarId();
         if ($ejemplarId === null) {
+            throw new EjemplarNoDisponibleException();
+        }
+
+        /** @var ?Ejemplar $ejemplar */
+        $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
+        if (!$ejemplar) {
+            throw new EjemplarNotFoundException();
+        }
+        if (!$ejemplar->isHabilitado()) {
             throw new EjemplarNoDisponibleException();
         }
 
@@ -162,15 +174,15 @@ class PrestamoService
             throw new PrestamoNotFoundException();
         }
 
-        if (!$prestamo->isActivo()) {
-            throw new PrestamoYaDevueltoException(); // TODO: cambiar excepcion
+        if ($prestamo->isDevuelto()) {
+            throw new PrestamoYaDevueltoException();
         }
 
         $prestamo->devolver($huboInconveniente);
         $this->prestamoRepo->updatePrestamo($prestamo);
 
         // Recargar con relaciones
-        $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($id);
+        $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($prestamoId);
         if (!$prestamoConRelaciones) {
             throw new PrestamoNotFoundException();
         }

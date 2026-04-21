@@ -467,7 +467,7 @@ test("createPrestamo crea un prestamo correctamente", function () {
 
     $this->ejemplarRepo
         ->shouldReceive('findById')
-        ->twice()
+        ->once()
         ->with(5)
         ->andReturn($ejemplar);
 
@@ -571,7 +571,7 @@ test('devolver lanza excepcion si ya esta devuelto', function () {
 test('devolver devuelve el prestamo correctamente', function () {
     $prestamo = Prestamo::create(
         new DateTimeImmutable('2026-04-01 10:00:00'),
-        new DateTimeImmutable('2026-04-21 10:00:00'),
+        (new DateTimeImmutable())->modify('+15 days'),
         1,
         1,
         1
