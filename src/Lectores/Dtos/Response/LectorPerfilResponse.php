@@ -31,7 +31,7 @@ readonly class LectorPerfilResponse implements JsonSerializable
         private string $telefono,
         #[OA\Property(type: "string", example: "juan@example.com")]
         private string $email,
-        #[OA\Property(type: "array", example: ["Contador Público", "Abogacía"])]
+        #[OA\Property(type: "array", items: new OA\Items(type: "string"), example: ["Contador Público", "Abogacía"])]
         private array $carreras,
     ) {
     }
