@@ -73,7 +73,8 @@ class ExceptionHandler
             }
 
             // BusinessRuleException y AlreadyExistsException agregan el campo que falló (si existe)
-            if (($e instanceof BusinessRuleException || $e instanceof AlreadyExistsException) && $e->getField() !== null) {
+            $isFieldException = $e instanceof BusinessRuleException || $e instanceof AlreadyExistsException;
+            if ($isFieldException && $e->getField() !== null) {
                 $body['error']['field'] = $e->getField();
             }
 
