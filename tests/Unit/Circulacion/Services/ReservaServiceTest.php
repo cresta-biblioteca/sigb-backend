@@ -287,7 +287,7 @@ test('cancelarReserva cancela con exito la reserva', function () {
         ->andReturn($reserva);
 
     $this->reservaRepositoryMock
-        ->shouldReceive('save')
+        ->shouldReceive('update')
         ->once();
 
     $this->reservaService->cancelarReserva(1);

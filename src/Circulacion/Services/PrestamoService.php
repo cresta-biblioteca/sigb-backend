@@ -92,13 +92,25 @@ class PrestamoService
         $reserva = $this->reservaRepo->findById($request->reservaId);
         if ($reserva === null) {
             throw new ReservaNotFoundException();
-        } 
+        }
         if (!$reserva->isPendiente()) {
+            throw new ReservaNoCompletableException();
+        }
+        if ($reserva->isVencida()) {
             throw new ReservaNoCompletableException();
         }
 
         $ejemplarId = $reserva->getEjemplarId();
         if ($ejemplarId === null) {
+            throw new EjemplarNoDisponibleException();
+        }
+
+        /** @var ?Ejemplar $ejemplar */
+        $ejemplar = $this->ejemplarRepo->findById($ejemplarId);
+        if (!$ejemplar) {
+            throw new EjemplarNotFoundException();
+        }
+        if (!$ejemplar->isHabilitado()) {
             throw new EjemplarNoDisponibleException();
         }
 
@@ -126,13 +138,14 @@ class PrestamoService
         );
 
         $prestamo = Prestamo::create(
-            fechaPrestamo: $fechaPrestamo,
+            fechaPrestamo:    $fechaPrestamo,
             fechaVencimiento: $fechaVencimiento,
-            tipoPrestamoId: $tipoPrestamo->getId(),
-            ejemplarId: $ejemplarId,
-            lectorId: $reserva->getLectorId()
+            tipoPrestamoId:   $tipoPrestamo->getId(),
+            ejemplarId:       $ejemplarId,
+            lectorId:         $reserva->getLectorId(),
+            maxRenovaciones:  $tipoPrestamo->getRenovaciones(),
         );
-        
+
         $this->pdo->beginTransaction();
         try {
             $this->prestamoRepo->insertPrestamo($prestamo);
@@ -162,15 +175,15 @@ class PrestamoService
             throw new PrestamoNotFoundException();
         }
 
-        if (!$prestamo->isActivo()) {
-            throw new PrestamoYaDevueltoException(); // TODO: cambiar excepcion
+        if ($prestamo->isDevuelto()) {
+            throw new PrestamoYaDevueltoException();
         }
 
         $prestamo->devolver($huboInconveniente);
         $this->prestamoRepo->updatePrestamo($prestamo);
 
         // Recargar con relaciones
-        $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($id);
+        $prestamoConRelaciones = $this->prestamoRepo->findByIdWithRelations($prestamoId);
         if (!$prestamoConRelaciones) {
             throw new PrestamoNotFoundException();
         }
@@ -194,8 +207,17 @@ class PrestamoService
             throw new RenovacionNoPermitidaException('el préstamo está vencido');
         }
 
-        if (!$prestamo->isActivo()) {
-            throw new RenovacionNoPermitidaException('el préstamo no está en un estado renovable');
+        // edge case: tipo inicial sin renovaciones
+        if ($prestamo->getMaxRenovaciones() === 0) {
+            throw new RenovacionNoPermitidaException(
+                'el tipo de préstamo no permite renovaciones'
+            );
+        }
+        // límite alcanzado
+        if ($prestamo->getCantRenovaciones() >= $prestamo->getMaxRenovaciones()) {
+            throw new RenovacionNoPermitidaException(
+                "se alcanzó el límite de {$prestamo->getMaxRenovaciones()} renovaciones permitidas"
+            );
         }
 
         if ($tipoPrestamoId) {
@@ -213,11 +235,6 @@ class PrestamoService
             $tipoPrestamo = $this->tipoPrestamoRepo->findById($prestamo->getTipoPrestamoId());
             if ($tipoPrestamo === null) {
                 throw new TipoPrestamoNotFoundException();
-            }
-            if ($tipoPrestamo->getRenovaciones() === 0) {
-                throw new RenovacionNoPermitidaException(
-                    'el tipo de préstamo no permite renovaciones'
-                );
             }
         }
 

@@ -26,10 +26,12 @@ class PrestamoMapper
             fechaVencimiento: $prestamo->getFechaVencimiento()->format('Y-m-d H:i:s'),
             fechaDevolucion: $prestamo->getFechaDevolucion()?->format('Y-m-d H:i:s'),
             estado: $prestamo->getEstado()->value,
-            tipoPrestamoId: $prestamo->getTipoPrestamoId(),
-            ejemplarId: $prestamo->getEjemplarId(),
-            lectorId: $prestamo->getLectorId(),
-            tipoPrestamo: $prestamo->getTipoPrestamo()?->toArray(),
+            tipoPrestamoId:   $prestamo->getTipoPrestamoId(),
+            ejemplarId:       $prestamo->getEjemplarId(),
+            lectorId:         $prestamo->getLectorId(),
+            cantRenovaciones: $prestamo->getCantRenovaciones(),
+            maxRenovaciones:  $prestamo->getMaxRenovaciones(),
+            tipoPrestamo:     $prestamo->getTipoPrestamo()?->toArray(),
             ejemplar: $prestamo->getEjemplar()?->toArray(),
             lector: $prestamo->getLector()?->toArray()
         );

@@ -28,7 +28,11 @@ $prestamoService = new PrestamoService(
 
 $prestamoController = new PrestamoController($prestamoService);
 
-// Rutas específicas primero (para evitar conflicto con {id})
+// Rutas específicas primero (para evitar conflictos con parámetros dinámicos)
+$router->get('/lectores/me/prestamos', function () use ($prestamoController) {
+    $prestamoController->getMisPrestamos();
+});
+
 $router->get('/lector/{lectorId}/prestamos', function ($lectorId) use ($prestamoController) {
     $prestamoController->getByLector($lectorId);
 });

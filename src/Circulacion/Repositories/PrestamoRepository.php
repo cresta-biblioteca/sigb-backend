@@ -54,10 +54,12 @@ class PrestamoRepository extends Repository
         $sql = "
             INSERT INTO prestamo
                 (fecha_prestamo, fecha_vencimiento, fecha_devolucion, estado,
-                 tipo_prestamo_id, ejemplar_id, lector_id)
+                 tipo_prestamo_id, ejemplar_id, lector_id,
+                 cant_renovaciones, max_renovaciones)
             VALUES
                 (:fecha_prestamo, :fecha_vencimiento, :fecha_devolucion, :estado,
-                 :tipo_prestamo_id, :ejemplar_id, :lector_id)
+                 :tipo_prestamo_id, :ejemplar_id, :lector_id,
+                 :cant_renovaciones, :max_renovaciones)
         ";
 
         $stmt = $this->pdo->prepare($sql);
@@ -69,6 +71,8 @@ class PrestamoRepository extends Repository
             'tipo_prestamo_id'   => $prestamo->getTipoPrestamoId(),
             'ejemplar_id'        => $prestamo->getEjemplarId(),
             'lector_id'          => $prestamo->getLectorId(),
+            'cant_renovaciones'  => $prestamo->getCantRenovaciones(),
+            'max_renovaciones'   => $prestamo->getMaxRenovaciones(),
         ]);
 
         $prestamo->setId((int) $this->pdo->lastInsertId());
@@ -83,7 +87,9 @@ class PrestamoRepository extends Repository
             UPDATE prestamo
             SET estado             = :estado,
                 fecha_vencimiento  = :fecha_vencimiento,
-                fecha_devolucion   = :fecha_devolucion
+                fecha_devolucion   = :fecha_devolucion,
+                tipo_prestamo_id   = :tipo_prestamo_id,
+                cant_renovaciones  = :cant_renovaciones
             WHERE id = :id
         ";
 
@@ -92,6 +98,8 @@ class PrestamoRepository extends Repository
             'estado'            => $prestamo->getEstado()->value,
             'fecha_vencimiento' => $prestamo->getFechaVencimiento()->format('Y-m-d H:i:s'),
             'fecha_devolucion'  => $prestamo->getFechaDevolucion()?->format('Y-m-d H:i:s'),
+            'tipo_prestamo_id'  => $prestamo->getTipoPrestamoId(),
+            'cant_renovaciones' => $prestamo->getCantRenovaciones(),
             'id'                => $prestamo->getId(),
         ]);
     }
