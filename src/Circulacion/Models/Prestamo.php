@@ -36,7 +36,7 @@ class Prestamo extends Entity
         int $tipoPrestamoId,
         int $ejemplarId,
         int $lectorId,
-        EstadoPrestamo $estado = EstadoPrestamo::ACTIVO
+        EstadoPrestamo $estado = EstadoPrestamo::VIGENTE
     ): self {
         $prestamo = new self();
         $prestamo->setFechaPrestamo($fechaPrestamo);
@@ -178,34 +178,40 @@ class Prestamo extends Entity
 
     public function isActivo(): bool
     {
-        return $this->estado === EstadoPrestamo::ACTIVO;
+        return $this->estado === EstadoPrestamo::VIGENTE;
     }
 
     public function isDevuelto(): bool
     {
-        return $this->estado === EstadoPrestamo::DEVUELTO;
+        return in_array($this->estado, [
+            EstadoPrestamo::COMPLETADO_EXITO,
+            EstadoPrestamo::COMPLETADO_VENCIDO,
+            EstadoPrestamo::INCONVENIENTE
+        ], true);
     }
 
     public function isVencido(): bool
     {
-        return $this->estado === EstadoPrestamo::VENCIDO
-            || ($this->isActivo() && $this->fechaVencimiento < new DateTimeImmutable());
+        return $this->isActivo() && $this->fechaVencimiento < new DateTimeImmutable();
     }
 
-    public function devolver(): void
+    public function devolver(bool $huboInconveniente = false): void
     {
-        $this->estado = EstadoPrestamo::DEVUELTO;
-        $this->fechaDevolucion = new DateTimeImmutable();
-    }
+        $ahora = new DateTimeImmutable();
+        $this->fechaDevolucion = $ahora;
 
-    public function marcarVencido(): void
-    {
-        $this->estado = EstadoPrestamo::VENCIDO;
+        if ($huboInconveniente) {
+            $this->estado = EstadoPrestamo::INCONVENIENTE;
+        } elseif ($ahora > $this->fechaVencimiento) {
+            $this->estado = EstadoPrestamo::COMPLETADO_VENCIDO;
+        } else {
+            $this->estado = EstadoPrestamo::COMPLETADO_EXITO;
+        }
     }
 
     public function renovar(DateTimeImmutable $nuevaFechaVencimiento): void
     {
-        $this->estado = EstadoPrestamo::RENOVADO;
+        $this->estado = EstadoPrestamo::VIGENTE;
         $this->fechaVencimiento = $nuevaFechaVencimiento;
     }
 

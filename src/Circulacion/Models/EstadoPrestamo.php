@@ -6,8 +6,8 @@ namespace App\Circulacion\Models;
 
 enum EstadoPrestamo: string
 {
-    case ACTIVO = 'ACTIVO';
-    case DEVUELTO = 'DEVUELTO';
-    case VENCIDO = 'VENCIDO';
-    case RENOVADO = 'RENOVADO';
+    case VIGENTE = 'VIGENTE';
+    case COMPLETADO_EXITO = 'COMPLETADO_EXITO';
+    case COMPLETADO_VENCIDO = 'COMPLETADO_VENCIDO';
+    case INCONVENIENTE = 'INCONVENIENTE';
 }
