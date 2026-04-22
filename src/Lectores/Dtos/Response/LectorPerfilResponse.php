@@ -13,6 +13,9 @@ use OpenApi\Attributes as OA;
 )]
 readonly class LectorPerfilResponse implements JsonSerializable
 {
+    /**
+     * @param string[] $carreras
+     */
     public function __construct(
         #[OA\Property(type: "string", example: "Juan")]
         private string $nombre,
@@ -28,6 +31,8 @@ readonly class LectorPerfilResponse implements JsonSerializable
         private string $telefono,
         #[OA\Property(type: "string", example: "juan@example.com")]
         private string $email,
+        #[OA\Property(type: "array", example: ["Contador Público", "Abogacía"])]
+        private array $carreras,
     ) {
     }
 
@@ -41,6 +46,7 @@ readonly class LectorPerfilResponse implements JsonSerializable
             'legajo' => $this->legajo,
             'telefono' => $this->telefono,
             'email' => $this->email,
+            'carreras' => $this->carreras,
         ];
     }
 }
