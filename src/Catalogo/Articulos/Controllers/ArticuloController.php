@@ -97,7 +97,7 @@ class ArticuloController
                 properties: [
                     new OA\Property(property: "titulo", type: "string", nullable: true, example: "Algorithms"),
                     new OA\Property(property: "anio_publicacion", type: "integer", nullable: true, example: 2011),
-                    new OA\Property(property: "tipo_documento_id", type: "integer", nullable: true, example: 1),
+                    new OA\Property(property: "tipo", type: "string", nullable: true, example: "libro"),
                     new OA\Property(property: "idioma", type: "string", nullable: true, example: "en"),
                     new OA\Property(property: "descripcion", type: "string", nullable: true),
                 ]

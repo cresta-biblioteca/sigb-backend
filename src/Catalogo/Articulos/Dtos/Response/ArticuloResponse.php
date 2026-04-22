@@ -17,22 +17,17 @@ readonly class ArticuloResponse implements JsonSerializable
         private string $titulo,
         #[OA\Property(description: "Año de publicación", type: "integer", example: 2011)]
         private int $anioPublicacion,
-        #[OA\Property(description: "ID del tipo de documento", type: "integer", example: 1)]
-        private int $tipoDocumentoId,
+        #[OA\Property(description: "Tipo de artículo según MARC21", type: "string", example: "libro")]
+        private string $tipo,
         #[OA\Property(description: "Código de idioma ISO 639-1", type: "string", example: "es")]
         private string $idioma,
         #[OA\Property(type: "string", nullable: true, example: "Introducción completa a algoritmos")]
         private ?string $descripcion = null,
-        #[OA\Property(type: "object", nullable: true)]
-        private ?array $tipoDocumento = null,
         #[OA\Property(type: "array", items: new OA\Items(type: "object"))]
         private array $temas = []
     ) {
     }
 
-    /**
-     * Getter para ID - necesario para relaciones padre-hijo (ej: crear Libro)
-     */
     public function getId(): int
     {
         return $this->id;
@@ -44,10 +39,9 @@ readonly class ArticuloResponse implements JsonSerializable
             'id' => $this->id,
             'titulo' => $this->titulo,
             'anio_publicacion' => $this->anioPublicacion,
-            'tipo_documento_id' => $this->tipoDocumentoId,
+            'tipo' => $this->tipo,
             'idioma' => $this->idioma,
             'descripcion' => $this->descripcion,
-            'tipo_documento' => $this->tipoDocumento,
             'temas' => $this->temas,
         ];
     }

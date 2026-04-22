@@ -50,7 +50,7 @@ class ArticuloService
         $articulo = Articulo::create(
             titulo: $request->getTitulo(),
             anioPublicacion: $request->getAnioPublicacion(),
-            tipoDocumentoId: $request->getTipoDocumentoId(),
+            tipo: $request->getTipo(),
             idioma: $request->getIdioma(),
             descripcion: $request->getDescripcion()
         );
@@ -73,18 +73,18 @@ class ArticuloService
 
         /** @var Articulo $existing */
 
-        $newTipoDocumentoId = array_key_exists('tipo_documento_id', $data)
-            ? (int)$data['tipo_documento_id']
-            : $existing->getTipoDocumentoId();
+        $newTipo = array_key_exists('tipo', $data)
+            ? (string)$data['tipo']
+            : $existing->getTipo();
 
         if (
-            array_key_exists('tipo_documento_id', $data)
-            && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
+            array_key_exists('tipo', $data)
+            && $newTipo !== $existing->getTipo()
             && $this->repository->isLinkedToLibro($id)
         ) {
             throw new BusinessRuleException(
-                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro',
-                'tipo_documento_id'
+                'No se puede modificar el tipo porque el artículo está asociado a un libro',
+                'tipo'
             );
         }
 
@@ -95,7 +95,7 @@ class ArticuloService
             anioPublicacion: array_key_exists('anio_publicacion', $data)
                 ? (int)$data['anio_publicacion']
                 : $existing->getAnioPublicacion(),
-            tipoDocumentoId: $newTipoDocumentoId,
+            tipo: $newTipo,
             idioma: array_key_exists('idioma', $data)
                 ? strtolower((string)$data['idioma'])
                 : $existing->getIdioma(),

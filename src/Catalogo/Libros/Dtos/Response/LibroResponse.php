@@ -59,8 +59,8 @@ readonly class LibroResponse implements JsonSerializable
         private ?string $titulo = null,
         #[OA\Property(type: "integer", nullable: true, example: 2011)]
         private ?int $anioPublicacion = null,
-        #[OA\Property(type: "integer", nullable: true, example: 1)]
-        private ?int $tipoDocumentoId = null,
+        #[OA\Property(description: "Tipo de artículo según MARC21", type: "string", nullable: true, example: "libro")]
+        private ?string $tipo = null,
         #[OA\Property(type: "string", nullable: true, example: "en")]
         private ?string $idioma = null,
         #[OA\Property(type: "string", nullable: true)]
@@ -97,7 +97,7 @@ readonly class LibroResponse implements JsonSerializable
             $data['articulo'] = [
                 'titulo' => $this->titulo,
                 'anio_publicacion' => $this->anioPublicacion,
-                'tipo_documento_id' => $this->tipoDocumentoId,
+                'tipo' => $this->tipo,
                 'idioma' => $this->idioma,
                 'descripcion' => $this->descripcion,
                 'temas' => $this->temas,

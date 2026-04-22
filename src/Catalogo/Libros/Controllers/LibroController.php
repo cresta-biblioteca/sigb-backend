@@ -70,11 +70,11 @@ readonly class LibroController
                 properties: [
                     new OA\Property(
                         property: "articulo",
-                        required: ["titulo", "anio_publicacion", "tipo_documento_id"],
+                        required: ["titulo", "anio_publicacion", "tipo"],
                         properties: [
                             new OA\Property(property: "titulo", type: "string", example: "Algorithms"),
                             new OA\Property(property: "anio_publicacion", type: "integer", example: 2011),
-                            new OA\Property(property: "tipo_documento_id", type: "integer", example: 1),
+                            new OA\Property(property: "tipo", type: "string", example: "libro"),
                             new OA\Property(property: "idioma", type: "string", example: "en"),
                             new OA\Property(property: "descripcion", type: "string", nullable: true),
                         ],

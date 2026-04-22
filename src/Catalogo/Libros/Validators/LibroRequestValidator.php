@@ -129,7 +129,7 @@ class LibroRequestValidator
             'lugar_de_publicacion',
             'titulo',
             'anio_publicacion',
-            'tipo_documento_id',
+            'tipo',
             'idioma',
             'tema_ids',
             'temas',
@@ -216,11 +216,14 @@ class LibroRequestValidator
             }
         }
 
-        if (isset($params['tipo_documento_id']) && $params['tipo_documento_id'] !== '') {
-            if (!is_numeric($params['tipo_documento_id'])) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un número'];
-            } elseif ((int) $params['tipo_documento_id'] <= 0) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser positivo'];
+        if (isset($params['tipo']) && $params['tipo'] !== '') {
+            if (!is_string($params['tipo'])) {
+                $errors['tipo'] = ['El campo tipo debe ser un string'];
+            } else {
+                $tiposValidos = ['libro', 'revista', 'tesis', 'mapa', 'partitura'];
+                if (!in_array($params['tipo'], $tiposValidos, true)) {
+                    $errors['tipo'] = ['El tipo debe ser uno de: ' . implode(', ', $tiposValidos)];
+                }
             }
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Validators;
 
+use App\Shared\Enums\TipoArticulo;
 use App\Shared\Exceptions\ValidationException;
 
 class ArticuloRequestValidator
@@ -15,7 +16,7 @@ class ArticuloRequestValidator
     private const REQUIRED_FIELDS = [
         'titulo',
         'anio_publicacion',
-        'tipo_documento_id',
+        'tipo',
     ];
 
     /**
@@ -56,10 +57,13 @@ class ArticuloRequestValidator
             }
         }
 
-        if (!is_int($data['tipo_documento_id']) && !is_numeric($data['tipo_documento_id'])) {
-            $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un número entero'];
-        } elseif ((int) $data['tipo_documento_id'] <= 0) {
-            $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un entero positivo'];
+        if (!is_string($data['tipo'])) {
+            $errors['tipo'] = ['El campo tipo debe ser un string'];
+        } else {
+            $tiposValidos = array_column(TipoArticulo::cases(), 'value');
+            if (!in_array($data['tipo'], $tiposValidos, true)) {
+                $errors['tipo'] = ['El tipo debe ser uno de: ' . implode(', ', $tiposValidos)];
+            }
         }
 
         if (isset($data['idioma'])) {
@@ -113,7 +117,7 @@ class ArticuloRequestValidator
             }
         }
 
-        $allowedFields = ['titulo', 'anio_publicacion', 'tipo_documento_id', 'idioma', 'descripcion'];
+        $allowedFields = ['titulo', 'anio_publicacion', 'tipo', 'idioma', 'descripcion'];
         foreach (array_keys($data) as $field) {
             if (!in_array($field, $allowedFields, true)) {
                 $errors[$field] = ["El campo {$field} no es válido para PATCH"];
@@ -149,11 +153,14 @@ class ArticuloRequestValidator
             }
         }
 
-        if (array_key_exists('tipo_documento_id', $data)) {
-            if (!is_int($data['tipo_documento_id']) && !is_numeric($data['tipo_documento_id'])) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un número entero'];
-            } elseif ((int) $data['tipo_documento_id'] <= 0) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un entero positivo'];
+        if (array_key_exists('tipo', $data)) {
+            if (!is_string($data['tipo'])) {
+                $errors['tipo'] = ['El campo tipo debe ser un string'];
+            } else {
+                $tiposValidos = array_column(TipoArticulo::cases(), 'value');
+                if (!in_array($data['tipo'], $tiposValidos, true)) {
+                    $errors['tipo'] = ['El tipo debe ser uno de: ' . implode(', ', $tiposValidos)];
+                }
             }
         }
 

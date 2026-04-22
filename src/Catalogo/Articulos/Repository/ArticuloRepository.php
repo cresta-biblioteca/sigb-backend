@@ -27,14 +27,14 @@ class ArticuloRepository extends Repository
     public function insertArticulo(Articulo $articulo): Articulo
     {
         $sql = 'INSERT INTO articulo
-				(titulo, anio_publicacion, tipo_documento_id, idioma, descripcion, created_at, updated_at)
-				VALUES (:titulo, :anio_publicacion, :tipo_documento_id, :idioma, :descripcion, NOW(), NOW())';
+				(titulo, anio_publicacion, tipo, idioma, descripcion, created_at, updated_at)
+				VALUES (:titulo, :anio_publicacion, :tipo, :idioma, :descripcion, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
             'titulo' => $articulo->getTitulo(),
             'anio_publicacion' => $articulo->getAnioPublicacion(),
-            'tipo_documento_id' => $articulo->getTipoDocumentoId(),
+            'tipo' => $articulo->getTipo(),
             'idioma' => $articulo->getIdioma(),
             'descripcion' => $articulo->getDescripcion(),
         ]);
@@ -53,7 +53,7 @@ class ArticuloRepository extends Repository
         $sql = 'UPDATE articulo
 				SET titulo = :titulo,
 					anio_publicacion = :anio_publicacion,
-					tipo_documento_id = :tipo_documento_id,
+					tipo = :tipo,
 					idioma = :idioma,
 					descripcion = :descripcion,
 					updated_at = NOW()
@@ -63,7 +63,7 @@ class ArticuloRepository extends Repository
         $success = $stmt->execute([
             'titulo' => $articulo->getTitulo(),
             'anio_publicacion' => $articulo->getAnioPublicacion(),
-            'tipo_documento_id' => $articulo->getTipoDocumentoId(),
+            'tipo' => $articulo->getTipo(),
             'idioma' => $articulo->getIdioma(),
             'descripcion' => $articulo->getDescripcion(),
             'id' => $id,
@@ -189,6 +189,7 @@ class ArticuloRepository extends Repository
         /** @var string[] */
         return $stmt->fetchAll(\PDO::FETCH_COLUMN);
     }
+
     public function getDeleteBlockingRelation(int $articuloId): ?string
     {
         $relations = [

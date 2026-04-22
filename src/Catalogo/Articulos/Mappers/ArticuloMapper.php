@@ -15,10 +15,9 @@ class ArticuloMapper
             id: $articulo->getId() ?? 0,
             titulo: $articulo->getTitulo(),
             anioPublicacion: $articulo->getAnioPublicacion(),
-            tipoDocumentoId: $articulo->getTipoDocumentoId(),
+            tipo: $articulo->getTipo(),
             idioma: $articulo->getIdioma(),
             descripcion: $articulo->getDescripcion(),
-            tipoDocumento: $articulo->getTipoDocumento()?->toArray(),
             temas: array_map(
                 fn($tema) => $tema->toArray(),
                 $articulo->getTemas()

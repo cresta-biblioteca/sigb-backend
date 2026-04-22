@@ -36,17 +36,10 @@ function withJsonInput(array $payload, callable $callback): void
 }
 
 test('getById obtiene articulo por id correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Integracion',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -57,28 +50,21 @@ test('getById obtiene articulo por id correctamente', function () {
     $response = json_decode($output, true);
 
     expect($response['titulo'])->toBe('Articulo Integracion')
-        ->and($response['tipo_documento_id'])->toBe($tipoDocumentoId);
+        ->and($response['tipo'])->toBe('libro');
 });
 
 test('getAll lista articulos correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $this->insertInto('articulo', [
         'titulo' => 'Articulo A',
         'anio_publicacion' => 2020,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
     $this->insertInto('articulo', [
         'titulo' => 'Articulo B',
         'anio_publicacion' => 2021,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'revista',
         'idioma' => 'es',
     ]);
 
@@ -104,17 +90,10 @@ test('getById devuelve 404 para articulo inexistente', function () {
 });
 
 test('patchArticulo actualiza articulo correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Titulo Original',
         'anio_publicacion' => 2023,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -135,17 +114,10 @@ test('patchArticulo actualiza articulo correctamente', function () {
 });
 
 test('deleteArticulo elimina articulo correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo a Eliminar',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -160,17 +132,10 @@ test('deleteArticulo elimina articulo correctamente', function () {
 });
 
 test('addTemaToArticulo agrega tema al articulo correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo con tema',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -192,17 +157,10 @@ test('addTemaToArticulo agrega tema al articulo correctamente', function () {
 });
 
 test('addTemaToArticulo devuelve 409 cuando tema ya esta agregado', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo con tema repetido',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -226,17 +184,10 @@ test('addTemaToArticulo devuelve 409 cuando tema ya esta agregado', function () 
 });
 
 test('addTemaToArticulo devuelve 404 cuando tema no existe', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo sin tema existente',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -251,17 +202,10 @@ test('addTemaToArticulo devuelve 404 cuando tema no existe', function () {
 });
 
 test('deleteTemaFromArticulo elimina tema del articulo correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo para eliminar tema',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -288,17 +232,10 @@ test('deleteTemaFromArticulo elimina tema del articulo correctamente', function 
 });
 
 test('deleteTemaFromArticulo devuelve 409 cuando la relacion ya fue eliminada', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo sin relacion',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -332,17 +269,10 @@ test('deleteTemaFromArticulo devuelve 404 cuando el articulo no existe', functio
 });
 
 test('getTemaTitlesByArticulo devuelve array de titulos de temas', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo con multiples temas',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -413,4 +343,3 @@ test('getTemaTitlesByArticulo devuelve 400 cuando idArticulo no es numerico', fu
     expect($response['errors'])->toHaveKey('id');
     expect(http_response_code())->toBe(400);
 });
-
