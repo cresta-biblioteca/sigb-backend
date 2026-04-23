@@ -36,17 +36,10 @@ function withJsonInputEjemplar(array $payload, callable $callback): void
 }
 
 test('create crea ejemplar correctamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Ejemplar',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -70,17 +63,10 @@ test('create crea ejemplar correctamente', function () {
 });
 
 test('getByArticuloId devuelve ejemplares del articulo', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Ejemplar',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -107,17 +93,10 @@ test('getByArticuloId devuelve ejemplares del articulo', function () {
 });
 
 test('deshabilitar cambia estado del ejemplar', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Ejemplar',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 

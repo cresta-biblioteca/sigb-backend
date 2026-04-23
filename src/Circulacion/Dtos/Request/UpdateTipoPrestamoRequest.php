@@ -27,6 +27,7 @@ readonly class UpdateTipoPrestamoRequest
         )]
         public ?string $descripcion = null,
         #[OA\Property(
+            property: "max_cantidad_prestamos",
             description: "Cantidad de prestamos maximos",
             type: "integer",
             example: 30,
@@ -34,13 +35,15 @@ readonly class UpdateTipoPrestamoRequest
         )]
         public ?int $maxCantidadPrestamos = null,
         #[OA\Property(
-            description: "Duracion del prestamo",
+            property: "duracion",
+            description: "Duracion del prestamo en dias",
             type: "integer",
             example: 7,
             nullable: true
         )]
         public ?int $duracionPrestamo = null,
         #[OA\Property(
+            property: "renovaciones",
             description: "Cantidad de renovaciones que se pueden realizar sobre ese prestamo",
             type: "integer",
             example: 4,
@@ -48,6 +51,7 @@ readonly class UpdateTipoPrestamoRequest
         )]
         public ?int $renovaciones = null,
         #[OA\Property(
+            property: "dias_renovacion",
             description: "Dias que dura la renovacion",
             type: "integer",
             example: 7,
@@ -55,6 +59,7 @@ readonly class UpdateTipoPrestamoRequest
         )]
         public ?int $diasRenovacion = null,
         #[OA\Property(
+            property: "cant_dias_renovar",
             description: "Cantidad de dias para renovar un prestamo",
             type: "integer",
             example: 0,

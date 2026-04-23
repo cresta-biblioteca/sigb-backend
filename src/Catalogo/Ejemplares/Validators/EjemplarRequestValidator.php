@@ -46,9 +46,9 @@ class EjemplarRequestValidator
         }
     }
 
-    public static function validateId(int $id, string $field = 'id'): void
+    public static function validateId(string $id, string $field = 'id'): void
     {
-        if ($id < 1) {
+        if (!ctype_digit($id) || (int) $id < 1) {
             throw ValidationException::forField($field, sprintf('El campo %s debe ser un entero positivo', $field));
         }
     }

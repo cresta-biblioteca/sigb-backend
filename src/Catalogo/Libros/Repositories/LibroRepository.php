@@ -43,7 +43,7 @@ class LibroRepository extends Repository
             a.id AS a_id,
             a.titulo AS a_titulo,
             a.anio_publicacion AS a_anio_publicacion,
-            a.tipo_documento_id AS a_tipo_documento_id,
+            a.tipo AS a_tipo,
             a.idioma AS a_idioma,
             a.descripcion AS a_descripcion,
             a.created_at AS a_created_at,
@@ -252,7 +252,7 @@ class LibroRepository extends Repository
                 a.id AS a_id,
                 a.titulo AS a_titulo,
                 a.anio_publicacion AS a_anio_publicacion,
-                a.tipo_documento_id AS a_tipo_documento_id,
+                a.tipo AS a_tipo,
                 a.idioma AS a_idioma,
                 a.descripcion AS a_descripcion,
                 a.created_at AS a_created_at,
@@ -395,9 +395,9 @@ class LibroRepository extends Repository
             $params['a_anio_publicacion'] = (int)$filters['anio_publicacion'];
         }
 
-        if (!empty($filters['tipo_documento_id'])) {
-            $conditions[] = 'a.tipo_documento_id = :a_tipo_documento_id';
-            $params['a_tipo_documento_id'] = (int)$filters['tipo_documento_id'];
+        if (!empty($filters['tipo'])) {
+            $conditions[] = 'a.tipo = :a_tipo';
+            $params['a_tipo'] = (string)$filters['tipo'];
         }
 
         if (!empty($filters['idioma'])) {
@@ -551,7 +551,7 @@ class LibroRepository extends Repository
                 'id' => $row['a_id'],
                 'titulo' => $row['a_titulo'],
                 'anio_publicacion' => $row['a_anio_publicacion'],
-                'tipo_documento_id' => $row['a_tipo_documento_id'],
+                'tipo' => $row['a_tipo'],
                 'idioma' => $row['a_idioma'],
                 'descripcion' => $row['a_descripcion'] ?? null
             ]);

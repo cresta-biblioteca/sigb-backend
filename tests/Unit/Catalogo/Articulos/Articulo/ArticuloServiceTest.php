@@ -20,11 +20,11 @@ test('crea un articulo exitosamente', function () {
     $request = new ArticuloRequest(
         titulo: 'Articulo de prueba',
         anioPublicacion: 2024,
-        tipoDocumentoId: 1,
+        tipo: 'libro',
         idioma: 'es'
     );
 
-    $articuloCreado = Articulo::create('Articulo de prueba', 2024, 1, 'es');
+    $articuloCreado = Articulo::create('Articulo de prueba', 2024, 'libro', 'es');
     $articuloCreado->setId(10);
 
     $this->repositoryMock
@@ -39,11 +39,11 @@ test('crea un articulo exitosamente', function () {
     expect($result)->toBeInstanceOf(ArticuloResponse::class);
     expect($result->getId())->toBe(10);
     expect($data['titulo'])->toBe('Articulo de prueba');
-    expect($data['tipo_documento_id'])->toBe(1);
+    expect($data['tipo'])->toBe('libro');
 });
 
 test('obtiene articulo por id exitosamente', function () {
-    $articulo = Articulo::create('Articulo por id', 2020, 2, 'es');
+    $articulo = Articulo::create('Articulo por id', 2020, 'revista', 'es');
     $articulo->setId(55);
 
     $this->repositoryMock
@@ -70,10 +70,10 @@ test('lanza excepcion al obtener articulo inexistente', function () {
 });
 
 test('actualiza articulo parcialmente exitosamente', function () {
-    $existing = Articulo::create('Titulo viejo', 2019, 1, 'es');
+    $existing = Articulo::create('Titulo viejo', 2019, 'libro', 'es');
     $existing->setId(12);
 
-    $updated = Articulo::create('Titulo nuevo', 2019, 1, 'es');
+    $updated = Articulo::create('Titulo nuevo', 2019, 'libro', 'es');
     $updated->setId(12);
 
     $this->repositoryMock
@@ -98,8 +98,8 @@ test('actualiza articulo parcialmente exitosamente', function () {
     expect($data['titulo'])->toBe('Titulo nuevo');
 });
 
-test('lanza excepcion cuando intenta cambiar tipo_documento_id y esta vinculado a libro', function () {
-    $existing = Articulo::create('Titulo viejo', 2019, 1, 'es');
+test('lanza excepcion cuando intenta cambiar tipo y esta vinculado a libro', function () {
+    $existing = Articulo::create('Titulo viejo', 2019, 'libro', 'es');
     $existing->setId(12);
 
     $this->repositoryMock
@@ -115,12 +115,12 @@ test('lanza excepcion cuando intenta cambiar tipo_documento_id y esta vinculado 
         ->willReturn(true);
 
     expect(fn () => $this->service->patchArticulo(12, [
-        'tipo_documento_id' => 2,
+        'tipo' => 'revista',
     ]))->toThrow(BusinessRuleException::class);
 });
 
 test('elimina articulo exitosamente', function () {
-    $articulo = Articulo::create('Articulo a borrar', 2022, 1, 'es');
+    $articulo = Articulo::create('Articulo a borrar', 2022, 'libro', 'es');
     $articulo->setId(30);
 
     $this->repositoryMock
@@ -138,10 +138,10 @@ test('elimina articulo exitosamente', function () {
 });
 
 test('obtiene lista completa de articulos', function () {
-    $articulo1 = Articulo::create('A', 2020, 1, 'es');
+    $articulo1 = Articulo::create('A', 2020, 'libro', 'es');
     $articulo1->setId(1);
 
-    $articulo2 = Articulo::create('B', 2021, 1, 'es');
+    $articulo2 = Articulo::create('B', 2021, 'tesis', 'es');
     $articulo2->setId(2);
 
     $this->repositoryMock
@@ -157,7 +157,7 @@ test('obtiene lista completa de articulos', function () {
 });
 
 test('agrega tema a articulo exitosamente', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -198,7 +198,7 @@ test('lanza excepcion al agregar tema a articulo inexistente', function () {
 });
 
 test('lanza excepcion al agregar tema inexistente', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -218,7 +218,7 @@ test('lanza excepcion al agregar tema inexistente', function () {
 });
 
 test('lanza excepcion cuando tema ya esta agregado al articulo', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -244,7 +244,7 @@ test('lanza excepcion cuando tema ya esta agregado al articulo', function () {
 });
 
 test('elimina tema de articulo exitosamente', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -285,7 +285,7 @@ test('lanza excepcion al eliminar tema de articulo inexistente', function () {
 });
 
 test('lanza excepcion al eliminar tema inexistente', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -305,7 +305,7 @@ test('lanza excepcion al eliminar tema inexistente', function () {
 });
 
 test('lanza excepcion cuando tema ya no pertenece al articulo', function () {
-    $articulo = Articulo::create('Articulo con tema', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con tema', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -331,7 +331,7 @@ test('lanza excepcion cuando tema ya no pertenece al articulo', function () {
 });
 
 test('obtiene titulos de temas por articulo id', function () {
-    $articulo = Articulo::create('Articulo con temas', 2024, 1, 'es');
+    $articulo = Articulo::create('Articulo con temas', 2024, 'libro', 'es');
     $articulo->setId(10);
 
     $this->repositoryMock
@@ -361,4 +361,3 @@ test('lanza excepcion al obtener temas de articulo inexistente', function () {
     expect(fn () => $this->service->getTemaTitlesByArticuloId(999))
         ->toThrow(ArticuloNotFoundException::class);
 });
-

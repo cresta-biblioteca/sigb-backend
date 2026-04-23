@@ -49,7 +49,7 @@ class LibroMapper
             // Información del artículo (si está disponible)
             titulo: $articulo?->getTitulo(),
             anioPublicacion: $articulo?->getAnioPublicacion(),
-            tipoDocumentoId: $articulo?->getTipoDocumentoId(),
+            tipo: $articulo?->getTipo(),
             idioma: $articulo?->getIdioma(),
             descripcion: $articulo?->getDescripcion(),
             temas: $temas,

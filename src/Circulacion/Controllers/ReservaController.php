@@ -292,13 +292,13 @@ readonly class ReservaController
             new OA\Response(response: 500, description: "Error interno del servidor")
         ]
     )]
-    public function getReservaById(int $id): void
+    public function getReservaById(string $id): void
     {
-        if ($id < 1) {
+        if (!ctype_digit($id) || (int) $id < 1) {
             throw ValidationException::forField('id', 'El ID debe ser un entero positivo mayor que 0');
         }
 
-        $response = $this->reservaService->getReservaById($id);
+        $response = $this->reservaService->getReservaById((int) $id);
         JsonHelper::jsonResponse($response);
     }
 
@@ -349,13 +349,13 @@ readonly class ReservaController
             new OA\Response(response: 500, description: "Error interno del servidor")
         ]
     )]
-    public function cancelarReserva(int $idReserva): void
+    public function cancelarReserva(string $idReserva): void
     {
-        if ($idReserva < 1) {
+        if (!ctype_digit($idReserva) || (int) $idReserva < 1) {
             throw ValidationException::forField('id', 'El ID debe ser un entero positivo mayor que 0');
         }
 
-        $this->reservaService->cancelarReserva($idReserva);
+        $this->reservaService->cancelarReserva((int) $idReserva);
         JsonHelper::jsonResponse(["message" => "Reserva cancelada exitosamente"], 200);
     }
 

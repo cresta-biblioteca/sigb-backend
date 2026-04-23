@@ -28,7 +28,12 @@ readonly class PrestamoResponse implements JsonSerializable
         private int $id,
         #[OA\Property(property: "fecha_prestamo", type: "string", format: "date-time", example: "2026-04-12 14:00:00")]
         private string $fechaPrestamo,
-        #[OA\Property(property: "fecha_vencimiento", type: "string", format: "date-time", example: "2026-04-27 14:00:00")]
+        #[OA\Property(
+            property: "fecha_vencimiento",
+            type: "string",
+            format: "date-time",
+            example: "2026-04-27 14:00:00"
+        )]
         private string $fechaVencimiento,
         #[OA\Property(property: "fecha_devolucion", type: "string", format: "date-time", example: null, nullable: true)]
         private ?string $fechaDevolucion,

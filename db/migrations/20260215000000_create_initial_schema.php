@@ -13,17 +13,6 @@ final class CreateInitialSchema extends AbstractMigration
         // ============================================================
 
         $this->execute("
-            CREATE TABLE tipo_documento (
-                id BIGINT NOT NULL AUTO_INCREMENT,
-                codigo VARCHAR(3) NOT NULL,
-                descripcion VARCHAR(100) NOT NULL,
-                renovable BOOL NOT NULL DEFAULT 1,
-                detalle VARCHAR(100) NULL,
-                CONSTRAINT tipo_documento_pk PRIMARY KEY (id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
-
-        $this->execute("
             CREATE TABLE tipo_prestamo (
                 id BIGINT NOT NULL AUTO_INCREMENT,
                 codigo VARCHAR(3) NOT NULL,
@@ -45,14 +34,6 @@ final class CreateInitialSchema extends AbstractMigration
                 id BIGINT NOT NULL AUTO_INCREMENT,
                 titulo VARCHAR(100) NOT NULL,
                 CONSTRAINT tema_pk PRIMARY KEY (id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
-
-        $this->execute("
-            CREATE TABLE materia (
-                id BIGINT NOT NULL AUTO_INCREMENT,
-                titulo VARCHAR(100) NOT NULL,
-                CONSTRAINT materia_pk PRIMARY KEY (id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
@@ -129,6 +110,7 @@ final class CreateInitialSchema extends AbstractMigration
 
         // ============================================================
         // TABLAS DE CATÁLOGO
+        // tipo VARCHAR(30): valores según MARC21 (libro, revista, tesis, mapa, partitura)
         // ============================================================
 
         $this->execute("
@@ -136,7 +118,7 @@ final class CreateInitialSchema extends AbstractMigration
                 id BIGINT NOT NULL AUTO_INCREMENT,
                 titulo VARCHAR(100) NOT NULL,
                 anio_publicacion INT NOT NULL,
-                tipo_documento_id BIGINT NOT NULL,
+                tipo VARCHAR(30) NOT NULL,
                 idioma VARCHAR(2) NOT NULL DEFAULT 'es',
                 descripcion VARCHAR(255) NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -206,22 +188,6 @@ final class CreateInitialSchema extends AbstractMigration
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
 
-        $this->execute("
-            CREATE TABLE materia_articulo (
-                articulo_id BIGINT NOT NULL,
-                materia_id BIGINT NOT NULL,
-                CONSTRAINT materia_articulo_pk PRIMARY KEY (articulo_id, materia_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
-
-        $this->execute("
-            CREATE TABLE carrera_materia (
-                carrera_id BIGINT NOT NULL,
-                materia_id BIGINT NOT NULL,
-                CONSTRAINT carrera_materia_pk PRIMARY KEY (carrera_id, materia_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
-
         // ============================================================
         // TABLAS DE LECTORES
         // ============================================================
@@ -269,6 +235,8 @@ final class CreateInitialSchema extends AbstractMigration
                 tipo_prestamo_id BIGINT NOT NULL,
                 ejemplar_id BIGINT NOT NULL,
                 lector_id BIGINT NOT NULL,
+                cant_renovaciones INT UNSIGNED NOT NULL DEFAULT 0,
+                max_renovaciones INT UNSIGNED NOT NULL DEFAULT 0,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 CONSTRAINT prestamo_pk PRIMARY KEY (id)
@@ -310,12 +278,6 @@ final class CreateInitialSchema extends AbstractMigration
                 FOREIGN KEY (permiso_id) REFERENCES permiso (id);
         ");
 
-        // articulo -> tipo_documento
-        $this->execute("
-            ALTER TABLE articulo ADD CONSTRAINT fk_articulo_tipo_documento
-                FOREIGN KEY (tipo_documento_id) REFERENCES tipo_documento (id);
-        ");
-
         // libro -> articulo
         $this->execute("
             ALTER TABLE libro ADD CONSTRAINT fk_libro_articulo
@@ -336,26 +298,6 @@ final class CreateInitialSchema extends AbstractMigration
         $this->execute("
             ALTER TABLE articulo_tema ADD CONSTRAINT fk_articulo_tema_tema
                 FOREIGN KEY (tema_id) REFERENCES tema (id);
-        ");
-
-        // materia_articulo -> articulo, materia
-        $this->execute("
-            ALTER TABLE materia_articulo ADD CONSTRAINT fk_materia_articulo_articulo
-                FOREIGN KEY (articulo_id) REFERENCES articulo (id);
-        ");
-        $this->execute("
-            ALTER TABLE materia_articulo ADD CONSTRAINT fk_materia_articulo_materia
-                FOREIGN KEY (materia_id) REFERENCES materia (id);
-        ");
-
-        // carrera_materia -> carrera, materia
-        $this->execute("
-            ALTER TABLE carrera_materia ADD CONSTRAINT fk_carrera_materia_carrera
-                FOREIGN KEY (carrera_id) REFERENCES carrera (id);
-        ");
-        $this->execute("
-            ALTER TABLE carrera_materia ADD CONSTRAINT fk_carrera_materia_materia
-                FOREIGN KEY (materia_id) REFERENCES materia (id);
         ");
 
         // lector -> user
@@ -417,7 +359,7 @@ final class CreateInitialSchema extends AbstractMigration
 
         $this->execute("CREATE INDEX idx_ejemplar_articulo ON ejemplar (articulo_id);");
 
-        $this->execute("CREATE INDEX idx_articulo_tipo_documento ON articulo (tipo_documento_id);");
+        $this->execute("CREATE INDEX idx_articulo_tipo ON articulo (tipo);");
         $this->execute("CREATE INDEX idx_articulo_anio ON articulo (anio_publicacion);");
 
         $this->execute("CREATE INDEX idx_lector_apellido ON lector (apellido);");
@@ -425,13 +367,10 @@ final class CreateInitialSchema extends AbstractMigration
 
     public function down(): void
     {
-        // Eliminar en orden inverso por las FK
         $this->execute("DROP TABLE IF EXISTS reserva;");
         $this->execute("DROP TABLE IF EXISTS prestamo;");
         $this->execute("DROP TABLE IF EXISTS lector_carrera;");
         $this->execute("DROP TABLE IF EXISTS lector;");
-        $this->execute("DROP TABLE IF EXISTS carrera_materia;");
-        $this->execute("DROP TABLE IF EXISTS materia_articulo;");
         $this->execute("DROP TABLE IF EXISTS articulo_tema;");
         $this->execute("DROP TABLE IF EXISTS ejemplar;");
         $this->execute("DROP TABLE IF EXISTS libro_persona;");
@@ -443,9 +382,7 @@ final class CreateInitialSchema extends AbstractMigration
         $this->execute("DROP TABLE IF EXISTS role;");
         $this->execute("DROP TABLE IF EXISTS permiso;");
         $this->execute("DROP TABLE IF EXISTS carrera;");
-        $this->execute("DROP TABLE IF EXISTS materia;");
         $this->execute("DROP TABLE IF EXISTS tema;");
         $this->execute("DROP TABLE IF EXISTS tipo_prestamo;");
-        $this->execute("DROP TABLE IF EXISTS tipo_documento;");
     }
 }

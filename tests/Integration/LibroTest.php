@@ -41,18 +41,11 @@ function withJsonInputLibro(array $payload, callable $callback): void
 }
 
 test('create crea libro completo con articulo y personas', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     withJsonInputLibro([
         'articulo' => [
             'titulo' => 'Clean Code: A Handbook of Agile Software Craftsmanship',
             'anio_publicacion' => 2008,
-            'tipo_documento_id' => $tipoDocumentoId,
+            'tipo' => 'libro',
             'idioma' => 'en'
         ],
         'libro' => [
@@ -91,17 +84,10 @@ test('create crea libro completo con articulo y personas', function () {
 });
 
 test('create falla con isbn duplicado', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId1 = $this->insertInto('articulo', [
         'titulo' => 'Articulo Uno',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -116,7 +102,7 @@ test('create falla con isbn duplicado', function () {
         'articulo' => [
             'titulo' => 'Otro libro',
             'anio_publicacion' => 2024,
-            'tipo_documento_id' => $tipoDocumentoId,
+            'tipo' => 'libro',
             'idioma' => 'es'
         ],
         'libro' => [
@@ -136,17 +122,10 @@ test('create falla con isbn duplicado', function () {
 });
 
 test('update actualiza libro y personas exitosamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Libro Original',
         'anio_publicacion' => 2020,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -182,17 +161,10 @@ test('update actualiza libro y personas exitosamente', function () {
 });
 
 test('delete elimina libro exitosamente', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Libro a Eliminar',
         'anio_publicacion' => 2020,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -214,19 +186,12 @@ test('delete elimina libro exitosamente', function () {
 });
 
 test('listAll filtra libros con paginacion y metadatos', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     // Crear múltiples libros para probar paginación
     for ($i = 1; $i <= 15; $i++) {
         $articuloId = $this->insertInto('articulo', [
             'titulo' => "Libro Test $i",
             'anio_publicacion' => 2020 + $i,
-            'tipo_documento_id' => $tipoDocumentoId,
+            'tipo' => 'libro',
             'idioma' => 'es',
         ]);
 
@@ -261,17 +226,10 @@ test('listAll filtra libros con paginacion y metadatos', function () {
 });
 
 test('getById retorna libro con todos los campos', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Libro Completo Test',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -317,19 +275,12 @@ test('getById retorna libro con todos los campos', function () {
 });
 
 test('deduplicación de personas al crear dos libros con mismo autor', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     // Crear primer libro con autor
     withJsonInputLibro([
         'articulo' => [
             'titulo' => 'Libro Uno',
             'anio_publicacion' => 2020,
-            'tipo_documento_id' => $tipoDocumentoId,
+            'tipo' => 'libro',
             'idioma' => 'es'
         ],
         'libro' => [
@@ -349,7 +300,7 @@ test('deduplicación de personas al crear dos libros con mismo autor', function 
         'articulo' => [
             'titulo' => 'Libro Dos',
             'anio_publicacion' => 2021,
-            'tipo_documento_id' => $tipoDocumentoId,
+            'tipo' => 'libro',
             'idioma' => 'es'
         ],
         'libro' => [
@@ -372,13 +323,6 @@ test('deduplicación de personas al crear dos libros con mismo autor', function 
 });
 
 test('search filtra libros por titulos de temas', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $temaProgramacionId = $this->insertInto('tema', [
         'titulo' => 'Programacion',
     ]);
@@ -390,7 +334,7 @@ test('search filtra libros por titulos de temas', function () {
     $articuloProgramacionId = $this->insertInto('articulo', [
         'titulo' => 'Libro de Programacion',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -409,7 +353,7 @@ test('search filtra libros por titulos de temas', function () {
     $articuloHistoriaId = $this->insertInto('articulo', [
         'titulo' => 'Libro de Historia',
         'anio_publicacion' => 2023,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -440,13 +384,6 @@ test('search filtra libros por titulos de temas', function () {
 });
 
 test('searchPaginated filtra libros por multiples temas', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $temaProgramacionId = $this->insertInto('tema', [
         'titulo' => 'Programacion',
     ]);
@@ -458,7 +395,7 @@ test('searchPaginated filtra libros por multiples temas', function () {
     $articuloUnoId = $this->insertInto('articulo', [
         'titulo' => 'Libro Uno',
         'anio_publicacion' => 2024,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -477,7 +414,7 @@ test('searchPaginated filtra libros por multiples temas', function () {
     $articuloDosId = $this->insertInto('articulo', [
         'titulo' => 'Libro Dos',
         'anio_publicacion' => 2022,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'es',
     ]);
 
@@ -511,17 +448,10 @@ test('searchPaginated filtra libros por multiples temas', function () {
 });
 
 test('search filtra libros por persona', function () {
-    $tipoDocumentoId = $this->insertInto('tipo_documento', [
-        'codigo' => 'LIB',
-        'descripcion' => 'Libro',
-        'renovable' => 1,
-        'detalle' => 'Material bibliografico',
-    ]);
-
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Introduction to Algorithms',
         'anio_publicacion' => 2009,
-        'tipo_documento_id' => $tipoDocumentoId,
+        'tipo' => 'libro',
         'idioma' => 'en',
     ]);
 

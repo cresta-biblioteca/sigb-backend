@@ -9,7 +9,7 @@ readonly class ArticuloRequest
     public function __construct(
         private string $titulo,
         private int $anioPublicacion,
-        private int $tipoDocumentoId,
+        private string $tipo,
         private string $idioma = 'es',
         private ?string $descripcion = null
     ) {
@@ -25,9 +25,9 @@ readonly class ArticuloRequest
         return $this->anioPublicacion;
     }
 
-    public function getTipoDocumentoId(): int
+    public function getTipo(): string
     {
-        return $this->tipoDocumentoId;
+        return $this->tipo;
     }
 
     public function getIdioma(): string

@@ -15,6 +15,7 @@ use App\Catalogo\Libros\Mappers\LibroMapper;
 use App\Catalogo\Libros\Models\Libro;
 use App\Catalogo\Libros\Repositories\LibroRepository;
 use App\Catalogo\Libros\Repositories\PersonaRepository;
+use App\Shared\Enums\TipoArticulo;
 use App\Shared\Exceptions\BusinessRuleException;
 use PDO;
 
@@ -61,7 +62,7 @@ readonly class LibroService
             $articulo = Articulo::create(
                 titulo: $request->titulo,
                 anioPublicacion: $request->anioPublicacion,
-                tipoDocumentoId: $request->tipoDocumentoId,
+                tipo: TipoArticulo::LIBRO->value,
                 idioma: $request->idioma,
                 descripcion: $request->descripcion
             );

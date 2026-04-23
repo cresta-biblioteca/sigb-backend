@@ -267,7 +267,7 @@ class PrestamoController
 
     #[OA\Get(
         path: "/lector/{lectorId}/prestamos",
-        description: "Obtiene todos los préstamos de un lector, opcionalmente filtrados por estado. Solo para administradores.",
+        description: "Obtiene todos los préstamos de un lector, opcionalmente filtrados por estado.",
         summary: "Préstamos de un lector (admin)",
         tags: ["Préstamos"],
         parameters: [

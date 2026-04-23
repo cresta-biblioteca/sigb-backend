@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Catalogo\Articulos\Services;
 
 use App\Catalogo\Articulos\Dtos\Request\ArticuloRequest;
+use App\Catalogo\Articulos\Dtos\Request\PatchArticuloRequest;
 use App\Catalogo\Articulos\Dtos\Response\ArticuloResponse;
 use App\Catalogo\Articulos\Exceptions\ArticuloNotFoundException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
@@ -13,8 +14,6 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
-use App\Shared\Exceptions\BusinessRuleException;
-
 class ArticuloService
 {
     public function __construct(private ArticuloRepository $repository)
@@ -50,7 +49,7 @@ class ArticuloService
         $articulo = Articulo::create(
             titulo: $request->getTitulo(),
             anioPublicacion: $request->getAnioPublicacion(),
-            tipoDocumentoId: $request->getTipoDocumentoId(),
+            tipo: $request->getTipo(),
             idioma: $request->getIdioma(),
             descripcion: $request->getDescripcion()
         );
@@ -60,10 +59,7 @@ class ArticuloService
         return ArticuloMapper::toArticuloResponse($created);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    public function patchArticulo(int $id, array $data): ArticuloResponse
+    public function patchArticulo(int $id, PatchArticuloRequest $request): ArticuloResponse
     {
         $existing = $this->repository->findById($id);
 
@@ -71,40 +67,23 @@ class ArticuloService
             throw new ArticuloNotFoundException();
         }
 
-        /** @var Articulo $existing */
+        $patchable = ['titulo', 'anio_publicacion', 'idioma', 'descripcion'];
+        $provided = array_values(array_intersect($request->provided, $patchable));
 
-        $newTipoDocumentoId = array_key_exists('tipo_documento_id', $data)
-            ? (int)$data['tipo_documento_id']
-            : $existing->getTipoDocumentoId();
-
-        if (
-            array_key_exists('tipo_documento_id', $data)
-            && $newTipoDocumentoId !== $existing->getTipoDocumentoId()
-            && $this->repository->isLinkedToLibro($id)
-        ) {
-            throw new BusinessRuleException(
-                'No se puede modificar tipo_documento_id porque el artículo está asociado a un libro',
-                'tipo_documento_id'
-            );
+        if ($request->isProvided('titulo')) {
+            $existing->setTitulo($request->titulo);
+        }
+        if ($request->isProvided('anio_publicacion')) {
+            $existing->setAnioPublicacion($request->anioPublicacion);
+        }
+        if ($request->isProvided('idioma')) {
+            $existing->setIdioma($request->idioma);
+        }
+        if ($request->isProvided('descripcion')) {
+            $existing->setDescripcion($request->descripcion);
         }
 
-        $articulo = Articulo::create(
-            titulo: array_key_exists('titulo', $data)
-                ? trim((string)$data['titulo'])
-                : $existing->getTitulo(),
-            anioPublicacion: array_key_exists('anio_publicacion', $data)
-                ? (int)$data['anio_publicacion']
-                : $existing->getAnioPublicacion(),
-            tipoDocumentoId: $newTipoDocumentoId,
-            idioma: array_key_exists('idioma', $data)
-                ? strtolower((string)$data['idioma'])
-                : $existing->getIdioma(),
-            descripcion: array_key_exists('descripcion', $data)
-                ? ($data['descripcion'] !== null ? trim((string)$data['descripcion']) : null)
-                : $existing->getDescripcion()
-        );
-
-        $updated = $this->repository->updateArticulo($id, $articulo);
+        $updated = $this->repository->updateArticulo($id, $existing, $provided);
 
         return ArticuloMapper::toArticuloResponse($updated);
     }

@@ -15,7 +15,6 @@ class ArticuloRequestValidator
     private const REQUIRED_FIELDS = [
         'titulo',
         'anio_publicacion',
-        'tipo_documento_id',
     ];
 
     /**
@@ -54,12 +53,6 @@ class ArticuloRequestValidator
                     . " y {$currentYear}"
                 ];
             }
-        }
-
-        if (!is_int($data['tipo_documento_id']) && !is_numeric($data['tipo_documento_id'])) {
-            $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un número entero'];
-        } elseif ((int) $data['tipo_documento_id'] <= 0) {
-            $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un entero positivo'];
         }
 
         if (isset($data['idioma'])) {
@@ -113,7 +106,7 @@ class ArticuloRequestValidator
             }
         }
 
-        $allowedFields = ['titulo', 'anio_publicacion', 'tipo_documento_id', 'idioma', 'descripcion'];
+        $allowedFields = ['titulo', 'anio_publicacion', 'tipo', 'idioma', 'descripcion'];
         foreach (array_keys($data) as $field) {
             if (!in_array($field, $allowedFields, true)) {
                 $errors[$field] = ["El campo {$field} no es válido para PATCH"];
@@ -146,14 +139,6 @@ class ArticuloRequestValidator
                         self::MIN_ANIO_PUBLICACION . " y {$currentYear}"
                     ];
                 }
-            }
-        }
-
-        if (array_key_exists('tipo_documento_id', $data)) {
-            if (!is_int($data['tipo_documento_id']) && !is_numeric($data['tipo_documento_id'])) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un número entero'];
-            } elseif ((int) $data['tipo_documento_id'] <= 0) {
-                $errors['tipo_documento_id'] = ['El campo tipo_documento_id debe ser un entero positivo'];
             }
         }
 

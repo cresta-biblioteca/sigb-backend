@@ -14,20 +14,6 @@ class CatalogoTestDataSeeder extends AbstractSeed
     public function run(): void
     {
         // ============================================================
-        // TIPO DE DOCUMENTO (solo libros)
-        // ============================================================
-        $this->table('tipo_documento')->insert([
-            [
-                'codigo' => 'LIB',
-                'descripcion' => 'Libro',
-                'renovable' => true,
-                'detalle' => 'Documento tipo libro',
-            ],
-        ])->save();
-
-        $tipoLibroId = $this->fetchRow("SELECT id FROM tipo_documento WHERE codigo = 'LIB'")['id'];
-
-        // ============================================================
         // TEMAS
         // ============================================================
         $temas = [
@@ -427,7 +413,7 @@ class CatalogoTestDataSeeder extends AbstractSeed
                 [
                     'titulo' => $libroData['titulo'],
                     'anio_publicacion' => $libroData['anio'],
-                    'tipo_documento_id' => $tipoLibroId,
+                    'tipo' => 'libro',
                     'idioma' => $libroData['idioma'],
                     'descripcion' => $libroData['descripcion'],
                     'created_at' => $now,

@@ -139,9 +139,10 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function getById(int $id): void
+    public function getById(string $id): void
     {
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getById($id)]);
+        EjemplarRequestValidator::validateId($id);
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getById((int) $id)]);
     }
 
     #[OA\Post(
@@ -226,11 +227,9 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function updateEjemplar(int $id): void
+    public function updateEjemplar(string $id): void
     {
-        if ($id < 1) {
-            throw ValidationException::forField('id', 'El ID debe ser un entero positivo mayor que 0');
-        }
+        EjemplarRequestValidator::validateId($id);
 
         $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
         EjemplarRequestValidator::validate($input);
@@ -242,7 +241,7 @@ class EjemplarController
             isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
         );
 
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->updateEjemplar($id, $request)]);
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->updateEjemplar((int) $id, $request)]);
     }
 
     #[OA\Delete(
@@ -273,9 +272,10 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function deleteEjemplar(int $id): void
+    public function deleteEjemplar(string $id): void
     {
-        $this->ejemplarService->deleteEjemplar($id);
+        EjemplarRequestValidator::validateId($id);
+        $this->ejemplarService->deleteEjemplar((int) $id);
         JsonHelper::jsonResponse(['message' => 'Ejemplar eliminado']);
     }
 
@@ -313,9 +313,10 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function getByArticuloId(int $articuloId): void
+    public function getByArticuloId(string $articuloId): void
     {
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByArticuloId($articuloId)]);
+        EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByArticuloId((int) $articuloId)]);
     }
 
     #[OA\Get(
@@ -351,9 +352,10 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function getHabilitadosByArticuloId(int $articuloId): void
+    public function getHabilitadosByArticuloId(string $articuloId): void
     {
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getHabilitadosByArticuloId($articuloId)]);
+        EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getHabilitadosByArticuloId((int) $articuloId)]);
     }
 
     #[OA\Patch(
@@ -385,9 +387,10 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function habilitar(int $id): void
+    public function habilitar(string $id): void
     {
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->habilitarEjemplar($id)]);
+        EjemplarRequestValidator::validateId($id);
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->habilitarEjemplar((int) $id)]);
     }
 
     #[OA\Patch(
@@ -419,8 +422,9 @@ class EjemplarController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function deshabilitar(int $id): void
+    public function deshabilitar(string $id): void
     {
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->deshabilitarEjemplar($id)]);
+        EjemplarRequestValidator::validateId($id);
+        JsonHelper::jsonResponse(['data' => $this->ejemplarService->deshabilitarEjemplar((int) $id)]);
     }
 }

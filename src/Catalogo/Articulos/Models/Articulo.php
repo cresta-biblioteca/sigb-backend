@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Catalogo\Articulos\Models;
 
 use App\Shared\Entity;
+use App\Shared\Enums\TipoArticulo;
 
 class Articulo extends Entity
 {
@@ -13,11 +14,9 @@ class Articulo extends Entity
 
     private string $titulo;
     private int $anioPublicacion;
-    private int $tipoDocumentoId;
+    private string $tipo;
     private string $idioma;
     private ?string $descripcion = null;
-
-    private ?TipoDocumento $tipoDocumento = null;
 
     /** @var Tema[] */
     private array $temas = [];
@@ -26,20 +25,17 @@ class Articulo extends Entity
     {
     }
 
-    /**
-     * Crea un nuevo Articulo (valida datos)
-     */
     public static function create(
         string $titulo,
         int $anioPublicacion,
-        int $tipoDocumentoId,
+        string $tipo,
         string $idioma = 'es',
         ?string $descripcion = null
     ): self {
         $articulo = new self();
         $articulo->setTitulo($titulo);
         $articulo->setAnioPublicacion($anioPublicacion);
-        $articulo->setTipoDocumentoId($tipoDocumentoId);
+        $articulo->setTipo($tipo);
         $articulo->setIdioma($idioma);
         $articulo->setDescripcion($descripcion);
 
@@ -47,8 +43,6 @@ class Articulo extends Entity
     }
 
     /**
-     * Reconstruye desde base de datos (sin validar)
-     *
      * @param array<string, mixed> $row
      */
     public static function fromDatabase(array $row): self
@@ -57,7 +51,7 @@ class Articulo extends Entity
         $articulo->id = (int) $row['id'];
         $articulo->titulo = $row['titulo'];
         $articulo->anioPublicacion = (int) $row['anio_publicacion'];
-        $articulo->tipoDocumentoId = (int) $row['tipo_documento_id'];
+        $articulo->tipo = $row['tipo'];
         $articulo->idioma = $row['idioma'];
         $articulo->descripcion = $row['descripcion'] ?? null;
         $articulo->setTimestamps(
@@ -98,15 +92,16 @@ class Articulo extends Entity
         $this->anioPublicacion = $anioPublicacion;
     }
 
-    public function getTipoDocumentoId(): int
+    public function getTipo(): string
     {
-        return $this->tipoDocumentoId;
+        return $this->tipo;
     }
 
-    public function setTipoDocumentoId(int $tipoDocumentoId): void
+    public function setTipo(string $tipo): void
     {
-        $this->assertPositive($tipoDocumentoId, 'tipo_documento_id');
-        $this->tipoDocumentoId = $tipoDocumentoId;
+        $tiposValidos = array_column(TipoArticulo::cases(), 'value');
+        $this->assertInArray($tipo, $tiposValidos, 'tipo');
+        $this->tipo = $tipo;
     }
 
     public function getIdioma(): string
@@ -133,17 +128,6 @@ class Articulo extends Entity
             $this->assertMaxLength($descripcion, 255, 'descripcion');
         }
         $this->descripcion = $descripcion;
-    }
-
-    public function getTipoDocumento(): ?TipoDocumento
-    {
-        return $this->tipoDocumento;
-    }
-
-    public function setTipoDocumento(TipoDocumento $tipoDocumento): void
-    {
-        $this->tipoDocumento = $tipoDocumento;
-        $this->tipoDocumentoId = $tipoDocumento->getId();
     }
 
     /**
@@ -176,16 +160,12 @@ class Articulo extends Entity
             'id' => $this->id,
             'titulo' => $this->titulo,
             'anio_publicacion' => $this->anioPublicacion,
-            'tipo_documento_id' => $this->tipoDocumentoId,
+            'tipo' => $this->tipo,
             'idioma' => $this->idioma,
             'descripcion' => $this->descripcion,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];
-
-        if ($this->tipoDocumento !== null) {
-            $data['tipo_documento'] = $this->tipoDocumento->toArray();
-        }
 
         if (!empty($this->temas)) {
             $data['temas'] = array_map(fn(Tema $t) => $t->toArray(), $this->temas);

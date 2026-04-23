@@ -54,7 +54,6 @@ class PatchLibroRequest
         public readonly ?array $personas = null,
         public array $provided = []
     ) {
-        $this->provided = $provided;
     }
 
     public static function fromRequest(mixed $data): self
