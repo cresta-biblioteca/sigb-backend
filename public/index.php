@@ -33,7 +33,7 @@ $jwtMiddleware = new JwtMiddleware(new JwtTokenProvider());
 
 $router->before(
     'GET|POST|PUT|DELETE|PATCH',
-    '/(?!auth\/login|auth\/register|docs\/).*',
+    '/(?!auth\/login|docs\/).*',
     function () use ($jwtMiddleware) {
         if (!$jwtMiddleware->handle()) {
             exit();
@@ -41,13 +41,25 @@ $router->before(
     }
 );
 
+function withRole(array $roles, callable $handler): callable
+{
+    return function () use ($roles, $handler) {
+        if (!in_array($_SERVER['USER_ROLE'] ?? '', $roles, true)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Forbidden.']);
+            exit();
+        }
+        $handler(...func_get_args());
+    };
+}
+
 require_once __DIR__ . '/../routes/auth.php';
 require_once __DIR__ . '/../routes/articulo.php';
 require_once __DIR__ . '/../routes/libro.php';
 require_once __DIR__ . '/../routes/ejemplar.php';
 require_once __DIR__ . '/../routes/carrera.php';
 require_once __DIR__ . '/../routes/tema.php';
-require_once __DIR__ . '/../routes/libro.php';
 require_once __DIR__ . '/../routes/docs.php';
 require_once __DIR__ . '/../routes/prestamo.php';
 require_once __DIR__ . '/../routes/tipoPrestamo.php';

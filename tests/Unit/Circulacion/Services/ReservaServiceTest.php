@@ -60,6 +60,7 @@ beforeEach(function () {
         $this->ejemplarRepositoryMock,
         $this->articuloRepositoryMock
     );
+    $_SERVER['USER_ROLE'] = 'admin';
 });
 
 afterEach(function () {

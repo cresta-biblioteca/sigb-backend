@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use App\Catalogo\Articulos\Controllers\TemaController;
@@ -14,22 +15,22 @@ $temaRepository = new TemaRepository();
 $temaService = new TemaService($temaRepository);
 $temaController = new TemaController($temaService);
 
-$router->get("/temas", function() use($temaController) {
+$router->get("/temas", withRole(['admin', 'auxiliar', 'lector'], function () use ($temaController) {
     $temaController->getAll();
-});
+}));
 
-$router->get("/temas/{id}", function($id) use($temaController) {
+$router->get("/temas/{id}", withRole(['admin', 'auxiliar', 'lector'], function ($id) use ($temaController) {
     $temaController->getById($id);
-});
+}));
 
-$router->post("/temas", function() use($temaController) {
+$router->post("/temas", withRole(['admin'], function () use ($temaController) {
     $temaController->createTema();
-});
+}));
 
-$router->put("/temas/{id}", function($id) use($temaController) {
+$router->put("/temas/{id}", withRole(['admin'], function ($id) use ($temaController) {
     $temaController->updateTema($id);
-});
+}));
 
-$router->delete("/temas/{id}", function($id) use($temaController) {
+$router->delete("/temas/{id}", withRole(['admin'], function ($id) use ($temaController) {
     $temaController->deleteTema($id);
-});
+}));

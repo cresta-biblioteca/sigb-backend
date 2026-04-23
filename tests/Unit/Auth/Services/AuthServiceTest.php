@@ -155,6 +155,22 @@ test('login lanza RuntimeException si el rol del usuario no existe', function ()
 test('login retorna un token cuando las credenciales son válidas', function () {
     $request = new UserLoginRequest(dni: $this->dni, password: $this->password);
 
+    $savedLector = Lector::fromDatabase([
+        'id' => 5,
+        'tarjeta_id' => '000001',
+        'user_id' => $this->savedUser->getId(),
+        'nombre' => 'John',
+        'apellido' => 'Doe',
+        'fecha_nacimiento' => '2000-01-01',
+        'telefono' => '2266556677',
+        'email' => $this->email,
+        'legajo' => null,
+        'genero' => 'M',
+        'cresta_id' => null,
+        'created_at' => null,
+        'updated_at' => null,
+    ]);
+
     $this->authRepository
         ->shouldReceive('findByDni')
         ->with($this->dni)
@@ -173,9 +189,15 @@ test('login retorna un token cuando las credenciales son válidas', function () 
         ->once()
         ->andReturn($this->role);
 
+    $this->lectorRepository
+        ->shouldReceive('findByUserId')
+        ->with($this->savedUser->getId())
+        ->once()
+        ->andReturn($savedLector);
+
     $this->jwtProvider
         ->shouldReceive('generateToken')
-        ->with($this->savedUser->getId(), $this->role->getNombre(), $this->savedUser->getDni())
+        ->with($this->savedUser->getId(), $this->role->getNombre(), $this->savedUser->getDni(), $savedLector->getId())
         ->once()
         ->andReturn('jwt.token.aqui');
 

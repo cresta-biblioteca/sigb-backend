@@ -28,31 +28,30 @@ $prestamoService = new PrestamoService(
 
 $prestamoController = new PrestamoController($prestamoService);
 
-// Rutas específicas primero (para evitar conflictos con parámetros dinámicos)
-$router->get('/lectores/me/prestamos', function () use ($prestamoController) {
+$router->get('/lectores/me/prestamos', withRole(['lector'], function () use ($prestamoController) {
     $prestamoController->getMisPrestamos();
-});
+}));
 
-$router->get('/lector/{lectorId}/prestamos', function ($lectorId) use ($prestamoController) {
+$router->get('/lector/{lectorId}/prestamos', withRole(['admin'], function ($lectorId) use ($prestamoController) {
     $prestamoController->getByLector($lectorId);
-});
+}));
 
-$router->get('/prestamos', function () use ($prestamoController) {
+$router->get('/prestamos', withRole(['admin', 'auxiliar'], function () use ($prestamoController) {
     $prestamoController->getAll();
-});
+}));
 
-$router->get('/prestamos/{id}', function ($id) use ($prestamoController) {
+$router->get('/prestamos/{id}', withRole(['admin', 'auxiliar'], function ($id) use ($prestamoController) {
     $prestamoController->getById($id);
-});
+}));
 
-$router->post('/prestamos', function () use ($prestamoController) {
+$router->post('/prestamos', withRole(['admin', 'auxiliar'], function () use ($prestamoController) {
     $prestamoController->createPrestamo();
-});
+}));
 
-$router->patch('/prestamos/{id}/devolver', function ($id) use ($prestamoController) {
+$router->patch('/prestamos/{id}/devolver', withRole(['admin'], function ($id) use ($prestamoController) {
     $prestamoController->return($id);
-});
+}));
 
-$router->patch('/prestamos/{id}/renovar', function ($id) use ($prestamoController) {
+$router->patch('/prestamos/{id}/renovar', withRole(['admin', 'auxiliar', 'lector'], function ($id) use ($prestamoController) {
     $prestamoController->renew($id);
-});
+}));

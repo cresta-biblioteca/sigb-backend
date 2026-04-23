@@ -14,38 +14,38 @@ $ejemplarRepository = new EjemplarRepository();
 $ejemplarService = new EjemplarService($ejemplarRepository);
 $ejemplarController = new EjemplarController($ejemplarService);
 
-$router->get('/ejemplares', function () use ($ejemplarController) {
+$router->get('/ejemplares', withRole(['admin', 'auxiliar', 'lector'], function () use ($ejemplarController) {
     $ejemplarController->getAll();
-});
+}));
 
-$router->get('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->getById((int) $id);
-});
+$router->get('/ejemplares/{id}', withRole(['admin', 'auxiliar', 'lector'], function ($id) use ($ejemplarController) {
+    $ejemplarController->getById($id);
+}));
 
-$router->post('/ejemplares', function () use ($ejemplarController) {
+$router->post('/ejemplares', withRole(['admin'], function () use ($ejemplarController) {
     $ejemplarController->createEjemplar();
-});
+}));
 
-$router->put('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->updateEjemplar((int) $id);
-});
+$router->put('/ejemplares/{id}', withRole(['admin'], function ($id) use ($ejemplarController) {
+    $ejemplarController->updateEjemplar($id);
+}));
 
-$router->delete('/ejemplares/{id}', function ($id) use ($ejemplarController) {
-    $ejemplarController->deleteEjemplar((int) $id);
-});
+$router->delete('/ejemplares/{id}', withRole(['admin'], function ($id) use ($ejemplarController) {
+    $ejemplarController->deleteEjemplar($id);
+}));
 
-$router->patch('/ejemplares/{id}/habilitar', function ($id) use ($ejemplarController) {
-    $ejemplarController->habilitar((int) $id);
-});
+$router->patch('/ejemplares/{id}/habilitar', withRole(['admin'], function ($id) use ($ejemplarController) {
+    $ejemplarController->habilitar($id);
+}));
 
-$router->patch('/ejemplares/{id}/deshabilitar', function ($id) use ($ejemplarController) {
-    $ejemplarController->deshabilitar((int) $id);
-});
+$router->patch('/ejemplares/{id}/deshabilitar', withRole(['admin'], function ($id) use ($ejemplarController) {
+    $ejemplarController->deshabilitar($id);
+}));
 
-$router->get('/articulos/{articuloId}/ejemplares', function ($articuloId) use ($ejemplarController) {
-    $ejemplarController->getByArticuloId((int) $articuloId);
-});
+$router->get('/articulos/{articuloId}/ejemplares', withRole(['admin', 'auxiliar', 'lector'], function ($articuloId) use ($ejemplarController) {
+    $ejemplarController->getByArticuloId($articuloId);
+}));
 
-$router->get('/articulos/{articuloId}/ejemplares/habilitados', function ($articuloId) use ($ejemplarController) {
-    $ejemplarController->getHabilitadosByArticuloId((int) $articuloId);
-});
+$router->get('/articulos/{articuloId}/ejemplares/habilitados', withRole(['admin', 'auxiliar', 'lector'], function ($articuloId) use ($ejemplarController) {
+    $ejemplarController->getHabilitadosByArticuloId($articuloId);
+}));

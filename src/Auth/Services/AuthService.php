@@ -132,7 +132,13 @@ class AuthService
             );
         }
 
-        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre(), $user->getDni());
+        $lectorId = null;
+        if ($role->getNombre() === 'lector') {
+            $lector = $this->lectorRepository->findByUserId($user->getId());
+            $lectorId = $lector?->getId();
+        }
+
+        $token = $this->jwtTokenProvider->generateToken($user->getId(), $role->getNombre(), $user->getDni(), $lectorId);
 
         return UserMapper::toLoginResponse($token);
     }

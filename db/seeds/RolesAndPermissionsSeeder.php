@@ -23,6 +23,10 @@ class RolesAndPermissionsSeeder extends AbstractSeed
                 'descripcion' => 'Administrador del sistema con acceso completo',
             ],
             [
+                'nombre' => 'auxiliar',
+                'descripcion' => 'Personal de biblioteca con acceso operativo a circulación y catálogo',
+            ],
+            [
                 'nombre' => 'lector',
                 'descripcion' => 'Usuario lector de la biblioteca',
             ],
@@ -78,8 +82,9 @@ class RolesAndPermissionsSeeder extends AbstractSeed
         // ============================================================
 
         // Obtener IDs de roles
-        $adminRoleId = $this->fetchRow("SELECT id FROM role WHERE nombre = 'admin'")['id'];
-        $lectorRoleId = $this->fetchRow("SELECT id FROM role WHERE nombre = 'lector'")['id'];
+        $adminRoleId    = $this->fetchRow("SELECT id FROM role WHERE nombre = 'admin'")['id'];
+        $auxiliarRoleId = $this->fetchRow("SELECT id FROM role WHERE nombre = 'auxiliar'")['id'];
+        $lectorRoleId   = $this->fetchRow("SELECT id FROM role WHERE nombre = 'lector'")['id'];
 
         // Obtener todos los permisos
         $allPermisos = $this->fetchAll("SELECT id, nombre FROM permiso");
@@ -96,7 +101,32 @@ class RolesAndPermissionsSeeder extends AbstractSeed
         }
         $rolePermiso->insert($adminPermisos)->save();
 
-        // Lector: permisos limitados
+        // Auxiliar: operaciones de circulación y consulta de catálogo
+        $auxiliarPermisoNames = [
+            'catalogo:listar',
+            'catalogo:ver',
+            'prestamos:listar',
+            'prestamos:ver',
+            'prestamos:crear',
+            'prestamos:devolver',
+            'prestamos:renovar',
+            'reservas:listar',
+            'reservas:ver',
+            'reservas:cancelar',
+        ];
+
+        $auxiliarPermisos = [];
+        foreach ($allPermisos as $permiso) {
+            if (in_array($permiso['nombre'], $auxiliarPermisoNames, true)) {
+                $auxiliarPermisos[] = [
+                    'role_id' => $auxiliarRoleId,
+                    'permiso_id' => $permiso['id'],
+                ];
+            }
+        }
+        $rolePermiso->insert($auxiliarPermisos)->save();
+
+        // Lector: consulta de catálogo y operaciones propias
         $lectorPermisoNames = [
             'catalogo:listar',
             'catalogo:ver',

@@ -18,6 +18,7 @@ use App\Circulacion\Repositories\PrestamoRepository;
 use App\Circulacion\Repositories\ReservaRepository;
 use App\Shared\Database\Connection;
 use App\Shared\HorarioBiblioteca;
+use App\Shared\Security\OwnershipGuard;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use Throwable;
@@ -145,6 +146,9 @@ readonly class ReservaService
         if ($reserva === null) {
             throw new ReservaNotFoundException();
         }
+
+        OwnershipGuard::assertLector(fn() => $reserva->getLectorId());
+
         if (!$reserva->isPendiente()) {
             throw new ReservaCannotBeCancelledException("Solo reservas en estado PENDIENTE pueden ser canceladas");
         }

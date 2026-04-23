@@ -42,6 +42,7 @@ beforeEach(function () {
         $this->ejemplarRepo,
         $this->lectorRepo
     );
+    $_SERVER['USER_ROLE'] = 'admin';
 });
 
 afterEach(function () {
