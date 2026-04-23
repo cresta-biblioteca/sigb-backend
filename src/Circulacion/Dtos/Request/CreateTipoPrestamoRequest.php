@@ -33,30 +33,35 @@ readonly class CreateTipoPrestamoRequest
     )]
     public string $descripcion;
     #[OA\Property(
+        property: "max_cantidad_prestamos",
         description: "Cantidad de prestamos maximos",
         type: "integer",
         example: 30
     )]
     public int $maxCantidadPrestamos;
     #[OA\Property(
-        description: "Duracion del prestamo",
+        property: "duracion",
+        description: "Duracion del prestamo en dias",
         type: "integer",
         example: 15
     )]
     public int $duracionPrestamo;
     #[OA\Property(
+        property: "renovaciones",
         description: "Cantidad de renovaciones que se pueden realizar sobre ese prestamo",
         type: "integer",
         example: 4
     )]
     public int $renovaciones;
     #[OA\Property(
+        property: "dias_renovacion",
         description: "Dias que dura la renovacion",
         type: "integer",
         example: 15
     )]
     public int $diasRenovacion;
     #[OA\Property(
+        property: "cant_dias_renovar",
         description: "Cantidad de dias para renovar un prestamo",
         type: "integer",
         example: 0

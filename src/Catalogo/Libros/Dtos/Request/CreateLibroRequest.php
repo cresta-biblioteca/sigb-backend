@@ -16,7 +16,6 @@ readonly class CreateLibroRequest
         // Articulo fields
         public string $titulo,
         public int $anioPublicacion,
-        public string $tipo,
         public string $idioma,
         // Libro fields
         public ?string $descripcion,
@@ -44,7 +43,6 @@ readonly class CreateLibroRequest
         return new self(
             titulo: $articuloData['titulo'],
             anioPublicacion: (int)$articuloData['anio_publicacion'],
-            tipo: (string)$articuloData['tipo'],
             idioma: $articuloData['idioma'] ?? 'es',
             descripcion: $articuloData['descripcion'] ?? null,
             isbn: $libroData['isbn'] ?? null,

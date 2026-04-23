@@ -132,6 +132,24 @@ class TipoPrestamoRequestValidator
                 $errors['cant_dias_renovar'] = ["La cantidad de dias para renovar no puede ser negativa"];
             }
         }
+
+        if (
+            isset($data['cant_dias_renovar'], $data['duracion'])
+            && is_int($data['cant_dias_renovar'])
+            && is_int($data['duracion'])
+            && $data['cant_dias_renovar'] >= $data['duracion']
+        ) {
+            $errors['cant_dias_renovar'] = ["La cantidad de dias para renovar debe ser menor a la duracion del prestamo"];
+        }
+
+        if (isset($data['renovaciones']) && is_int($data['renovaciones']) && $data['renovaciones'] === 0) {
+            if (isset($data['dias_renovacion']) && is_int($data['dias_renovacion']) && $data['dias_renovacion'] !== 0) {
+                $errors['dias_renovacion'] = ["Los dias de renovacion deben ser 0 si no se permiten renovaciones"];
+            }
+            if (isset($data['cant_dias_renovar']) && is_int($data['cant_dias_renovar']) && $data['cant_dias_renovar'] !== 0) {
+                $errors['cant_dias_renovar'] = ["La cantidad de dias para renovar debe ser 0 si no se permiten renovaciones"];
+            }
+        }
     }
 
     public static function validateId(string $id): void

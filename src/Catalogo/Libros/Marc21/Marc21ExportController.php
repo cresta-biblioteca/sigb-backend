@@ -51,7 +51,7 @@ readonly class Marc21ExportController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function exportSingle(int $id): void
+    public function exportSingle(string $id): void
     {
         LibroRequestValidator::validateId($id);
 
@@ -60,11 +60,11 @@ readonly class Marc21ExportController
         if ($format === 'iso') {
             header('Content-Type: application/marc');
             header("Content-Disposition: attachment; filename=\"libro-{$id}.mrc\"");
-            echo $this->exportService->exportSingleIso2709($id);
+            echo $this->exportService->exportSingleIso2709((int) $id);
         } else {
             header('Content-Type: application/xml; charset=UTF-8');
             header("Content-Disposition: attachment; filename=\"libro-{$id}.xml\"");
-            echo $this->exportService->exportSingleXml($id);
+            echo $this->exportService->exportSingleXml((int) $id);
         }
     }
 

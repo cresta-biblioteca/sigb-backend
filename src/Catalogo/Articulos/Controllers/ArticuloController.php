@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Controllers;
 
+use App\Catalogo\Articulos\Dtos\Request\PatchArticuloRequest;
 use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Articulos\Validators\ArticuloRequestValidator;
 use App\Catalogo\Articulos\Validators\TemaRequestValidator;
@@ -69,10 +70,10 @@ class ArticuloController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function getById($id): void
+    public function getById(string $id): void
     {
         ArticuloRequestValidator::validateId($id);
-        $articulo = $this->service->getById((int) $id);
+        $articulo = $this->service->getById((int)$id);
         JsonHelper::jsonResponse($articulo, 200);
     }
 
@@ -97,7 +98,6 @@ class ArticuloController
                 properties: [
                     new OA\Property(property: "titulo", type: "string", nullable: true, example: "Algorithms"),
                     new OA\Property(property: "anio_publicacion", type: "integer", nullable: true, example: 2011),
-                    new OA\Property(property: "tipo", type: "string", nullable: true, example: "libro"),
                     new OA\Property(property: "idioma", type: "string", nullable: true, example: "en"),
                     new OA\Property(property: "descripcion", type: "string", nullable: true),
                 ]
@@ -115,12 +115,13 @@ class ArticuloController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function patchArticulo($id): void
+    public function patchArticulo(string $id): void
     {
         ArticuloRequestValidator::validateId($id);
         $input = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
         ArticuloRequestValidator::validatePatch($input);
-        $articulo = $this->service->patchArticulo((int) $id, $input);
+        $request = PatchArticuloRequest::fromArray($input);
+        $articulo = $this->service->patchArticulo((int)$id, $request);
         JsonHelper::jsonResponse($articulo, 200);
     }
 
@@ -147,10 +148,10 @@ class ArticuloController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function deleteArticulo($id): void
+    public function deleteArticulo(string $id): void
     {
         ArticuloRequestValidator::validateId($id);
-        $this->service->deleteArticulo((int) $id);
+        $this->service->deleteArticulo((int)$id);
         http_response_code(204);
     }
 
@@ -219,7 +220,7 @@ class ArticuloController
             new OA\Response(response: 500, description: 'Error interno del servidor'),
         ]
     )]
-    public function addTemaToArticulo($idArticulo, $idTema): void
+    public function addTemaToArticulo(string $idArticulo, string $idTema): void
     {
         try {
             ArticuloRequestValidator::validateId($idArticulo);
@@ -234,7 +235,7 @@ class ArticuloController
 
         TemaRequestValidator::validateId($idTema);
 
-        $this->service->addTemaToArticulo((int) $idArticulo, (int) $idTema);
+        $this->service->addTemaToArticulo((int)$idArticulo, (int)$idTema);
 
         JsonHelper::jsonResponse(['message' => 'El tema ha sido agregado al artículo'], 201);
     }
@@ -290,7 +291,7 @@ class ArticuloController
             new OA\Response(response: 500, description: 'Error interno del servidor'),
         ]
     )]
-    public function getTemaTitlesByArticulo($idArticulo): void
+    public function getTemaTitlesByArticulo(string $idArticulo): void
     {
         try {
             ArticuloRequestValidator::validateId($idArticulo);
@@ -303,7 +304,7 @@ class ArticuloController
             throw new ValidationException($errors);
         }
 
-        $temas = $this->service->getTemaTitlesByArticuloId((int) $idArticulo);
+        $temas = $this->service->getTemaTitlesByArticuloId((int)$idArticulo);
         JsonHelper::jsonResponse($temas, 200);
     }
 
@@ -371,7 +372,7 @@ class ArticuloController
             new OA\Response(response: 500, description: 'Error interno del servidor'),
         ]
     )]
-    public function deleteTemaFromArticulo($idArticulo, $idTema): void
+    public function deleteTemaFromArticulo(string $idArticulo, string $idTema): void
     {
         try {
             ArticuloRequestValidator::validateId($idArticulo);
@@ -386,7 +387,7 @@ class ArticuloController
 
         TemaRequestValidator::validateId($idTema);
 
-        $this->service->deleteTemaFromArticulo((int) $idArticulo, (int) $idTema);
+        $this->service->deleteTemaFromArticulo((int)$idArticulo, (int)$idTema);
 
         JsonHelper::jsonResponse(['message' => 'El tema ha sido eliminado del artículo'], 200);
     }

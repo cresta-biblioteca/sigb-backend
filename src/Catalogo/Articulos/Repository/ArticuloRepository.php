@@ -48,29 +48,36 @@ class ArticuloRepository extends Repository
         return $articulo;
     }
 
-    public function updateArticulo(int $id, Articulo $articulo): Articulo
+    /**
+     * @param array<int, string> $fields Nombres de los campos a actualizar
+     */
+    public function updateArticulo(int $id, Articulo $articulo, array $fields): Articulo
     {
-        $sql = 'UPDATE articulo
-				SET titulo = :titulo,
-					anio_publicacion = :anio_publicacion,
-					tipo = :tipo,
-					idioma = :idioma,
-					descripcion = :descripcion,
-					updated_at = NOW()
-				WHERE id = :id';
+        $getters = [
+            'titulo'           => fn() => $articulo->getTitulo(),
+            'anio_publicacion' => fn() => $articulo->getAnioPublicacion(),
+            'idioma'           => fn() => $articulo->getIdioma(),
+            'descripcion'      => fn() => $articulo->getDescripcion(),
+        ];
 
-        $stmt = $this->pdo->prepare($sql);
-        $success = $stmt->execute([
-            'titulo' => $articulo->getTitulo(),
-            'anio_publicacion' => $articulo->getAnioPublicacion(),
-            'tipo' => $articulo->getTipo(),
-            'idioma' => $articulo->getIdioma(),
-            'descripcion' => $articulo->getDescripcion(),
-            'id' => $id,
-        ]);
+        $setClauses = [];
+        $params = ['id' => $id];
 
-        if ($success === false) {
-            throw new \RuntimeException('Error al actualizar el artículo');
+        foreach ($fields as $field) {
+            if (!isset($getters[$field])) {
+                continue;
+            }
+            $setClauses[] = "{$field} = :{$field}";
+            $params[$field] = $getters[$field]();
+        }
+
+        if (!empty($setClauses)) {
+            $setClauses[] = 'updated_at = NOW()';
+            $sql = 'UPDATE articulo SET ' . implode(', ', $setClauses) . ' WHERE id = :id';
+            $stmt = $this->pdo->prepare($sql);
+            if ($stmt->execute($params) === false) {
+                throw new \RuntimeException('Error al actualizar el artículo');
+            }
         }
 
         $articulo->setId($id);
@@ -88,15 +95,6 @@ class ArticuloRepository extends Repository
         return $this->findByQuery($sql, [
             'titulo' => '%' . $titulo . '%',
         ]);
-    }
-
-    public function isLinkedToLibro(int $articuloId): bool
-    {
-        $sql = 'SELECT COUNT(*) FROM libro WHERE articulo_id = :articulo_id';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['articulo_id' => $articuloId]);
-
-        return (int)$stmt->fetchColumn() > 0;
     }
 
     public function temaExists(int $temaId): bool

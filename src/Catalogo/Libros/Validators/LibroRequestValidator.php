@@ -106,9 +106,9 @@ class LibroRequestValidator
         }
     }
 
-    public static function validateId(int $id): void
+    public static function validateId(string $id): void
     {
-        if ($id <= 0) {
+        if (!ctype_digit($id) || (int) $id < 1) {
             throw new ValidationException(['id' => ['El ID debe ser un entero positivo']]);
         }
     }

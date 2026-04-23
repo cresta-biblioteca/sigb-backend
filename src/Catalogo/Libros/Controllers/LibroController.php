@@ -50,9 +50,9 @@ readonly class LibroController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function getById($id): void
+    public function getById(string $id): void
     {
-        LibroRequestValidator::validateId((int)$id);
+        LibroRequestValidator::validateId($id);
         $libro = $this->libroService->getById((int)$id);
         JsonHelper::jsonResponse(['data' => $libro]);
     }
@@ -70,11 +70,10 @@ readonly class LibroController
                 properties: [
                     new OA\Property(
                         property: "articulo",
-                        required: ["titulo", "anio_publicacion", "tipo"],
+                        required: ["titulo", "anio_publicacion"],
                         properties: [
                             new OA\Property(property: "titulo", type: "string", example: "Algorithms"),
                             new OA\Property(property: "anio_publicacion", type: "integer", example: 2011),
-                            new OA\Property(property: "tipo", type: "string", example: "libro"),
                             new OA\Property(property: "idioma", type: "string", example: "en"),
                             new OA\Property(property: "descripcion", type: "string", nullable: true),
                         ],
@@ -199,9 +198,9 @@ readonly class LibroController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function updateLibro($id): void
+    public function updateLibro(string $id): void
     {
-        LibroRequestValidator::validateId((int)$id);
+        LibroRequestValidator::validateId($id);
 
         $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
         LibroRequestValidator::validatePatch($data);
@@ -242,9 +241,9 @@ readonly class LibroController
             new OA\Response(response: 500, description: "Error interno del servidor"),
         ]
     )]
-    public function deleteLibro($id): void
+    public function deleteLibro(string $id): void
     {
-        LibroRequestValidator::validateId((int)$id);
+        LibroRequestValidator::validateId($id);
         $this->libroService->deleteLibro((int)$id);
         JsonHelper::jsonResponse(['message' => 'Libro eliminado exitosamente']);
     }

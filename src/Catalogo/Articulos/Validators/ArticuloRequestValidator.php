@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Catalogo\Articulos\Validators;
 
-use App\Shared\Enums\TipoArticulo;
 use App\Shared\Exceptions\ValidationException;
 
 class ArticuloRequestValidator
@@ -16,7 +15,6 @@ class ArticuloRequestValidator
     private const REQUIRED_FIELDS = [
         'titulo',
         'anio_publicacion',
-        'tipo',
     ];
 
     /**
@@ -54,15 +52,6 @@ class ArticuloRequestValidator
                     "El año de publicación debe estar entre " . self::MIN_ANIO_PUBLICACION
                     . " y {$currentYear}"
                 ];
-            }
-        }
-
-        if (!is_string($data['tipo'])) {
-            $errors['tipo'] = ['El campo tipo debe ser un string'];
-        } else {
-            $tiposValidos = array_column(TipoArticulo::cases(), 'value');
-            if (!in_array($data['tipo'], $tiposValidos, true)) {
-                $errors['tipo'] = ['El tipo debe ser uno de: ' . implode(', ', $tiposValidos)];
             }
         }
 
@@ -149,17 +138,6 @@ class ArticuloRequestValidator
                         "El año de publicación debe estar entre " .
                         self::MIN_ANIO_PUBLICACION . " y {$currentYear}"
                     ];
-                }
-            }
-        }
-
-        if (array_key_exists('tipo', $data)) {
-            if (!is_string($data['tipo'])) {
-                $errors['tipo'] = ['El campo tipo debe ser un string'];
-            } else {
-                $tiposValidos = array_column(TipoArticulo::cases(), 'value');
-                if (!in_array($data['tipo'], $tiposValidos, true)) {
-                    $errors['tipo'] = ['El tipo debe ser uno de: ' . implode(', ', $tiposValidos)];
                 }
             }
         }

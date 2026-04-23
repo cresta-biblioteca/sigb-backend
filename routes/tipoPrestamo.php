@@ -21,14 +21,14 @@ $router->post('/tipos-prestamos', function () use ($tipoPrestamoController) {
     $tipoPrestamoController->createTipoPrestamo();
 });
 
-$router->patch('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
-    $tipoPrestamoController->updateTipoPrestamo($id);
-});
-
 $router->patch('/tipos-prestamos/{id}/deshabilitar', function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->disableTipoPrestamo($id);
 });
 
 $router->patch('/tipos-prestamos/{id}/habilitar', function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->enableTipoPrestamo($id);
+});
+
+$router->patch('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
+    $tipoPrestamoController->updateTipoPrestamo($id);
 });
