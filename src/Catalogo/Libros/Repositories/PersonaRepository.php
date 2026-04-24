@@ -19,9 +19,14 @@ class PersonaRepository extends Repository
         return Persona::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function findByNombreApellido(string $nombre, string $apellido): ?Persona
     {
-        $sql = "SELECT * FROM persona WHERE nombre = :nombre AND apellido = :apellido LIMIT 1";
+        $sql = "SELECT * FROM persona WHERE nombre = :nombre AND apellido = :apellido AND deleted_at IS NULL LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['nombre' => $nombre, 'apellido' => $apellido]);
 

@@ -14,7 +14,7 @@ class EjemplarMapper
         return new EjemplarResponse(
             $ejemplar->getId() ?? 0,
             $ejemplar->getCodigoBarras() ?? '',
-            $ejemplar->isHabilitado(),
+            $ejemplar->isActivo(),
             $ejemplar->getArticuloId(),
             $ejemplar->getSignaturaTopografica()
         );

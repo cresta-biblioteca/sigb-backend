@@ -43,7 +43,6 @@ class EjemplarService
         $ejemplar = Ejemplar::create(
             $request->getArticuloId(),
             $request->getCodigoBarras(),
-            $request->isHabilitado(),
             $request->getSignaturaTopografica()
         );
 
@@ -65,7 +64,6 @@ class EjemplarService
         }
 
         $ejemplar->setCodigoBarras($request->getCodigoBarras());
-        $ejemplar->setHabilitado($request->isHabilitado());
         $ejemplar->setSignaturaTopografica($request->getSignaturaTopografica());
 
         $this->ejemplarRepository->updateEjemplar($ejemplar);
@@ -76,7 +74,7 @@ class EjemplarService
     public function deleteEjemplar(int $id): void
     {
         $this->findOrFail($id);
-        $this->ejemplarRepository->delete($id);
+        $this->ejemplarRepository->softDelete($id);
     }
 
     public function getByCodigoBarras(string $codigoBarras): ?EjemplarResponse
@@ -86,48 +84,18 @@ class EjemplarService
         return $ejemplar === null ? null : EjemplarMapper::toResponse($ejemplar);
     }
 
-    public function getByHabilitado(bool $habilitado): array
-    {
-        $ejemplares = $this->ejemplarRepository->findEjemplaresByHabilitado($habilitado);
-        $ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
-
-        return $ejemplaresDto;
-    }
-
     public function getByArticuloId(int $articuloId): array
     {
         $ejemplares = $this->ejemplarRepository->findEjemplaresByArticuloId($articuloId);
-        $ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
 
-        return $ejemplaresDto;
+        return array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
     }
 
-    public function getHabilitadosByArticuloId(int $articuloId): array
+    public function getActivosByArticuloId(int $articuloId): array
     {
-        $ejemplares = $this->ejemplarRepository->findEjemplaresHabilitadosByArticuloId($articuloId);
-        $ejemplaresDto = array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
+        $ejemplares = $this->ejemplarRepository->findEjemplaresActivosByArticuloId($articuloId);
 
-        return $ejemplaresDto;
-    }
-
-
-    public function habilitarEjemplar(int $id): EjemplarResponse
-    {
-        $ejemplar = $this->findOrFail($id);
-        $ejemplar->habilitar();
-        $this->ejemplarRepository->updateEjemplar($ejemplar);
-
-        return EjemplarMapper::toResponse($ejemplar);
-    }
-
-
-    public function deshabilitarEjemplar(int $id): EjemplarResponse
-    {
-        $ejemplar = $this->findOrFail($id);
-        $ejemplar->deshabilitar();
-        $this->ejemplarRepository->updateEjemplar($ejemplar);
-
-        return EjemplarMapper::toResponse($ejemplar);
+        return array_map(fn($ejemplar) => EjemplarMapper::toResponse($ejemplar), $ejemplares);
     }
 
 

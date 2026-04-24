@@ -7,8 +7,6 @@ namespace App\Circulacion\Services;
 use App\Circulacion\Dtos\Request\CreateTipoPrestamoRequest;
 use App\Circulacion\Dtos\Request\UpdateTipoPrestamoRequest;
 use App\Circulacion\Dtos\Response\TipoPrestamoResponse;
-use App\Circulacion\Exceptions\TipoPrestamoAlreadyDisabledException;
-use App\Circulacion\Exceptions\TipoPrestamoAlreadyEnabledException;
 use App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException;
 use App\Circulacion\Exceptions\TipoPrestamoNotFoundException;
 use App\Circulacion\Mappers\TipoPrestamoMapper;
@@ -94,29 +92,11 @@ class TipoPrestamoService
         return TipoPrestamoMapper::toResponse($tipoUpdated);
     }
 
-    public function disableTipoPrestamo(int $id): void
+    public function deleteTipoPrestamo(int $id): void
     {
-        /** @var TipoPrestamo $tipoExistente */
-        $tipoExistente = $this->repo->findById($id);
-        if (!$tipoExistente) {
+        if (!$this->repo->findById($id)) {
             throw new TipoPrestamoNotFoundException();
         }
-        if ($tipoExistente->isHabilitado() === false) {
-            throw new TipoPrestamoAlreadyDisabledException();
-        }
-        $this->repo->disableTipoPrestamo($id);
-    }
-
-    public function enableTipoPrestamo(int $id): void
-    {
-        /** @var TipoPrestamo $tipoExistente */
-        $tipoExistente = $this->repo->findById($id);
-        if (!$tipoExistente) {
-            throw new TipoPrestamoNotFoundException();
-        }
-        if ($tipoExistente->isHabilitado() === true) {
-            throw new TipoPrestamoAlreadyEnabledException();
-        }
-        $this->repo->enableTipoPrestamo($id);
+        $this->repo->softDelete($id);
     }
 }

@@ -19,16 +19,20 @@ class EjemplarRepository extends Repository
         return Ejemplar::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function insertEjemplar(Ejemplar $ejemplar): Ejemplar
     {
         $sql = 'INSERT INTO ejemplar
-				(codigo_barras, habilitado, articulo_id, signatura_topografica, created_at, updated_at)
-				VALUES (:codigo_barras, :habilitado, :articulo_id, :signatura_topografica, NOW(), NOW())';
+				(codigo_barras, articulo_id, signatura_topografica, created_at, updated_at)
+				VALUES (:codigo_barras, :articulo_id, :signatura_topografica, NOW(), NOW())';
 
         $stmt = $this->pdo->prepare($sql);
         $success = $stmt->execute([
             'codigo_barras' => $ejemplar->getCodigoBarras(),
-            'habilitado' => $ejemplar->isHabilitado() ? 1 : 0,
             'articulo_id' => $ejemplar->getArticuloId(),
             'signatura_topografica' => $ejemplar->getSignaturaTopografica(),
         ]);
@@ -46,7 +50,6 @@ class EjemplarRepository extends Repository
     {
         $sql = 'UPDATE ejemplar
 				SET codigo_barras = :codigo_barras,
-					habilitado = :habilitado,
 					articulo_id = :articulo_id,
 					signatura_topografica = :signatura_topografica,
 					updated_at = NOW()
@@ -55,7 +58,6 @@ class EjemplarRepository extends Repository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'codigo_barras' => $ejemplar->getCodigoBarras(),
-            'habilitado' => $ejemplar->isHabilitado() ? 1 : 0,
             'articulo_id' => $ejemplar->getArticuloId(),
             'signatura_topografica' => $ejemplar->getSignaturaTopografica(),
             'id' => $ejemplar->getId(),
@@ -66,7 +68,7 @@ class EjemplarRepository extends Repository
 
     public function findEjemplarByCodigoBarras(string $codigoBarras): ?Ejemplar
     {
-        $sql = 'SELECT * FROM ejemplar WHERE codigo_barras = :codigo_barras LIMIT 1';
+        $sql = 'SELECT * FROM ejemplar WHERE codigo_barras = :codigo_barras AND deleted_at IS NULL LIMIT 1';
 
         /** @var ?Ejemplar */
         return $this->findOneByQuery($sql, [
@@ -76,7 +78,7 @@ class EjemplarRepository extends Repository
 
     public function findEjemplaresByArticuloId(int $articuloId): array
     {
-        $sql = 'SELECT * FROM ejemplar WHERE articulo_id = :articulo_id ORDER BY id DESC';
+        $sql = 'SELECT * FROM ejemplar WHERE articulo_id = :articulo_id AND deleted_at IS NULL ORDER BY id DESC';
 
         /** @var Ejemplar[] */
         return $this->findByQuery($sql, [
@@ -84,27 +86,24 @@ class EjemplarRepository extends Repository
         ]);
     }
 
-    public function findEjemplaresByHabilitado(bool $habilitado): array
-    {
-        $sql = 'SELECT * FROM ejemplar WHERE habilitado = :habilitado ORDER BY id DESC';
-
-        /** @var Ejemplar[] */
-        return $this->findByQuery($sql, [
-            'habilitado' => $habilitado ? 1 : 0,
-        ]);
-    }
-
-    public function findEjemplaresHabilitadosByArticuloId(int $articuloId): array
+    public function findEjemplaresActivosByArticuloId(int $articuloId): array
     {
         $sql = 'SELECT * FROM ejemplar
 				WHERE articulo_id = :articulo_id
-				AND habilitado = 1
+				AND deleted_at IS NULL
 				ORDER BY id DESC';
 
         /** @var Ejemplar[] */
         return $this->findByQuery($sql, [
             'articulo_id' => $articuloId,
         ]);
+    }
+
+    public function softDeleteByArticuloId(int $articuloId): void
+    {
+        $sql = 'UPDATE ejemplar SET deleted_at = NOW() WHERE articulo_id = :articulo_id AND deleted_at IS NULL';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['articulo_id' => $articuloId]);
     }
 
     public function existsEjemplarByCodigoBarras(string $codigoBarras, ?int $excludeId = null): bool
@@ -135,7 +134,7 @@ class EjemplarRepository extends Repository
     {
         $sql = 'SELECT e.*
                 FROM ejemplar e
-                WHERE e.habilitado = 1
+                WHERE e.deleted_at IS NULL
                   AND e.articulo_id = :articulo_id
                   AND NOT EXISTS (
                       SELECT 1

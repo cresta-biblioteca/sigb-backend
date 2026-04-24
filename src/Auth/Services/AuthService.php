@@ -11,6 +11,7 @@ use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
 use App\Auth\Exceptions\InvalidCredentialsException;
 use App\Auth\Exceptions\UserAlreadyExistsException;
+use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -164,6 +165,32 @@ class AuthService
 
         $newHashedPassword = $this->passwordEncoder->hash($request->getNewPassword());
         $this->authRepository->updatePassword($userId, $newHashedPassword);
+    }
+
+    /**
+     * @throws UserNotFoundException
+     * @throws Throwable
+     */
+    public function deleteUser(int $userId): void
+    {
+        $user = $this->authRepository->findById($userId);
+        if ($user === null) {
+            throw new UserNotFoundException();
+        }
+
+        $lector = $this->lectorRepository->findByUserId($userId);
+
+        $this->pdo->beginTransaction();
+        try {
+            if ($lector !== null) {
+                $this->lectorRepository->softDelete($lector->getId());
+            }
+            $this->authRepository->softDelete($userId);
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     // TODO: re-implementar logica de generacion de tarjeta

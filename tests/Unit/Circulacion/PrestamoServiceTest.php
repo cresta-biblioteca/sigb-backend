@@ -239,7 +239,7 @@ test("createPrestamo falla si no hay un ejemplar asignado", function () {
     $this->service->createPrestamo($request);
 })->throws(EjemplarNoDisponibleException::class);
 
-test("createPrestamo falla si el ejemplar no esta habilitado", function () {
+test("createPrestamo falla si el ejemplar no esta activo", function () {
     $request = new CreatePrestamoRequest(reservaId: 1, tipoPrestamoId: 1);
     $reserva = Mockery::mock(Reserva::class);
     $this->reservaRepo
@@ -268,7 +268,7 @@ test("createPrestamo falla si el ejemplar no esta habilitado", function () {
         ->with(5)
         ->andReturn($ejemplar);
 
-    $ejemplar->shouldReceive("isHabilitado")->once()->andReturn(false);
+    $ejemplar->shouldReceive("isActivo")->once()->andReturn(false);
 
     $this->service->createPrestamo($request);
 })->throws(EjemplarNoDisponibleException::class);
@@ -302,7 +302,7 @@ test("createPrestamo falla si no existe el tipo de prestamo", function () {
         ->andReturn($ejemplar);
 
     $ejemplar
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -315,7 +315,7 @@ test("createPrestamo falla si no existe el tipo de prestamo", function () {
     $this->service->createPrestamo($request);
 })->throws(TipoPrestamoNotFoundException::class);
 
-test("createPrestamo falla si el tipo de prestamo no esta habilitado", function () {
+test("createPrestamo falla si el tipo de prestamo no esta activo", function () {
     $request = new CreatePrestamoRequest(reservaId: 1, tipoPrestamoId: 1);
     $reserva = Mockery::mock(Reserva::class);
     $this->reservaRepo
@@ -345,7 +345,7 @@ test("createPrestamo falla si el tipo de prestamo no esta habilitado", function 
         ->andReturn($ejemplar);
 
     $ejemplar
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -358,7 +358,7 @@ test("createPrestamo falla si el tipo de prestamo no esta habilitado", function 
         ->andReturn($tipoPrestamo);
 
     $tipoPrestamo
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(false);
 
@@ -399,7 +399,7 @@ test("createPrestamo falla si el lector supera el limite de prestamos activos de
         ->andReturn($ejemplar);
 
     $ejemplar
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -413,7 +413,7 @@ test("createPrestamo falla si el lector supera el limite de prestamos activos de
         ->andReturn($tipoPrestamo);
 
     $tipoPrestamo
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -473,7 +473,7 @@ test("createPrestamo crea un prestamo correctamente", function () {
         ->andReturn($ejemplar);
 
     $ejemplar
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -487,7 +487,7 @@ test("createPrestamo crea un prestamo correctamente", function () {
         ->andReturn($tipoPrestamo);
 
     $tipoPrestamo
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(true);
 
@@ -689,7 +689,7 @@ test("renovar falla si el nuevo tipo de prestamo no existe", function() {
     $this->service->renovar(1, 2);
 })->throws(TipoPrestamoNotFoundException::class);
 
-test("renovar falla si el nuevo tipo de prestamo no esta habilitado", function() {
+test("renovar falla si el nuevo tipo de prestamo no esta activo", function() {
     $prestamo = Mockery::mock(Prestamo::class)->makePartial();
     $this->prestamoRepo
         ->shouldReceive('findById')
@@ -710,7 +710,7 @@ test("renovar falla si el nuevo tipo de prestamo no esta habilitado", function()
         ->andReturn($tipoPrestamo);
 
     $tipoPrestamo
-        ->shouldReceive('isHabilitado')
+        ->shouldReceive('isActivo')
         ->once()
         ->andReturn(false);
 

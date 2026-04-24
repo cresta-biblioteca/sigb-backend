@@ -24,6 +24,11 @@ class ArticuloRepository extends Repository
         return Articulo::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function insertArticulo(Articulo $articulo): Articulo
     {
         $sql = 'INSERT INTO articulo
@@ -90,7 +95,7 @@ class ArticuloRepository extends Repository
      */
     public function findByTitulo(string $titulo): array
     {
-        $sql = 'SELECT * FROM articulo WHERE titulo LIKE :titulo ORDER BY titulo';
+        $sql = 'SELECT * FROM articulo WHERE titulo LIKE :titulo AND deleted_at IS NULL ORDER BY titulo';
 
         return $this->findByQuery($sql, [
             'titulo' => '%' . $titulo . '%',

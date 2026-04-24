@@ -84,7 +84,8 @@ class Lector extends Entity
         $lector->crestaId = $row['cresta_id'] !== null ? (int) $row['cresta_id'] : null;
         $lector->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $lector;

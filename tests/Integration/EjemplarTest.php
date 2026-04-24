@@ -46,7 +46,6 @@ test('create crea ejemplar correctamente', function () {
     withJsonInputEjemplar([
         'articulo_id' => $articuloId,
         'codigo_barras' => '1234567890123',
-        'habilitado' => true,
     ], function () {
         ob_start();
         $this->controller->createEjemplar();
@@ -62,7 +61,7 @@ test('create crea ejemplar correctamente', function () {
     expect($this->recordExists('ejemplar', ['id' => $response['data']['id']]))->toBeTrue();
 });
 
-test('getByArticuloId devuelve ejemplares del articulo', function () {
+test('getByArticuloId devuelve ejemplares activos del articulo', function () {
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Ejemplar',
         'anio_publicacion' => 2024,
@@ -72,13 +71,11 @@ test('getByArticuloId devuelve ejemplares del articulo', function () {
 
     $this->insertInto('ejemplar', [
         'codigo_barras' => '10001',
-        'habilitado' => 1,
         'articulo_id' => $articuloId,
     ]);
 
     $this->insertInto('ejemplar', [
         'codigo_barras' => '10002',
-        'habilitado' => 0,
         'articulo_id' => $articuloId,
     ]);
 
@@ -92,7 +89,7 @@ test('getByArticuloId devuelve ejemplares del articulo', function () {
         ->and($response['data'])->toHaveCount(2);
 });
 
-test('deshabilitar cambia estado del ejemplar', function () {
+test('deleteEjemplar hace soft delete del ejemplar', function () {
     $articuloId = $this->insertInto('articulo', [
         'titulo' => 'Articulo Ejemplar',
         'anio_publicacion' => 2024,
@@ -102,19 +99,13 @@ test('deshabilitar cambia estado del ejemplar', function () {
 
     $ejemplarId = $this->insertInto('ejemplar', [
         'codigo_barras' => '20001',
-        'habilitado' => 1,
         'articulo_id' => $articuloId,
     ]);
 
     ob_start();
-    $this->controller->deshabilitar($ejemplarId);
-    $output = ob_get_clean();
-
-    $response = json_decode($output, true);
-
-    expect($response['error'])->toBe(false)
-        ->and($response['data']['habilitado'])->toBe(false);
+    $this->controller->deleteEjemplar($ejemplarId);
+    ob_get_clean();
 
     $dbEjemplar = $this->findById('ejemplar', $ejemplarId);
-    expect((int) $dbEjemplar['habilitado'])->toBe(0);
+    expect($dbEjemplar['deleted_at'])->not->toBeNull();
 });

@@ -20,8 +20,7 @@ class EjemplarController
     #[OA\Get(
         path: "/ejemplares",
         description: "Listado de ejemplares con filtros opcionales. Si se provee `codigo_barras` retorna el ejemplar"
-            . " exacto. Si se provee `articulo_id` retorna los ejemplares de ese artículo"
-            . " (con `habilitado=true` solo los habilitados). Si se provee `habilitado` filtra por estado.",
+            . " exacto. Si se provee `articulo_id` retorna los ejemplares activos de ese artículo.",
         summary: "Listar ejemplares",
         security: [["bearerAuth" => []]],
         tags: ["Ejemplares"],
@@ -39,13 +38,6 @@ class EjemplarController
                 description: "ID del artículo",
                 required: false,
                 schema: new OA\Schema(type: "integer")
-            ),
-            new OA\Parameter(
-                name: "habilitado",
-                in: "query",
-                description: "Filtrar por estado habilitado",
-                required: false,
-                schema: new OA\Schema(type: "boolean")
             ),
         ],
         responses: [
@@ -87,24 +79,7 @@ class EjemplarController
         if (isset($_GET['articulo_id']) && $_GET['articulo_id'] !== '') {
             $articuloId = (int) $_GET['articulo_id'];
             EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
-
-            if (isset($_GET['habilitado']) && filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN)) {
-                $this->getHabilitadosByArticuloId($articuloId);
-                return;
-            }
-
             $this->getByArticuloId($articuloId);
-            return;
-        }
-
-        if (isset($_GET['habilitado']) && $_GET['habilitado'] !== '') {
-            $habilitado = filter_var($_GET['habilitado'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-
-            if (!is_bool($habilitado)) {
-                throw ValidationException::forField('habilitado', 'El campo habilitado debe ser booleano');
-            }
-
-            JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByHabilitado($habilitado)]);
             return;
         }
 
@@ -186,7 +161,6 @@ class EjemplarController
         $request = new EjemplarRequest(
             (int) $input['articulo_id'],
             trim((string) $input['codigo_barras']),
-            (bool) $input['habilitado'],
             isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
         );
 
@@ -237,7 +211,6 @@ class EjemplarController
         $request = new EjemplarRequest(
             (int) $input['articulo_id'],
             trim((string) $input['codigo_barras']),
-            (bool) $input['habilitado'],
             isset($input['signatura_topografica']) ? trim((string) $input['signatura_topografica']) : null
         );
 
@@ -319,112 +292,4 @@ class EjemplarController
         JsonHelper::jsonResponse(['data' => $this->ejemplarService->getByArticuloId((int) $articuloId)]);
     }
 
-    #[OA\Get(
-        path: "/articulos/{articuloId}/ejemplares/habilitados",
-        description: "Obtener solo los ejemplares habilitados de un artículo",
-        summary: "Ejemplares habilitados de un artículo",
-        security: [["bearerAuth" => []]],
-        tags: ["Ejemplares"],
-        parameters: [
-            new OA\Parameter(
-                name: "articuloId",
-                in: "path",
-                description: "ID del artículo",
-                required: true,
-                schema: new OA\Schema(type: "integer", minimum: 1)
-            )
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: "Listado obtenido",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(
-                            property: "data",
-                            type: "array",
-                            items: new OA\Items(ref: "#/components/schemas/EjemplarResponse")
-                        )
-                    ]
-                )
-            ),
-            new OA\Response(response: 401, description: "No autenticado"),
-            new OA\Response(response: 500, description: "Error interno del servidor"),
-        ]
-    )]
-    public function getHabilitadosByArticuloId(string $articuloId): void
-    {
-        EjemplarRequestValidator::validateId($articuloId, 'articulo_id');
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->getHabilitadosByArticuloId((int) $articuloId)]);
-    }
-
-    #[OA\Patch(
-        path: "/ejemplares/{id}/habilitar",
-        description: "Habilita un ejemplar deshabilitado",
-        summary: "Habilitar ejemplar",
-        security: [["bearerAuth" => []]],
-        tags: ["Ejemplares"],
-        parameters: [
-            new OA\Parameter(
-                name: "id",
-                in: "path",
-                description: "ID del ejemplar",
-                required: true,
-                schema: new OA\Schema(type: "integer", minimum: 1)
-            )
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: "Ejemplar habilitado",
-                content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "data", ref: "#/components/schemas/EjemplarResponse")]
-                )
-            ),
-            new OA\Response(response: 401, description: "No autenticado"),
-            new OA\Response(response: 404, description: "Ejemplar no encontrado"),
-            new OA\Response(response: 422, description: "El ejemplar ya está habilitado"),
-            new OA\Response(response: 500, description: "Error interno del servidor"),
-        ]
-    )]
-    public function habilitar(string $id): void
-    {
-        EjemplarRequestValidator::validateId($id);
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->habilitarEjemplar((int) $id)]);
-    }
-
-    #[OA\Patch(
-        path: "/ejemplares/{id}/deshabilitar",
-        description: "Deshabilita un ejemplar habilitado",
-        summary: "Deshabilitar ejemplar",
-        security: [["bearerAuth" => []]],
-        tags: ["Ejemplares"],
-        parameters: [
-            new OA\Parameter(
-                name: "id",
-                in: "path",
-                description: "ID del ejemplar",
-                required: true,
-                schema: new OA\Schema(type: "integer", minimum: 1)
-            )
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: "Ejemplar deshabilitado",
-                content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "data", ref: "#/components/schemas/EjemplarResponse")]
-                )
-            ),
-            new OA\Response(response: 401, description: "No autenticado"),
-            new OA\Response(response: 404, description: "Ejemplar no encontrado"),
-            new OA\Response(response: 422, description: "El ejemplar ya está deshabilitado"),
-            new OA\Response(response: 500, description: "Error interno del servidor"),
-        ]
-    )]
-    public function deshabilitar(string $id): void
-    {
-        EjemplarRequestValidator::validateId($id);
-        JsonHelper::jsonResponse(['data' => $this->ejemplarService->deshabilitarEjemplar((int) $id)]);
-    }
 }

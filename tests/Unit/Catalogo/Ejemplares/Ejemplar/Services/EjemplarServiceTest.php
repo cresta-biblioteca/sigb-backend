@@ -17,11 +17,10 @@ beforeEach(function () {
 test('crea un ejemplar exitosamente', function () {
     $request = new EjemplarRequest(
         articuloId: 1,
-        codigoBarras: '1234567890123',
-        habilitado: true
+        codigoBarras: '1234567890123'
     );
 
-    $ejemplar = Ejemplar::create(1, '1234567890123', true);
+    $ejemplar = Ejemplar::create(1, '1234567890123');
     $ejemplar->setId(1);
 
     $this->repositoryMock
@@ -47,8 +46,7 @@ test('crea un ejemplar exitosamente', function () {
 test('lanza excepcion si codigo de barras ya existe', function () {
     $request = new EjemplarRequest(
         articuloId: 2,
-        codigoBarras: '1234567890123',
-        habilitado: true
+        codigoBarras: '1234567890123'
     );
 
     $this->repositoryMock
@@ -62,7 +60,7 @@ test('lanza excepcion si codigo de barras ya existe', function () {
 });
 
 test('obtiene ejemplar por id exitosamente', function () {
-    $ejemplar = Ejemplar::create(5, '12345', true);
+    $ejemplar = Ejemplar::create(5, '12345');
     $ejemplar->setId(44);
 
     $this->repositoryMock
@@ -90,16 +88,12 @@ test('lanza excepcion al obtener ejemplar inexistente', function () {
 });
 
 test('actualiza ejemplar exitosamente', function () {
-    $existing = Ejemplar::create(3, '11111', true);
+    $existing = Ejemplar::create(3, '11111');
     $existing->setId(8);
-
-    $updated = Ejemplar::create(3, '22222', false);
-    $updated->setId(8);
 
     $request = new EjemplarRequest(
         articuloId: 3,
-        codigoBarras: '22222',
-        habilitado: false
+        codigoBarras: '22222'
     );
 
     $this->repositoryMock
@@ -124,17 +118,16 @@ test('actualiza ejemplar exitosamente', function () {
     $data = $result->jsonSerialize();
 
     expect($data['codigo_barras'])->toBe('22222');
-    expect($data['habilitado'])->toBeFalse();
+    expect($data['activo'])->toBeTrue();
 });
 
 test('lanza excepcion si intenta modificar articulo_id del ejemplar', function () {
-    $existing = Ejemplar::create(3, '11111', true);
+    $existing = Ejemplar::create(3, '11111');
     $existing->setId(8);
 
     $request = new EjemplarRequest(
         articuloId: 99,
-        codigoBarras: '22222',
-        habilitado: false
+        codigoBarras: '22222'
     );
 
     $this->repositoryMock
@@ -151,8 +144,8 @@ test('lanza excepcion si intenta modificar articulo_id del ejemplar', function (
         ->toThrow(BusinessRuleException::class);
 });
 
-test('deshabilita ejemplar exitosamente', function () {
-    $ejemplar = Ejemplar::create(9, '77777', true);
+test('elimina ejemplar exitosamente (soft delete)', function () {
+    $ejemplar = Ejemplar::create(9, '77777');
     $ejemplar->setId(9);
 
     $this->repositoryMock
@@ -163,21 +156,18 @@ test('deshabilita ejemplar exitosamente', function () {
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('updateEjemplar')
-        ->with($this->isInstanceOf(Ejemplar::class))
+        ->method('softDelete')
+        ->with(9)
         ->willReturn(true);
 
-    $result = $this->service->deshabilitarEjemplar(9);
-    $data = $result->jsonSerialize();
-
-    expect($data['habilitado'])->toBeFalse();
+    $this->service->deleteEjemplar(9);
 });
 
 test('lista ejemplares por articulo', function () {
-    $ejemplar1 = Ejemplar::create(20, '10001', true);
+    $ejemplar1 = Ejemplar::create(20, '10001');
     $ejemplar1->setId(1);
 
-    $ejemplar2 = Ejemplar::create(20, '10002', false);
+    $ejemplar2 = Ejemplar::create(20, '10002');
     $ejemplar2->setId(2);
 
     $this->repositoryMock

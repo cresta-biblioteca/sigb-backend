@@ -111,7 +111,7 @@ class PrestamoService
         if (!$ejemplar) {
             throw new EjemplarNotFoundException();
         }
-        if (!$ejemplar->isHabilitado()) {
+        if (!$ejemplar->isActivo()) {
             throw new EjemplarNoDisponibleException();
         }
 
@@ -120,7 +120,7 @@ class PrestamoService
         if ($tipoPrestamo === null) {
             throw new TipoPrestamoNotFoundException();
         }
-        if (!$tipoPrestamo->isHabilitado()) {
+        if (!$tipoPrestamo->isActivo()) {
             throw new TipoPrestamoDeshabilitadoException();
         }
 
@@ -228,7 +228,7 @@ class PrestamoService
             $tipoPrestamo = $this->tipoPrestamoRepo->findById($tipoPrestamoId);
             if ($tipoPrestamo === null) {
                 throw new TipoPrestamoNotFoundException();
-            } elseif (!$tipoPrestamo->isHabilitado()) {
+            } elseif (!$tipoPrestamo->isActivo()) {
                 throw new TipoPrestamoDeshabilitadoException();
             }
 

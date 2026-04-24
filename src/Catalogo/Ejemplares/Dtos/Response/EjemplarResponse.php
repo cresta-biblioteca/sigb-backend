@@ -14,8 +14,8 @@ readonly class EjemplarResponse implements \JsonSerializable
         private int $id,
         #[OA\Property(description: "Código de barras", type: "string", example: "9780321573513")]
         private string $codigoBarras,
-        #[OA\Property(description: "Estado del ejemplar", type: "boolean", example: true)]
-        private bool $habilitado,
+        #[OA\Property(description: "Indica si el ejemplar está activo (no eliminado)", type: "boolean", example: true)]
+        private bool $activo,
         #[OA\Property(description: "ID del artículo asociado", type: "integer", example: 1)]
         private int $articuloId,
         #[OA\Property(description: "Signatura topográfica", type: "string", nullable: true, example: "001 SED")]
@@ -28,7 +28,7 @@ readonly class EjemplarResponse implements \JsonSerializable
         return [
             'id' => $this->id,
             'codigo_barras' => $this->codigoBarras,
-            'habilitado' => $this->habilitado,
+            'activo' => $this->activo,
             'articulo_id' => $this->articuloId,
             'signatura_topografica' => $this->signaturaTopografica,
         ];

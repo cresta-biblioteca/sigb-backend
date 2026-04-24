@@ -9,11 +9,16 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Shared\Exceptions\BusinessRuleException;
 
 beforeEach(function () {
     $this->repositoryMock = $this->createMock(ArticuloRepository::class);
-    $this->service = new ArticuloService($this->repositoryMock);
+    $this->ejemplarRepoMock = $this->createMock(EjemplarRepository::class);
+    $this->pdoMock = $this->createMock(PDO::class);
+    $this->pdoMock->method('beginTransaction')->willReturn(true);
+    $this->pdoMock->method('commit')->willReturn(true);
+    $this->service = new ArticuloService($this->repositoryMock, $this->ejemplarRepoMock, $this->pdoMock);
 });
 
 test('crea un articulo exitosamente', function () {
@@ -129,9 +134,14 @@ test('elimina articulo exitosamente', function () {
         ->with(30)
         ->willReturn($articulo);
 
+    $this->ejemplarRepoMock
+        ->expects($this->once())
+        ->method('softDeleteByArticuloId')
+        ->with(30);
+
     $this->repositoryMock
         ->expects($this->once())
-        ->method('delete')
+        ->method('softDelete')
         ->with(30);
 
     $this->service->deleteArticulo(30);

@@ -35,7 +35,8 @@ class Persona extends Entity
         $persona->apellido = $row['apellido'];
         $persona->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $persona;

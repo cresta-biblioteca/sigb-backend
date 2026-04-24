@@ -14,10 +14,17 @@ use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Mappers\ArticuloMapper;
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
+use App\Shared\Exceptions\BusinessRuleException;
+use PDO;
+
 class ArticuloService
 {
-    public function __construct(private ArticuloRepository $repository)
-    {
+    public function __construct(
+        private ArticuloRepository $repository,
+        private EjemplarRepository $ejemplarRepository,
+        private PDO $pdo
+    ) {
     }
 
     /**
@@ -94,15 +101,16 @@ class ArticuloService
             throw new ArticuloNotFoundException();
         }
 
-        $blockingRelation = $this->repository->getDeleteBlockingRelation($id);
-        if ($blockingRelation !== null) {
-            throw new BusinessRuleException(
-                "No se puede eliminar el artículo porque tiene {$blockingRelation}",
-                'id'
-            );
+        $this->pdo->beginTransaction();
+        try {
+            // Borra todos los ejemplares que le pertenecen al articulo
+            $this->ejemplarRepository->softDeleteByArticuloId($id);
+            $this->repository->softDelete($id);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
-
-        $this->repository->delete($id);
     }
 
     public function addTemaToArticulo(int $articuloId, int $temaId): void

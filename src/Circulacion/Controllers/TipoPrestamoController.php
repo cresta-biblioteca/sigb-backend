@@ -239,125 +239,30 @@ class TipoPrestamoController
         JsonHelper::jsonResponse($tipoPrestamoActualizado, 200);
     }
 
-    #[OA\Patch(
-        path: "/tipos-prestamos/{id}/deshabilitar",
-        description: "Deshabilitar un tipo de prestamo existente",
-        summary: "Deshabilitar tipo de prestamo",
+    #[OA\Delete(
+        path: "/tipos-prestamos/{id}",
+        description: "Elimina (soft delete) un tipo de prestamo",
+        summary: "Eliminar tipo de prestamo",
         tags: ["Tipos de Prestamo"],
         parameters: [
             new OA\Parameter(
                 name: "id",
                 in: "path",
-                description: "id del tipo de prestamo a deshabilitar",
+                description: "id del tipo de prestamo a eliminar",
                 required: true,
                 schema: new OA\Schema(type: "integer")
             )
         ],
         responses: [
-            new OA\Response(
-                response: 204,
-                description: "Tipo de prestamo deshabilitado exitosamente"
-            ),
-            new OA\Response(
-                response: 400,
-                description: "Datos de entrada invalidos",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string"),
-                        new OA\Property(property: "errors", type: "object")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 404,
-                description: "Tipo de prestamo no encontrado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 422,
-                description: "Tipo de prestamo ya deshabilitado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 500,
-                description: "Error interno del servidor"
-            )
+            new OA\Response(response: 204, description: "Tipo de prestamo eliminado exitosamente"),
+            new OA\Response(response: 404, description: "Tipo de prestamo no encontrado"),
+            new OA\Response(response: 500, description: "Error interno del servidor")
         ]
     )]
-    public function disableTipoPrestamo(string $id): void
+    public function deleteTipoPrestamo(string $id): void
     {
         TipoPrestamoRequestValidator::validateId($id);
-
-        $this->service->disableTipoPrestamo((int) $id);
-        http_response_code(204);
-    }
-
-    #[OA\Patch(
-        path: "/tipos-prestamos/{id}/habilitar",
-        description: "Habilitar un tipo de prestamo que se encuentra deshabilitado",
-        summary: "Habilitar tipo de prestamo",
-        tags: ["Tipos de Prestamo"],
-        parameters: [
-            new OA\Parameter(
-                name: "id",
-                in: "path",
-                description: "id del tipo de prestamo a habilitar",
-                required: true,
-                schema: new OA\Schema(type: "integer")
-            )
-        ],
-        responses: [
-            new OA\Response(
-                response: 204,
-                description: "Tipo de prestamo habilitado exitosamente"
-            ),
-            new OA\Response(
-                response: 400,
-                description: "Datos de entrada invalidos",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string"),
-                        new OA\Property(property: "errors", type: "object")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 404,
-                description: "Tipo de prestamo no encontrado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 422,
-                description: "El tipo de prestamo ya se encuentra habilitado",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "message", type: "string")
-                    ]
-                )
-            ),
-            new OA\Response(
-                response: 500,
-                description: "Error interno del servidor"
-            )
-        ]
-    )]
-    public function enableTipoPrestamo(string $id): void
-    {
-        TipoPrestamoRequestValidator::validateId($id);
-
-        $this->service->enableTipoPrestamo((int) $id);
+        $this->service->deleteTipoPrestamo((int) $id);
         http_response_code(204);
     }
 }

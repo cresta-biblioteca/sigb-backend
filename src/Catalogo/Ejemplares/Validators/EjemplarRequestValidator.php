@@ -13,7 +13,6 @@ class EjemplarRequestValidator
     /** @var array<int, string> */
     private const REQUIRED_FIELDS = [
         'codigo_barras',
-        'habilitado',
     ];
 
     /**
@@ -35,10 +34,6 @@ class EjemplarRequestValidator
 
         if (!self::validateCodigoBarras($data['codigo_barras'])) {
             $errors['codigo_barras'] = ['El campo codigo_barras debe ser un string'];
-        }
-
-        if (!is_bool($data['habilitado'])) {
-            $errors['habilitado'] = ['El campo habilitado debe ser un booleano'];
         }
 
         if (!empty($errors)) {

@@ -19,9 +19,14 @@ class AuthRepository extends Repository
         return User::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function findByDni(string $dni): ?User
     {
-        $sql = "SELECT * FROM user WHERE dni = :dni LIMIT 1";
+        $sql = "SELECT * FROM `user` WHERE dni = :dni AND deleted_at IS NULL LIMIT 1";
         return $this->findOneByQuery($sql, ['dni' => $dni]);
     }
 

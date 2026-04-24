@@ -20,6 +20,11 @@ class LectorRepository extends Repository
         return Lector::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function existsByTarjetaId(string $tarjetaId)
     {
         $sql = "SELECT COUNT(*) FROM {$this->getTableName()} WHERE tarjeta_id = :tarjeta_id";
@@ -49,7 +54,7 @@ class LectorRepository extends Repository
 
     public function existsByEmail(string $email): bool
     {
-        $sql = "SELECT COUNT(*) FROM {$this->getTableName()} WHERE email = :email";
+        $sql = "SELECT COUNT(*) FROM {$this->getTableName()} WHERE email = :email AND deleted_at IS NULL";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['email' => $email]);
         return (int)$stmt->fetchColumn() > 0;
@@ -57,7 +62,7 @@ class LectorRepository extends Repository
 
     public function findByUserId(int $userId): ?Lector
     {
-        $sql = "SELECT * FROM {$this->getTableName()} WHERE user_id = :user_id LIMIT 1";
+        $sql = "SELECT * FROM {$this->getTableName()} WHERE user_id = :user_id AND deleted_at IS NULL LIMIT 1";
         /** @var ?Lector $lector */
         $lector = $this->findOneByQuery($sql, ['user_id' => $userId]);
 

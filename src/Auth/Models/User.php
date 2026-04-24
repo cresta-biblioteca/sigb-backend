@@ -49,7 +49,8 @@ class User extends Entity
         $user->roleId = (int)$row['role_id'];
         $user->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $user;
