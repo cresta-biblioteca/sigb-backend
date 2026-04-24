@@ -22,14 +22,10 @@ $router->post('/tipos-prestamos', withRole(['admin'], function () use ($tipoPres
     $tipoPrestamoController->createTipoPrestamo();
 }));
 
-$router->patch('/tipos-prestamos/{id}/deshabilitar', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
-    $tipoPrestamoController->disableTipoPrestamo($id);
-}));
-
-$router->patch('/tipos-prestamos/{id}/habilitar', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
-    $tipoPrestamoController->enableTipoPrestamo($id);
-}));
-
 $router->patch('/tipos-prestamos/{id}', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->updateTipoPrestamo($id);
+}));
+
+$router->delete('/tipos-prestamos/{id}', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
+    $tipoPrestamoController->deleteTipoPrestamo($id);
 }));

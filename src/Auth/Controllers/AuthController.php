@@ -9,9 +9,11 @@ use App\Auth\Dtos\Request\UserLoginRequest;
 use App\Auth\Dtos\Request\UserRegisterRequest;
 use App\Auth\Mappers\UserMapper;
 use App\Auth\Services\AuthService;
+use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Validators\UserChangePasswordValidator;
 use App\Auth\Validators\UserLoginValidator;
 use App\Auth\Validators\UserRegisterValidator;
+use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\JsonHelper;
 use DateTimeImmutable;
 use OpenApi\Attributes as OA;
@@ -157,5 +159,39 @@ readonly class AuthController
 
         $response = $this->authService->login(UserMapper::toLoginRequest($data));
         JsonHelper::jsonResponse($response, 200);
+    }
+
+    #[OA\Delete(
+        path: '/auth/usuarios/{id}',
+        description: 'Elimina (soft delete) el usuario y su lector asociado. Solo administradores.',
+        summary: 'Eliminar usuario',
+        security: [['bearerAuth' => []]],
+        tags: ['Auth'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                description: 'ID del usuario a eliminar',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'Usuario eliminado exitosamente'),
+            new OA\Response(response: 400, description: 'ID inválido'),
+            new OA\Response(response: 401, description: 'No autenticado'),
+            new OA\Response(response: 403, description: 'Prohibido'),
+            new OA\Response(response: 404, description: 'Usuario no encontrado'),
+            new OA\Response(response: 500, description: 'Error interno del servidor'),
+        ]
+    )]
+    public function deleteUser(string $id): void
+    {
+        if (!ctype_digit($id) || (int) $id < 1) {
+            throw ValidationException::forField('id', 'El campo id debe ser un entero positivo');
+        }
+
+        $this->authService->deleteUser((int) $id);
+        http_response_code(204);
     }
 }

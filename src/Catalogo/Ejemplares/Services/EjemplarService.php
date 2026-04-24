@@ -31,7 +31,7 @@ class EjemplarService
 
     public function getById(int $id): EjemplarResponse
     {
-        return EjemplarMapper::toResponse($this->findOrFail($id));
+        return EjemplarMapper::toResponse($this->findOrThrowException($id));
     }
 
     public function createEjemplar(EjemplarRequest $request): EjemplarResponse
@@ -53,7 +53,7 @@ class EjemplarService
 
     public function updateEjemplar(int $id, EjemplarRequest $request): EjemplarResponse
     {
-        $ejemplar = $this->findOrFail($id);
+        $ejemplar = $this->findOrThrowException($id);
 
         if ($request->getArticuloId() !== $ejemplar->getArticuloId()) {
             throw new BusinessRuleException('El articulo_id del ejemplar no puede ser modificado', 'articulo_id');
@@ -73,7 +73,7 @@ class EjemplarService
 
     public function deleteEjemplar(int $id): void
     {
-        $this->findOrFail($id);
+        $this->findOrThrowException($id);
         $this->ejemplarRepository->softDelete($id);
     }
 
@@ -99,7 +99,7 @@ class EjemplarService
     }
 
 
-    private function findOrFail(int $id): Ejemplar
+    private function findOrThrowException(int $id): Ejemplar
     {
         /** @var ?Ejemplar $ejemplar */
         $ejemplar = $this->ejemplarRepository->findById($id);
