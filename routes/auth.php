@@ -26,9 +26,9 @@ $authService = new AuthService($pdo, $authRepository, $lectorRepository, $roleRe
 $controller = new AuthController($authService);
 
 $router->mount('/auth', function () use ($router, $controller) {
-    $router->post('/register', function () use ($controller) {
+    $router->post('/register', withRole(['admin', 'auxiliar'], function () use ($controller) {
         $controller->createUser();
-    });
+    }));
 
     $router->post('/login', function () use ($controller) {
         $controller->login();

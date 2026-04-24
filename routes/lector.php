@@ -16,14 +16,14 @@ $carreraRepository = new CarreraRepository();
 $lectorService = new LectorService($lectorRepository, $carreraRepository);
 $lectorController = new LectorController($lectorService);
 
-$router->get("/lectores/mi-perfil", function () use ($lectorController) {
+$router->get("/lectores/mi-perfil", withRole(['lector'], function () use ($lectorController) {
     $lectorController->getMiPerfil();
-});
+}));
 
-$router->post("/lectores/{lectorId}/carreras/{carreraId}", function ($lectorId, $carreraId) use ($lectorController) {
+$router->post("/lectores/{lectorId}/carreras/{carreraId}", withRole(['admin'], function ($lectorId, $carreraId) use ($lectorController) {
     $lectorController->assignCarrera($lectorId, $carreraId);
-});
+}));
 
-$router->delete("/lectores/{lectorId}/carreras/{carreraId}", function ($lectorId, $carreraId) use ($lectorController) {
+$router->delete("/lectores/{lectorId}/carreras/{carreraId}", withRole(['admin'], function ($lectorId, $carreraId) use ($lectorController) {
     $lectorController->removeCarrera($lectorId, $carreraId);
-});
+}));

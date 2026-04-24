@@ -29,6 +29,7 @@ use App\Circulacion\Repositories\PrestamoRepository;
 use App\Circulacion\Repositories\ReservaRepository;
 use App\Circulacion\Repositories\TipoPrestamoRepository;
 use App\Lectores\Repositories\LectorRepository;
+use App\Shared\Security\OwnershipGuard;
 use DateTimeImmutable;
 use PDO;
 
@@ -198,6 +199,8 @@ class PrestamoService
         if ($prestamo === null) {
             throw new PrestamoNotFoundException();
         }
+
+        OwnershipGuard::assertLector(fn() => $prestamo->getLectorId());
 
         if ($prestamo->isDevuelto()) {
             throw new RenovacionNoPermitidaException('el préstamo ya fue devuelto');

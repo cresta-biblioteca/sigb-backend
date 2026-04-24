@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use App\Circulacion\Controllers\TipoPrestamoController;
@@ -9,26 +10,26 @@ $tipoPrestamoRepository = new TipoPrestamoRepository();
 $tipoPrestamoService = new TipoPrestamoService($tipoPrestamoRepository);
 $tipoPrestamoController = new TipoPrestamoController($tipoPrestamoService);
 
-$router->get('/tipos-prestamos', function () use ($tipoPrestamoController) {
+$router->get('/tipos-prestamos', withRole(['admin', 'auxiliar'], function () use ($tipoPrestamoController) {
     $tipoPrestamoController->getAll();
-});
+}));
 
-$router->get('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
+$router->get('/tipos-prestamos/{id}', withRole(['admin', 'auxiliar'], function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->getById($id);
-});
+}));
 
-$router->post('/tipos-prestamos', function () use ($tipoPrestamoController) {
+$router->post('/tipos-prestamos', withRole(['admin'], function () use ($tipoPrestamoController) {
     $tipoPrestamoController->createTipoPrestamo();
-});
+}));
 
-$router->patch('/tipos-prestamos/{id}/deshabilitar', function ($id) use ($tipoPrestamoController) {
+$router->patch('/tipos-prestamos/{id}/deshabilitar', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->disableTipoPrestamo($id);
-});
+}));
 
-$router->patch('/tipos-prestamos/{id}/habilitar', function ($id) use ($tipoPrestamoController) {
+$router->patch('/tipos-prestamos/{id}/habilitar', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->enableTipoPrestamo($id);
-});
+}));
 
-$router->patch('/tipos-prestamos/{id}', function ($id) use ($tipoPrestamoController) {
+$router->patch('/tipos-prestamos/{id}', withRole(['admin'], function ($id) use ($tipoPrestamoController) {
     $tipoPrestamoController->updateTipoPrestamo($id);
-});
+}));

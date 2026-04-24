@@ -28,6 +28,7 @@ readonly class JwtMiddleware
             $_SERVER['USER_ID'] = $decodedJwt->sub;
             $_SERVER['USER_ROLE'] = $decodedJwt->role;
             $_SERVER['USER_DNI'] = $decodedJwt->dni;
+            $_SERVER['USER_LECTOR_ID'] = $decodedJwt->lector_id ?? null;
 
             return true;
         } catch (Exception $e) {
