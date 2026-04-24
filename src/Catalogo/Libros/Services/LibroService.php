@@ -6,6 +6,7 @@ namespace App\Catalogo\Libros\Services;
 
 use App\Catalogo\Articulos\Models\Articulo;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Dtos\Request\CreateLibroRequest;
 use App\Catalogo\Libros\Dtos\Request\PatchLibroRequest;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
@@ -25,6 +26,7 @@ readonly class LibroService
         private LibroRepository $repository,
         private ArticuloRepository $articuloRepository,
         private PersonaRepository $personaRepository,
+        private ArticuloService $articuloService,
         private PDO $pdo
     ) {
     }
@@ -171,7 +173,7 @@ readonly class LibroService
             throw new LibroNotFoundException();
         }
 
-        $this->repository->delete($id);
+        $this->articuloService->deleteArticulo($id);
     }
 
     private function validateIsbnIssnExclusivity(?string $isbn, ?string $issn): void

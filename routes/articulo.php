@@ -5,13 +5,17 @@ declare(strict_types=1);
 use App\Catalogo\Articulos\Controllers\ArticuloController;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
+use App\Shared\Database\Connection;
 
 /**
  * @var \Bramus\Router\Router $router
  */
 
+$pdo = Connection::getInstance();
 $articuloRepository = new ArticuloRepository();
-$articuloService = new ArticuloService($articuloRepository);
+$ejemplarRepository = new EjemplarRepository();
+$articuloService = new ArticuloService($articuloRepository, $ejemplarRepository, $pdo);
 $articuloController = new ArticuloController($articuloService);
 
 $router->get('/articulos', withRole(['admin', 'auxiliar', 'lector'], function () use ($articuloController) {
@@ -36,8 +40,4 @@ $router->get('/articulos/{id}', withRole(['admin', 'auxiliar', 'lector'], functi
 
 $router->patch('/articulos/{id}', withRole(['admin'], function ($id) use ($articuloController) {
     $articuloController->patchArticulo($id);
-}));
-
-$router->delete('/articulos/{id}', withRole(['admin'], function ($id) use ($articuloController) {
-    $articuloController->deleteArticulo($id);
 }));

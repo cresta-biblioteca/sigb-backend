@@ -125,37 +125,6 @@ class ArticuloController
         JsonHelper::jsonResponse($articulo, 200);
     }
 
-    #[OA\Delete(
-        path: "/articulos/{id}",
-        description: "Elimina un artículo por su ID",
-        summary: "Eliminar artículo",
-        security: [["bearerAuth" => []]],
-        tags: ["Articulos"],
-        parameters: [
-            new OA\Parameter(
-                name: "id",
-                in: "path",
-                description: "ID del artículo",
-                required: true,
-                schema: new OA\Schema(type: "integer", minimum: 1)
-            )
-        ],
-        responses: [
-            new OA\Response(response: 204, description: "Artículo eliminado exitosamente"),
-            new OA\Response(response: 400, description: "ID inválido"),
-            new OA\Response(response: 401, description: "No autenticado"),
-            new OA\Response(response: 404, description: "Artículo no encontrado"),
-            new OA\Response(response: 500, description: "Error interno del servidor"),
-        ]
-    )]
-    public function deleteArticulo(string $id): void
-    {
-        ArticuloRequestValidator::validateId($id);
-        $this->service->deleteArticulo((int)$id);
-        http_response_code(204);
-    }
-
-
     #[OA\Post(
         path: '/articulos/{idArticulo}/temas/{idTema}',
         description: 'Asocia un tema existente a un artículo existente',

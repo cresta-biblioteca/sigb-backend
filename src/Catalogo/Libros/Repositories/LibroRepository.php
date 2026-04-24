@@ -65,15 +65,6 @@ class LibroRepository extends Repository
         return $this->hydrateLibroWithArticulo($row);
     }
 
-    public function delete(int $id): bool
-    {
-        $sql = "DELETE FROM libro WHERE articulo_id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['id' => $id]);
-
-        return $stmt->rowCount() > 0;
-    }
-
     public function insertLibro(Libro $libro): Libro
     {
         $sql = "INSERT INTO libro

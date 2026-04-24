@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Catalogo\Libros\Controllers\LibroController;
 use App\Catalogo\Libros\Marc21\Marc21ExportController;
 use App\Catalogo\Libros\Marc21\Marc21ExportService;
@@ -19,7 +21,9 @@ $pdo = Connection::getInstance();
 $libroRepository = new LibroRepository($pdo);
 $articuloRepository = new ArticuloRepository($pdo);
 $personaRepository = new PersonaRepository($pdo);
-$libroService = new LibroService($libroRepository, $articuloRepository, $personaRepository, $pdo);
+$ejemplarRepository = new EjemplarRepository($pdo);
+$articuloService = new ArticuloService($articuloRepository, $ejemplarRepository, $pdo);
+$libroService = new LibroService($libroRepository, $articuloRepository, $personaRepository, $articuloService, $pdo);
 $libroController = new LibroController($libroService);
 $marc21ExportService = new Marc21ExportService($libroRepository);
 $marc21ExportController = new Marc21ExportController($marc21ExportService);
