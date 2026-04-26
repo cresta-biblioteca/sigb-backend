@@ -183,7 +183,7 @@ readonly class ReservaController
     )]
     public function getMisReservas(): void
     {
-        $lectorId = (int) $_SERVER['USER_ID'];
+        $lectorId = (int) $_SERVER['USER_LECTOR_ID'];
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 10;
         $estado = $this->parseEstado($_GET['estado'] ?? null);
