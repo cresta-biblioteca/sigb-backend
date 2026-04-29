@@ -255,7 +255,7 @@ class PrestamoController
     )]
     public function getMisPrestamos(): void
     {
-        $lectorId = (int) $_SERVER['USER_ID'];
+        $lectorId = (int) $_SERVER['USER_LECTOR_ID'];
 
         $estado = $_GET['estado'] ?? null;
         PrestamoRequestValidator::validateFiltroEstado($estado);

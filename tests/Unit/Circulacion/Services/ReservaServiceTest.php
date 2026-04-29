@@ -99,7 +99,7 @@ test("addReserva lanza excepcion not found por no encontrar el articulo de la re
         ->with(1)
         ->andReturn(false);
 
-    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1, 1)))
+    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1), 1))
         ->toThrow(ArticuloNotFoundException::class);
 });
 
@@ -122,7 +122,7 @@ test("addReserva lanza una excepcion porque el lector ya tiene una reserva pendi
         ->with(1, 1)
         ->andReturn(false);
 
-    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1, 1)))
+    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1), 1))
         ->toThrow(LectorYaTieneReservaOPrestamoException::class);
 });
 
@@ -145,13 +145,13 @@ test("addReserva lanza una excepcion porque el lector ya tiene un prestamo pendi
         ->with(1, 1)
         ->andReturn(true);
 
-    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1, 1)))
+    expect(fn() => $this->reservaService->addReserva(new CreateReservaRequest(1), 1))
         ->toThrow(LectorYaTieneReservaOPrestamoException::class);
 });
 
 test("addReserva crea una reserva con exito y con fecha de vencimiento ya que hay ejemplares disponibles", function () {
     $ejemplar = makeEjemplar();
-    $reservaRequest = new CreateReservaRequest(1, 1);
+    $reservaRequest = new CreateReservaRequest(1);
 
     $this->articuloRepositoryMock
         ->shouldReceive('exists')
@@ -186,7 +186,7 @@ test("addReserva crea una reserva con exito y con fecha de vencimiento ya que ha
             $reflection->setValue($reserva, 1);
         });
 
-    $response = $this->reservaService->addReserva($reservaRequest);
+    $response = $this->reservaService->addReserva($reservaRequest, 1);
 
     expect($response->lectorId)->toBe(1)
         ->and($response->articuloId)->toBe(1)
@@ -194,7 +194,7 @@ test("addReserva crea una reserva con exito y con fecha de vencimiento ya que ha
 });
 
 test("addReserva crea una reserva con exito sin fecha de vencimiento ya que no hay ejemplares disponibles", function () {
-    $reservaRequest = new CreateReservaRequest(1, 1);
+    $reservaRequest = new CreateReservaRequest(1);
 
     $this->articuloRepositoryMock
         ->shouldReceive('exists')
@@ -230,7 +230,7 @@ test("addReserva crea una reserva con exito sin fecha de vencimiento ya que no h
             $reflection->setValue($reserva, 1);
         });
 
-    $response = $this->reservaService->addReserva($reservaRequest);
+    $response = $this->reservaService->addReserva($reservaRequest, 1);
 
     expect($response->lectorId)->toBe(1)
         ->and($response->articuloId)->toBe(1)

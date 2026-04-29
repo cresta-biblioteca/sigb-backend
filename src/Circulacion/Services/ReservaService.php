@@ -102,7 +102,7 @@ readonly class ReservaService
     /**
      * @throws ArticuloNotFoundException
      */
-    public function addReserva(CreateReservaRequest $request): ReservaResponse
+    public function addReserva(CreateReservaRequest $request, int $lectorId): ReservaResponse
     {
         if (!$this->articuloRepository->exists($request->articuloId)) {
             throw new ArticuloNotFoundException();
@@ -110,9 +110,9 @@ readonly class ReservaService
 
         // Para que el usuario no acapare el stock
         $tieneReserva = $this->reservaRepository
-            ->lectorTieneReservaPendienteParaArticulo($request->lectorId, $request->articuloId);
+            ->lectorTieneReservaPendienteParaArticulo($lectorId, $request->articuloId);
         $tienePrestamo = $this->prestamoRepository
-            ->lectorTienePrestamoActivoParaArticulo($request->lectorId, $request->articuloId);
+            ->lectorTienePrestamoActivoParaArticulo($lectorId, $request->articuloId);
 
         // Las dos condiciones son exclusivas, nunca ambas podran dar true
         if ($tieneReserva || $tienePrestamo) {
@@ -125,14 +125,14 @@ readonly class ReservaService
             // Hay ejemplar disponible: se asigna de inmediato con fecha de vencimiento
             $fechaVencimiento = HorarioBiblioteca::calcularVencimientoReserva(new DateTimeImmutable());
             $reserva = Reserva::create(
-                $request->lectorId,
+                $lectorId,
                 $request->articuloId,
                 $ejemplarDisponible->getId(),
                 $fechaVencimiento
             );
         } else {
             // Sin ejemplar disponible: reserva en cola, ejemplar y vencimiento se asignan luego
-            $reserva = Reserva::create($request->lectorId, $request->articuloId);
+            $reserva = Reserva::create($lectorId, $request->articuloId);
         }
 
         $this->reservaRepository->save($reserva);

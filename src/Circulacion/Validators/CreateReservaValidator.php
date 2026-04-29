@@ -7,7 +7,6 @@ use App\Shared\Exceptions\ValidationException;
 class CreateReservaValidator
 {
     private const REQUIRED_FIELDS = [
-        'lectorId',
         'articuloId'
     ];
 
@@ -22,10 +21,6 @@ class CreateReservaValidator
         }
         if (!empty($errors)) {
             throw new ValidationException($errors);
-        }
-
-        if (!is_int($data['lectorId'])) {
-            $errors['lectorId'] = ['El campo lectorId debe ser un entero'];
         }
 
         if (!is_int($data['articuloId'])) {
