@@ -7,13 +7,19 @@ use App\Catalogo\Articulos\Exceptions\TemaAlreadyEliminatedException;
 use App\Catalogo\Articulos\Exceptions\TemaAlreadyInArticuloException;
 use App\Catalogo\Articulos\Exceptions\TemaNotFoundException;
 use App\Catalogo\Articulos\Models\Articulo;
+use App\Catalogo\Articulos\Dtos\Request\PatchArticuloRequest;
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
 use App\Catalogo\Articulos\Services\ArticuloService;
+use App\Catalogo\Ejemplares\Repositories\EjemplarRepository;
 use App\Shared\Exceptions\BusinessRuleException;
 
 beforeEach(function () {
     $this->repositoryMock = $this->createMock(ArticuloRepository::class);
-    $this->service = new ArticuloService($this->repositoryMock);
+    $this->ejemplarRepoMock = $this->createMock(EjemplarRepository::class);
+    $this->pdoMock = $this->createMock(PDO::class);
+    $this->pdoMock->method('beginTransaction')->willReturn(true);
+    $this->pdoMock->method('commit')->willReturn(true);
+    $this->service = new ArticuloService($this->repositoryMock, $this->ejemplarRepoMock, $this->pdoMock);
 });
 
 test('crea un articulo exitosamente', function () {
@@ -88,9 +94,9 @@ test('actualiza articulo parcialmente exitosamente', function () {
         ->with(12, $this->isInstanceOf(Articulo::class))
         ->willReturn($updated);
 
-    $result = $this->service->patchArticulo(12, [
+    $result = $this->service->patchArticulo(12, PatchArticuloRequest::fromArray([
         'titulo' => 'Titulo nuevo',
-    ]);
+    ]));
 
     $data = $result->jsonSerialize();
 
@@ -98,7 +104,7 @@ test('actualiza articulo parcialmente exitosamente', function () {
     expect($data['titulo'])->toBe('Titulo nuevo');
 });
 
-test('lanza excepcion cuando intenta cambiar tipo y esta vinculado a libro', function () {
+test('patchear el tipo es ignorado porque no es un campo patchable', function () {
     $existing = Articulo::create('Titulo viejo', 2019, 'libro', 'es');
     $existing->setId(12);
 
@@ -110,13 +116,15 @@ test('lanza excepcion cuando intenta cambiar tipo y esta vinculado a libro', fun
 
     $this->repositoryMock
         ->expects($this->once())
-        ->method('isLinkedToLibro')
-        ->with(12)
-        ->willReturn(true);
+        ->method('updateArticulo')
+        ->with(12, $this->isInstanceOf(Articulo::class), [])
+        ->willReturn($existing);
 
-    expect(fn () => $this->service->patchArticulo(12, [
+    $result = $this->service->patchArticulo(12, PatchArticuloRequest::fromArray([
         'tipo' => 'revista',
-    ]))->toThrow(BusinessRuleException::class);
+    ]));
+
+    expect($result->jsonSerialize()['tipo'])->toBe('libro');
 });
 
 test('elimina articulo exitosamente', function () {
@@ -129,9 +137,14 @@ test('elimina articulo exitosamente', function () {
         ->with(30)
         ->willReturn($articulo);
 
+    $this->ejemplarRepoMock
+        ->expects($this->once())
+        ->method('softDeleteByArticuloId')
+        ->with(30);
+
     $this->repositoryMock
         ->expects($this->once())
-        ->method('delete')
+        ->method('softDelete')
         ->with(30);
 
     $this->service->deleteArticulo(30);

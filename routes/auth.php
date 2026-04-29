@@ -37,4 +37,8 @@ $router->mount('/auth', function () use ($router, $controller) {
     $router->post('/change-password', function () use ($controller) {
         $controller->changePassword();
     });
+
+    $router->delete('/usuarios/(\d+)', withRole(['admin'], function (string $id) use ($controller) {
+        $controller->deleteUser($id);
+    }));
 });

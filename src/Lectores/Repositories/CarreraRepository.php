@@ -21,6 +21,11 @@ class CarreraRepository extends Repository
         return Carrera::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     /**
      * Inserta una nueva carrera en la base de datos
      *
@@ -76,7 +81,7 @@ class CarreraRepository extends Repository
     public function findByCodigo(string $codigo): ?Carrera
     {
         $sql = sprintf(
-            'SELECT * FROM %s WHERE codigo = :codigo LIMIT 1',
+            'SELECT * FROM %s WHERE codigo = :codigo AND deleted_at IS NULL LIMIT 1',
             $this->getTableName()
         );
 
@@ -92,7 +97,7 @@ class CarreraRepository extends Repository
     public function findByNombre(string $nombre): array
     {
         $sql = sprintf(
-            'SELECT * FROM %s WHERE nombre LIKE :nombre',
+            'SELECT * FROM %s WHERE nombre LIKE :nombre AND deleted_at IS NULL',
             $this->getTableName()
         );
         $nombre = addcslashes($nombre, '%_');
@@ -123,11 +128,8 @@ class CarreraRepository extends Repository
             $bindings['nombre'] = '%' . $escapedNombre . '%';
         }
 
-        $sql = sprintf('SELECT * FROM %s', $this->getTableName());
-
-        if (!empty($conditions)) {
-            $sql .= ' WHERE ' . implode(' AND ', $conditions);
-        }
+        $conditions[] = 'deleted_at IS NULL';
+        $sql = sprintf('SELECT * FROM %s WHERE %s', $this->getTableName(), implode(' AND ', $conditions));
 
         if (!empty($params["order"])) {
             $order = strtoupper($params['order']) === 'DESC' ? 'DESC' : 'ASC';
@@ -146,7 +148,7 @@ class CarreraRepository extends Repository
     public function existsByCodigo(string $codigo): bool
     {
         $sql = sprintf(
-            'SELECT 1 FROM %s WHERE codigo = :codigo LIMIT 1',
+            'SELECT 1 FROM %s WHERE codigo = :codigo AND deleted_at IS NULL LIMIT 1',
             $this->getTableName()
         );
 
@@ -159,7 +161,7 @@ class CarreraRepository extends Repository
     public function findCoincidence(string $cod, string $nombre): ?Carrera
     {
         $sql = sprintf(
-            'SELECT * FROM %s WHERE codigo = :cod OR nombre = :nombre LIMIT 1',
+            'SELECT * FROM %s WHERE (codigo = :cod OR nombre = :nombre) AND deleted_at IS NULL LIMIT 1',
             $this->getTableName()
         );
 

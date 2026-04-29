@@ -12,6 +12,7 @@ abstract class Entity
     protected ?int $id = null;
     protected ?DateTimeImmutable $createdAt = null;
     protected ?DateTimeImmutable $updatedAt = null;
+    protected ?DateTimeImmutable $deletedAt = null;
 
     public function getId(): ?int
     {
@@ -33,6 +34,16 @@ abstract class Entity
         return $this->updatedAt;
     }
 
+    public function getDeletedAt(): ?DateTimeImmutable
+    {
+        return $this->deletedAt;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deletedAt !== null;
+    }
+
     /**
      * Asigna el ID después de persistir
      */
@@ -44,13 +55,16 @@ abstract class Entity
     /**
      * Asigna timestamps desde la base de datos
      */
-    protected function setTimestamps(?string $createdAt, ?string $updatedAt): void
+    protected function setTimestamps(?string $createdAt, ?string $updatedAt, ?string $deletedAt = null): void
     {
         $this->createdAt = $createdAt !== null
             ? new DateTimeImmutable($createdAt)
             : null;
         $this->updatedAt = $updatedAt !== null
             ? new DateTimeImmutable($updatedAt)
+            : null;
+        $this->deletedAt = $deletedAt !== null
+            ? new DateTimeImmutable($deletedAt)
             : null;
     }
 

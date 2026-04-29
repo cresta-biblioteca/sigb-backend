@@ -59,7 +59,7 @@ class TipoPrestamoMapper
             $tipoPrestamo->getRenovaciones(),
             $tipoPrestamo->getDiasRenovacion(),
             $tipoPrestamo->getCantDiasRenovar(),
-            $tipoPrestamo->isHabilitado()
+            $tipoPrestamo->isActivo()
         );
     }
 }

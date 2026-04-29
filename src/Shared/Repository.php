@@ -30,13 +30,15 @@ abstract class Repository
     abstract protected function getEntityClass(): string;
 
     /**
-     * Busca una entidad por su ID
+     * Busca una entidad por su ID (excluye soft-deleted si aplica)
      */
     public function findById(int $id): ?Entity
     {
+        $filter = $this->usesSoftDelete() ? ' AND deleted_at IS NULL' : '';
         $sql = sprintf(
-            'SELECT * FROM %s WHERE id = :id LIMIT 1',
-            $this->getTableName()
+            'SELECT * FROM %s WHERE id = :id%s LIMIT 1',
+            $this->getTableName(),
+            $filter
         );
 
         $stmt = $this->pdo->prepare($sql);
@@ -79,13 +81,14 @@ abstract class Repository
     }
 
     /**
-     * Obtiene todas las entidades
+     * Obtiene todas las entidades activas (excluye soft-deleted si aplica)
      *
      * @return Entity[]
      */
     public function findAll(): array
     {
-        $sql = sprintf('SELECT * FROM %s', $this->getTableName());
+        $filter = $this->usesSoftDelete() ? ' WHERE deleted_at IS NULL' : '';
+        $sql = sprintf('SELECT * FROM %s%s', $this->getTableName(), $filter);
         $stmt = $this->pdo->query($sql);
 
         $entityClass = $this->getEntityClass();
@@ -99,11 +102,35 @@ abstract class Repository
     }
 
     /**
-     * Elimina una entidad por su ID
+     * Indica si esta tabla usa soft delete (deleted_at).
+     * Las subclases que tengan deleted_at deben sobreescribir a true.
+     */
+    protected function usesSoftDelete(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Elimina una entidad por su ID (hard delete para tablas sin soft delete)
      */
     public function delete(int $id): bool
     {
         $sql = sprintf('DELETE FROM %s WHERE id = :id', $this->getTableName());
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Soft delete: setea deleted_at en lugar de borrar la fila
+     */
+    public function softDelete(int $id): bool
+    {
+        $sql = sprintf(
+            'UPDATE %s SET deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL',
+            $this->getTableName()
+        );
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
 

@@ -12,7 +12,6 @@ class Ejemplar extends Entity
     private const CODIGO_BARRAS_PATTERN = '/^\d{1,13}$/';
 
     private ?string $codigoBarras;
-    private bool $habilitado;
     private int $articuloId;
     private ?string $signaturaTopografica = null;
 
@@ -28,13 +27,11 @@ class Ejemplar extends Entity
     public static function create(
         int $articuloId,
         ?string $codigoBarras = null,
-        bool $habilitado = true,
         ?string $signaturaTopografica = null
     ): self {
         $ejemplar = new self();
         $ejemplar->setArticuloId($articuloId);
         $ejemplar->setCodigoBarras($codigoBarras);
-        $ejemplar->habilitado = $habilitado;
         $ejemplar->setSignaturaTopografica($signaturaTopografica);
 
         return $ejemplar;
@@ -50,12 +47,12 @@ class Ejemplar extends Entity
         $ejemplar = new self();
         $ejemplar->id = (int) $row['id'];
         $ejemplar->codigoBarras = $row['codigo_barras'];
-        $ejemplar->habilitado = (bool) $row['habilitado'];
         $ejemplar->articuloId = (int) $row['articulo_id'];
         $ejemplar->signaturaTopografica = $row['signatura_topografica'] ?? null;
         $ejemplar->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $ejemplar;
@@ -79,24 +76,9 @@ class Ejemplar extends Entity
         $this->codigoBarras = $codigoBarras;
     }
 
-    public function isHabilitado(): bool
+    public function isActivo(): bool
     {
-        return $this->habilitado;
-    }
-
-    public function setHabilitado(bool $habilitado): void
-    {
-        $this->habilitado = $habilitado;
-    }
-
-    public function habilitar(): void
-    {
-        $this->habilitado = true;
-    }
-
-    public function deshabilitar(): void
-    {
-        $this->habilitado = false;
+        return $this->deletedAt === null;
     }
 
     public function getArticuloId(): int
@@ -142,11 +124,12 @@ class Ejemplar extends Entity
         $data = [
             'id' => $this->id,
             'codigo_barras' => $this->codigoBarras,
-            'habilitado' => $this->habilitado,
+            'activo' => $this->isActivo(),
             'articulo_id' => $this->articuloId,
             'signatura_topografica' => $this->signaturaTopografica,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
+            'deleted_at' => $this->deletedAt?->format('Y-m-d H:i:s'),
         ];
 
         if ($this->articulo !== null) {

@@ -11,6 +11,7 @@ use App\Auth\Dtos\Response\UserLoginResponse;
 use App\Auth\Dtos\Response\UserRegisterResponse;
 use App\Auth\Exceptions\InvalidCredentialsException;
 use App\Auth\Exceptions\UserAlreadyExistsException;
+use App\Auth\Exceptions\UserNotFoundException;
 use App\Auth\Mappers\UserMapper;
 use App\Auth\Models\User;
 use App\Auth\Repositories\AuthRepository;
@@ -20,18 +21,21 @@ use App\Lectores\Repositories\LectorRepository;
 use App\Shared\Security\JwtTokenProvider;
 use App\Shared\Security\PasswordEncoder;
 use PDO;
+use Random\RandomException;
+use RuntimeException;
 use Throwable;
 
-class AuthService
+readonly class AuthService
 {
     public function __construct(
-        private readonly PDO $pdo,
-        private readonly AuthRepository $authRepository,
-        private readonly LectorRepository $lectorRepository,
-        private readonly RoleRepository $roleRepository,
-        private readonly JwtTokenProvider $jwtTokenProvider,
-        private readonly PasswordEncoder $passwordEncoder
-    ) {
+        private PDO              $pdo,
+        private AuthRepository   $authRepository,
+        private LectorRepository $lectorRepository,
+        private RoleRepository   $roleRepository,
+        private JwtTokenProvider $jwtTokenProvider,
+        private PasswordEncoder  $passwordEncoder
+    )
+    {
     }
 
     /**
@@ -53,7 +57,7 @@ class AuthService
         try {
             $role = $this->roleRepository->getRoleByName('lector');
             if ($role === null) {
-                throw new \RuntimeException("Role 'lector' not found in database");
+                throw new RuntimeException("Role 'lector' not found in database");
             }
 
             $user = User::create(
@@ -127,7 +131,7 @@ class AuthService
 
         $role = $this->roleRepository->findById($user->getRoleId());
         if ($role === null) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Role not found for user {$user->getId()}, role_id: {$user->getRoleId()}"
             );
         }
@@ -166,19 +170,49 @@ class AuthService
         $this->authRepository->updatePassword($userId, $newHashedPassword);
     }
 
+    /**
+     * @throws UserNotFoundException
+     * @throws Throwable
+     */
+    public function deleteUser(int $userId): void
+    {
+        $user = $this->authRepository->findById($userId);
+        if ($user === null) {
+            throw new UserNotFoundException();
+        }
+
+        $lector = $this->lectorRepository->findByUserId($userId);
+
+        $this->pdo->beginTransaction();
+        try {
+            if ($lector !== null) {
+                $this->lectorRepository->softDelete($lector->getId());
+            }
+            $this->authRepository->softDelete($userId);
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
     // TODO: re-implementar logica de generacion de tarjeta
+
+    /**
+     * @throws RandomException
+     */
     private function generarTarjetaId(): string
     {
         $maxIntentos = 10;
 
         for ($i = 0; $i < $maxIntentos; $i++) {
-            $tarjetaId = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $tarjetaId = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             if (!$this->lectorRepository->existsByTarjetaId($tarjetaId)) {
                 return $tarjetaId;
             }
         }
 
-        throw new \RuntimeException('No se pudo generar una tarjeta ID única');
+        throw new RuntimeException('No se pudo generar una tarjeta ID única');
     }
 }

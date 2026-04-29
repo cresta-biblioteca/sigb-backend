@@ -21,8 +21,6 @@ readonly class EjemplarRequest
             example: "9780321573513"
         )]
         private string $codigoBarras,
-        #[OA\Property(description: "Indica si el ejemplar está habilitado", type: "boolean", example: true)]
-        private bool $habilitado = true,
         #[OA\Property(
             description: "Signatura topográfica del ejemplar",
             type: "string",
@@ -41,11 +39,6 @@ readonly class EjemplarRequest
     public function getCodigoBarras(): string
     {
         return $this->codigoBarras;
-    }
-
-    public function isHabilitado(): bool
-    {
-        return $this->habilitado;
     }
 
     public function getSignaturaTopografica(): ?string

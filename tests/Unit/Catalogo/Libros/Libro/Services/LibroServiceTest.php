@@ -1,6 +1,7 @@
 <?php
 
 use App\Catalogo\Articulos\Repository\ArticuloRepository;
+use App\Catalogo\Articulos\Services\ArticuloService;
 use App\Catalogo\Libros\Dtos\Response\LibroResponse;
 use App\Catalogo\Libros\Exceptions\LibroNotFoundException;
 use App\Catalogo\Libros\Models\Libro;
@@ -9,26 +10,17 @@ use App\Catalogo\Libros\Repositories\PersonaRepository;
 use App\Catalogo\Libros\Services\LibroService;
 use Mockery\MockInterface;
 
-/** @var MockInterface */
-$repositoryMock = null;
-/** @var MockInterface */
-$articuloRepositoryMock = null;
-/** @var MockInterface */
-$personaRepositoryMock = null;
-/** @var MockInterface */
-$pdoMock = null;
-/** @var LibroService */
-$service = null;
-
 beforeEach(function () {
     $this->repositoryMock = Mockery::mock(LibroRepository::class);
     $this->articuloRepositoryMock = Mockery::mock(ArticuloRepository::class);
     $this->personaRepositoryMock = Mockery::mock(PersonaRepository::class);
+    $this->articuloServiceMock = Mockery::mock(ArticuloService::class);
     $this->pdoMock = Mockery::mock(PDO::class);
     $this->service = new LibroService(
         $this->repositoryMock,
         $this->articuloRepositoryMock,
         $this->personaRepositoryMock,
+        $this->articuloServiceMock,
         $this->pdoMock
     );
 });
@@ -75,11 +67,10 @@ test('elimina libro exitosamente', function () {
         ->once()
         ->andReturn($libro);
 
-    $this->repositoryMock
-        ->shouldReceive('delete')
+    $this->articuloServiceMock
+        ->shouldReceive('deleteArticulo')
         ->with(11)
-        ->once()
-        ->andReturn(true);
+        ->once();
 
     $this->service->deleteLibro(11);
 

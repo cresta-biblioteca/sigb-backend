@@ -34,18 +34,6 @@ $router->delete('/ejemplares/{id}', withRole(['admin'], function ($id) use ($eje
     $ejemplarController->deleteEjemplar($id);
 }));
 
-$router->patch('/ejemplares/{id}/habilitar', withRole(['admin'], function ($id) use ($ejemplarController) {
-    $ejemplarController->habilitar($id);
-}));
-
-$router->patch('/ejemplares/{id}/deshabilitar', withRole(['admin'], function ($id) use ($ejemplarController) {
-    $ejemplarController->deshabilitar($id);
-}));
-
 $router->get('/articulos/{articuloId}/ejemplares', withRole(['admin', 'auxiliar', 'lector'], function ($articuloId) use ($ejemplarController) {
     $ejemplarController->getByArticuloId($articuloId);
-}));
-
-$router->get('/articulos/{articuloId}/ejemplares/habilitados', withRole(['admin', 'auxiliar', 'lector'], function ($articuloId) use ($ejemplarController) {
-    $ejemplarController->getHabilitadosByArticuloId($articuloId);
 }));

@@ -22,18 +22,21 @@ class TipoPrestamoRepository extends Repository
         return TipoPrestamo::class;
     }
 
+    protected function usesSoftDelete(): bool
+    {
+        return true;
+    }
+
     public function findByCodigo(string $codigo): ?TipoPrestamo
     {
-        $sql = "SELECT * FROM tipo_prestamo WHERE codigo = :codigo";
-        $tipoPrestamo = $this->findOneByQuery($sql, ["codigo" => $codigo]);
-        return $tipoPrestamo;
+        $sql = "SELECT * FROM tipo_prestamo WHERE codigo = :codigo AND deleted_at IS NULL";
+        return $this->findOneByQuery($sql, ["codigo" => $codigo]);
     }
 
     public function findCoincidence(string $codigo, string $descripcion): ?TipoPrestamo
     {
-        $sql = "SELECT * FROM tipo_prestamo WHERE codigo = :codigo OR descripcion = :descripcion";
-        $tipoPrestamo = $this->findOneByQuery($sql, ["codigo" => $codigo, "descripcion" => $descripcion]);
-        return $tipoPrestamo;
+        $sql = "SELECT * FROM tipo_prestamo WHERE (codigo = :codigo OR descripcion = :descripcion) AND deleted_at IS NULL";
+        return $this->findOneByQuery($sql, ["codigo" => $codigo, "descripcion" => $descripcion]);
     }
 
     public function insertTipoPrestamo(TipoPrestamo $tipoPrestamo): TipoPrestamo
@@ -41,10 +44,10 @@ class TipoPrestamoRepository extends Repository
         $this->pdo->beginTransaction();
         try {
             $stmtInsert = $this->pdo->prepare("
-			INSERT INTO tipo_prestamo(codigo, descripcion, max_cantidad_prestamos, duracion_prestamo, renovaciones, 
-										dias_renovacion, cant_dias_renovar, habilitado) 
-			VALUES(:codigo, :descripcion, :max_cant_prestamos, 
-					:duracion, :renovaciones, :dias_renovacion, :cant_dias_renovar, :habilitado);
+			INSERT INTO tipo_prestamo(codigo, descripcion, max_cantidad_prestamos, duracion_prestamo, renovaciones,
+										dias_renovacion, cant_dias_renovar)
+			VALUES(:codigo, :descripcion, :max_cant_prestamos,
+					:duracion, :renovaciones, :dias_renovacion, :cant_dias_renovar);
             ");
 
             $stmtInsert->execute([
@@ -55,7 +58,6 @@ class TipoPrestamoRepository extends Repository
                 "renovaciones" => $tipoPrestamo->getRenovaciones(),
                 "dias_renovacion" => $tipoPrestamo->getDiasRenovacion(),
                 "cant_dias_renovar" => $tipoPrestamo->getCantDiasRenovar(),
-                "habilitado" => $tipoPrestamo->isHabilitado()
             ]);
 
             $tipoPrestamo->setId((int) $this->pdo->lastInsertId());
@@ -104,25 +106,4 @@ class TipoPrestamoRepository extends Repository
         }
     }
 
-    public function disableTipoPrestamo(int $id): void
-    {
-        $stmtDisable = $this->pdo->prepare("
-			UPDATE tipo_prestamo SET habilitado = 0
-			WHERE id = :id;
-		");
-        $stmtDisable->execute([
-            "id" => $id
-        ]);
-    }
-
-    public function enableTipoPrestamo(int $id): void
-    {
-        $stmtEnable = $this->pdo->prepare("
-			UPDATE tipo_prestamo SET habilitado = 1
-			WHERE id = :id;
-		");
-        $stmtEnable->execute([
-            "id" => $id
-        ]);
-    }
 }

@@ -56,7 +56,8 @@ class Articulo extends Entity
         $articulo->descripcion = $row['descripcion'] ?? null;
         $articulo->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $articulo;

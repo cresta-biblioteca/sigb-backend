@@ -15,7 +15,6 @@ class TipoPrestamo extends Entity
     private int $renovaciones;
     private int $diasRenovacion;
     private int $cantDiasRenovar;
-    private bool $habilitado;
 
     private function __construct()
     {
@@ -31,8 +30,7 @@ class TipoPrestamo extends Entity
         int $renovaciones,
         int $diasRenovacion,
         int $cantDiasRenovar,
-        ?string $descripcion = null,
-        bool $habilitado = true
+        ?string $descripcion = null
     ): self {
         $tipo = new self();
         $tipo->setCodigo($codigo);
@@ -42,7 +40,6 @@ class TipoPrestamo extends Entity
         $tipo->setDiasRenovacion($diasRenovacion);
         $tipo->setCantDiasRenovar($cantDiasRenovar);
         $tipo->setDescripcion($descripcion);
-        $tipo->habilitado = $habilitado;
 
         return $tipo;
     }
@@ -63,10 +60,10 @@ class TipoPrestamo extends Entity
         $tipo->renovaciones = (int) $row['renovaciones'];
         $tipo->diasRenovacion = (int) $row['dias_renovacion'];
         $tipo->cantDiasRenovar = (int) $row['cant_dias_renovar'];
-        $tipo->habilitado = (bool) $row['habilitado'];
         $tipo->setTimestamps(
             $row['created_at'] ?? null,
-            $row['updated_at'] ?? null
+            $row['updated_at'] ?? null,
+            $row['deleted_at'] ?? null
         );
 
         return $tipo;
@@ -152,24 +149,9 @@ class TipoPrestamo extends Entity
         $this->cantDiasRenovar = $cantDiasRenovar;
     }
 
-    public function isHabilitado(): bool
+    public function isActivo(): bool
     {
-        return $this->habilitado;
-    }
-
-    public function setHabilitado(bool $habilitado): void
-    {
-        $this->habilitado = $habilitado;
-    }
-
-    public function habilitar(): void
-    {
-        $this->habilitado = true;
-    }
-
-    public function deshabilitar(): void
-    {
-        $this->habilitado = false;
+        return $this->deletedAt === null;
     }
 
     /**
@@ -186,9 +168,10 @@ class TipoPrestamo extends Entity
             'renovaciones' => $this->renovaciones,
             'dias_renovacion' => $this->diasRenovacion,
             'cant_dias_renovar' => $this->cantDiasRenovar,
-            'habilitado' => $this->habilitado,
+            'activo' => $this->isActivo(),
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
+            'deleted_at' => $this->deletedAt?->format('Y-m-d H:i:s'),
         ];
     }
 }

@@ -18,7 +18,7 @@ use OpenApi\Attributes as OA;
         "renovaciones",
         "dias_renovacion",
         "cant_dias_renovar",
-        "habilitado"
+        "activo"
     ]
 )]
 readonly class TipoPrestamoResponse implements JsonSerializable
@@ -40,8 +40,8 @@ readonly class TipoPrestamoResponse implements JsonSerializable
         private int $dias_renovacion,
         #[OA\Property(type: "integer", example: 1)]
         private int $cant_dias_renovar,
-        #[OA\Property(type: "bool", example: true)]
-        private bool $habilitado
+        #[OA\Property(description: "Indica si el tipo de préstamo está activo", type: "bool", example: true)]
+        private bool $activo
     ) {
     }
 
@@ -56,7 +56,7 @@ readonly class TipoPrestamoResponse implements JsonSerializable
             "renovaciones" => $this->renovaciones,
             "dias_renovacion" => $this->dias_renovacion,
             "cant_dias_renovar" => $this->cant_dias_renovar,
-            "habilitado" => $this->habilitado,
+            "activo" => $this->activo,
         ];
     }
 }

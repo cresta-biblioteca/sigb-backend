@@ -38,6 +38,11 @@ class Carrera extends Entity
         $carrera->id = (int) $row['id'];
         $carrera->codigo = $row['codigo'];
         $carrera->nombre = $row['nombre'];
+        $carrera->setTimestamps(
+            null,
+            null,
+            $row['deleted_at'] ?? null
+        );
 
         return $carrera;
     }

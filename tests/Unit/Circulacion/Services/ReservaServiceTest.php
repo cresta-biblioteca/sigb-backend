@@ -41,7 +41,7 @@ function makeEjemplar(array $override = []): Ejemplar
     return Ejemplar::fromDatabase(array_merge([
         'id' => 1,
         'codigo_barras' => '1234567890123',
-        'habilitado' => true,
+        'deleted_at' => null,
         'articulo_id' => 1,
         'signatura_topografica' => 'A-123',
         'created_at' => '2026-04-07 10:00:00',

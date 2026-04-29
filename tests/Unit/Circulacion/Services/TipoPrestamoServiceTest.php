@@ -163,7 +163,7 @@ test("createTipoPrestamo devuelve TipoPrestamoResponse cuando se crea exitosamen
             "renovaciones" => $tipoPrestamoRequest->renovaciones,
             "dias_renovacion" => $tipoPrestamoRequest->diasRenovacion,
             "cant_dias_renovar" => $tipoPrestamoRequest->cantDiasRenovar,
-            "habilitado" => true
+            "activo" => true
         ]);
 });
 
@@ -368,10 +368,9 @@ test("updateTipoPrestamo lanza TipoPrestamoAlreadyExistsException por descripcio
         ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyExistsException::class);
 });
 
-test("disableTipoPrestamo deshabilita un tipo de prestamo", function () {
+test("deleteTipoPrestamo elimina (soft delete) un tipo de prestamo", function () {
     $tipoPrestamo = TipoPrestamo::create("P07", 1, 1, 1, 1, 1, "Prestamo 7 dias");
     $tipoPrestamo->setId(1);
-    $tipoPrestamo->setHabilitado(true);
 
     $this->repositoryMock
         ->shouldReceive("findById")
@@ -380,85 +379,22 @@ test("disableTipoPrestamo deshabilita un tipo de prestamo", function () {
         ->andReturn($tipoPrestamo);
 
     $this->repositoryMock
-        ->shouldReceive("disableTipoPrestamo")
+        ->shouldReceive("softDelete")
         ->with(1)
         ->once();
 
-    $this->service->disableTipoPrestamo(1);
+    $this->service->deleteTipoPrestamo(1);
 
-    // No hay expect porque el metodo no devuelve nada, el test pasa si no hay excepciones
     expect(true)->toBeTrue();
 });
 
-test("disableTipoPrestamo lanza TipoPrestamoNotFoundException", function () {
+test("deleteTipoPrestamo lanza TipoPrestamoNotFoundException", function () {
     $this->repositoryMock
         ->shouldReceive("findById")
         ->with(1)
         ->once()
         ->andReturnNull();
 
-    expect(fn() => $this->service->disableTipoPrestamo(1))
+    expect(fn() => $this->service->deleteTipoPrestamo(1))
         ->toThrow(TipoPrestamoNotFoundException::class);
-});
-
-test("disableTipoPrestamo lanza TipoPrestamoAlreadyDisabledException", function () {
-    $tipoPrestamo = TipoPrestamo::create("P07", 1, 1, 1, 1, 1, "Prestamo 7 dias");
-    $tipoPrestamo->setId(1);
-    $tipoPrestamo->setHabilitado(false);
-
-    $this->repositoryMock
-        ->shouldReceive("findById")
-        ->with(1)
-        ->once()
-        ->andReturn($tipoPrestamo);
-
-    expect(fn() => $this->service->disableTipoPrestamo(1))
-        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyDisabledException::class);
-});
-
-test("enableTipoPrestamo habilita un tipo de prestamo", function () {
-    $tipoPrestamo = TipoPrestamo::create("P07", 1, 1, 1, 1, 1, "Prestamo 7 dias");
-    $tipoPrestamo->setId(1);
-    $tipoPrestamo->setHabilitado(false);
-
-    $this->repositoryMock
-        ->shouldReceive("findById")
-        ->with(1)
-        ->once()
-        ->andReturn($tipoPrestamo);
-
-    $this->repositoryMock
-        ->shouldReceive("enableTipoPrestamo")
-        ->with(1)
-        ->once();
-
-    $this->service->enableTipoPrestamo(1);
-
-    expect(true)->toBeTrue();
-});
-
-test("enableTipoPrestamo lanza TipoPrestamoNotFoundException", function () {
-    $this->repositoryMock
-        ->shouldReceive("findById")
-        ->with(1)
-        ->once()
-        ->andReturnNull();
-
-    expect(fn() => $this->service->enableTipoPrestamo(1))
-        ->toThrow(TipoPrestamoNotFoundException::class);
-});
-
-test("enableTipoPrestamo lanza TipoPrestamoAlreadyEnabledException", function () {
-    $tipoPrestamo = TipoPrestamo::create("P07", 1, 1, 1, 1, 1, "Prestamo 7 dias");
-    $tipoPrestamo->setId(1);
-    $tipoPrestamo->setHabilitado(true);
-
-    $this->repositoryMock
-        ->shouldReceive("findById")
-        ->with(1)
-        ->once()
-        ->andReturn($tipoPrestamo);
-
-    expect(fn() => $this->service->enableTipoPrestamo(1))
-        ->toThrow(\App\Circulacion\Exceptions\TipoPrestamoAlreadyEnabledException::class);
 });
