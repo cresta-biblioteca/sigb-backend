@@ -26,6 +26,7 @@ use App\Circulacion\Repositories\ReservaRepository;
 use App\Circulacion\Repositories\TipoPrestamoRepository;
 use App\Lectores\Repositories\LectorRepository;
 use App\Circulacion\Services\PrestamoService;
+use App\Shared\Exceptions\ForbiddenException;
 
 beforeEach(function () {
     $this->prestamoRepo = Mockery::mock(PrestamoRepository::class);
@@ -138,7 +139,7 @@ test('getByLectorId retorna los prestamos de un lector', function () {
         1
     );
     $prestamo1->setId(1);
-    $prestamo2->setId(2); 
+    $prestamo2->setId(2);
 
     $this->prestamoRepo
         ->shouldReceive('findByLectorId')
@@ -155,6 +156,34 @@ test('getByLectorId retorna los prestamos de un lector', function () {
         ->toBeInstanceOf(PrestamoResponse::class);
     expect($result[1])
         ->toBeInstanceOf(PrestamoResponse::class);
+});
+
+test('getByLectorId filtra por estado cuando se indica', function () {
+    $this->lectorRepo
+        ->shouldReceive('exists')
+        ->once()
+        ->with(1)
+        ->andReturn(true);
+
+    $prestamo = Prestamo::create(
+        new DateTimeImmutable('2026-04-01 10:00:00'),
+        (new DateTimeImmutable())->modify('+15 days'),
+        1,
+        1,
+        1
+    );
+    $prestamo->setId(1);
+
+    $this->prestamoRepo
+        ->shouldReceive('findByLectorId')
+        ->once()
+        ->with(1, EstadoPrestamo::VIGENTE)
+        ->andReturn([$prestamo]);
+
+    $result = $this->service->getByLectorId(1, 'vigente');
+
+    expect($result)->toHaveCount(1)
+        ->and($result[0])->toBeInstanceOf(PrestamoResponse::class);
 });
 
 test("getByLectorId lanza excepcion si el lector no existe", function () {
@@ -600,10 +629,68 @@ test('devolver devuelve el prestamo correctamente', function () {
         ->andReturn($prestamo);
 
     $result = $this->service->devolver(1);
-    expect($result)
-        ->toBeInstanceOf(PrestamoResponse::class);
-    expect($result->jsonSerialize()['estado'])
-        ->toBe(EstadoPrestamo::COMPLETADO_EXITO->value);
+    expect($result)->toBeInstanceOf(PrestamoResponse::class);
+    expect($result->jsonSerialize()['estado'])->toBe(EstadoPrestamo::COMPLETADO_EXITO->value);
+});
+
+test('devolver con inconveniente marca el estado como INCONVENIENTE', function () {
+    $prestamo = Prestamo::create(
+        new DateTimeImmutable('2026-04-01 10:00:00'),
+        (new DateTimeImmutable())->modify('+15 days'),
+        1,
+        1,
+        1
+    );
+    $prestamo->setId(1);
+
+    $this->prestamoRepo
+        ->shouldReceive('findById')
+        ->once()
+        ->with(1)
+        ->andReturn($prestamo);
+
+    $this->prestamoRepo
+        ->shouldReceive('updatePrestamo')
+        ->once()
+        ->with($prestamo);
+    $this->prestamoRepo
+        ->shouldReceive('findByIdWithRelations')
+        ->once()
+        ->with(1)
+        ->andReturn($prestamo);
+
+    $result = $this->service->devolver(1, true);
+    expect($result->jsonSerialize()['estado'])->toBe(EstadoPrestamo::INCONVENIENTE->value);
+});
+
+test('devolver tardio sin inconveniente marca el estado como COMPLETADO_VENCIDO', function () {
+    $prestamo = Prestamo::create(
+        new DateTimeImmutable('2026-03-01 10:00:00'),
+        new DateTimeImmutable('2026-03-15 10:00:00'),
+        1,
+        1,
+        1
+    );
+    $prestamo->setId(1);
+
+    $this->prestamoRepo
+        ->shouldReceive('findById')
+        ->once()
+        ->with(1)
+        ->andReturn($prestamo);
+
+    $this->prestamoRepo
+        ->shouldReceive('updatePrestamo')
+        ->once()
+        ->with($prestamo);
+    $this->prestamoRepo
+        ->shouldReceive('findByIdWithRelations')
+        ->once()
+        ->with(1)
+        ->andReturn($prestamo);
+
+    $result = $this->service->devolver(1);
+    expect($result->jsonSerialize()['estado'])->toBe(EstadoPrestamo::COMPLETADO_VENCIDO->value);
 });
 
 test('renovar falla si el prestamo no existe', function () {
@@ -888,4 +975,59 @@ test("renovar renueva correctamente un prestamo", function () {
     // --- Assert ---
     expect($this->service->renovar(1))
         ->toBeInstanceOf(PrestamoResponse::class);
+});
+
+test('renovar lanza ForbiddenException cuando un lector intenta renovar un prestamo ajeno', function () {
+    $_SERVER['USER_ROLE'] = 'lector';
+    $_SERVER['USER_LECTOR_ID'] = 99;
+
+    $prestamo = Mockery::mock(Prestamo::class)->makePartial();
+    $prestamo->shouldReceive('getLectorId')->andReturn(1);
+
+    $this->prestamoRepo
+        ->shouldReceive('findById')
+        ->once()
+        ->with(1)
+        ->andReturn($prestamo);
+
+    expect(fn() => $this->service->renovar(1))
+        ->toThrow(ForbiddenException::class);
+});
+
+test('renovar permite al lector renovar su propio prestamo', function () {
+    $_SERVER['USER_ROLE'] = 'lector';
+    $_SERVER['USER_LECTOR_ID'] = 1;
+
+    $prestamo = Mockery::mock(Prestamo::class)->makePartial();
+    $prestamo->setId(1);
+    $prestamo->allows([
+        'getLectorId'         => 1,
+        'getTipoPrestamoId'   => 2,
+        'getEjemplarId'       => 10,
+        'getFechaPrestamo'    => new DateTimeImmutable(),
+        'getFechaVencimiento' => (new DateTimeImmutable())->add(new DateInterval('P2D')),
+        'getFechaDevolucion'  => null,
+        'getEstado'           => EstadoPrestamo::VIGENTE,
+        'getMaxRenovaciones'  => 2,
+        'getCantRenovaciones' => 0,
+    ]);
+    $prestamo->expects('isDevuelto')->once()->andReturn(false);
+    $prestamo->expects('isVencido')->once()->andReturn(false);
+    $prestamo->expects('renovar')->once()->withArgs(fn($d) => $d instanceof DateTimeImmutable);
+
+    $tipoPrestamo = Mockery::mock(TipoPrestamo::class)->makePartial();
+    $tipoPrestamo->allows(['getCantDiasRenovar' => 3, 'getDiasRenovacion' => 7]);
+
+    $ejemplar = Mockery::mock(Ejemplar::class)->makePartial();
+    $ejemplar->expects('getArticuloId')->once()->andReturn(1);
+
+    $this->prestamoRepo->expects('findById')->once()->with(1)->andReturn($prestamo);
+    $this->prestamoRepo->expects('updatePrestamo')->once()->with($prestamo);
+    $this->prestamoRepo->expects('findByIdWithRelations')->once()->with(1)->andReturn($prestamo);
+
+    $this->tipoPrestamoRepo->expects('findById')->once()->with(2)->andReturn($tipoPrestamo);
+    $this->ejemplarRepo->expects('findById')->once()->with(10)->andReturn($ejemplar);
+    $this->reservaRepo->expects('existeReservaPendienteParaArticulo')->once()->with(1)->andReturn(false);
+
+    expect($this->service->renovar(1))->toBeInstanceOf(PrestamoResponse::class);
 });
