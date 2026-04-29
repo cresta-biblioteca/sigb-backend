@@ -14,6 +14,7 @@ use App\Circulacion\Repositories\PrestamoRepository;
 use App\Circulacion\Repositories\ReservaRepository;
 use App\Circulacion\Services\ReservaService;
 use App\Circulacion\Services\TipoPrestamoService;
+use App\Shared\Exceptions\ForbiddenException;
 use Mockery\MockInterface;
 
 /** @var MockInterface */
@@ -294,4 +295,174 @@ test('cancelarReserva cancela con exito la reserva', function () {
     $this->reservaService->cancelarReserva(1);
 
     expect($reserva->getEstado())->toEqual(EstadoReserva::CANCELADA);
+});
+
+test('cancelarReserva lanza ForbiddenException cuando un lector intenta cancelar una reserva ajena', function () {
+    $_SERVER['USER_ROLE'] = 'lector';
+    $_SERVER['USER_LECTOR_ID'] = 99;
+
+    $reserva = makeReserva(['lector_id' => 1]);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findById')
+        ->once()
+        ->with(1)
+        ->andReturn($reserva);
+
+    expect(fn() => $this->reservaService->cancelarReserva(1))
+        ->toThrow(ForbiddenException::class);
+});
+
+test('cancelarReserva permite al lector cancelar su propia reserva', function () {
+    $_SERVER['USER_ROLE'] = 'lector';
+    $_SERVER['USER_LECTOR_ID'] = 1;
+
+    $reserva = makeReserva(['lector_id' => 1]);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findById')
+        ->once()
+        ->with(1)
+        ->andReturn($reserva);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('update')
+        ->once();
+
+    $this->reservaService->cancelarReserva(1);
+
+    expect($reserva->getEstado())->toEqual(EstadoReserva::CANCELADA);
+});
+
+// --- getMisReservas ---
+
+test('getMisReservas retorna las reservas paginadas del lector autenticado', function () {
+    $reserva = makeReserva();
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with(['lector_id' => 1])
+        ->andReturn(1);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with(['lector_id' => 1], 10, 0)
+        ->andReturn([$reserva]);
+
+    $result = $this->reservaService->getMisReservas(1, null, 1, 10);
+
+    expect($result['items'])->toHaveCount(1)
+        ->and($result['items'][0]->id)->toBe(1)
+        ->and($result['pagination']['total'])->toBe(1)
+        ->and($result['pagination']['page'])->toBe(1);
+});
+
+test('getMisReservas filtra por estado cuando se indica', function () {
+    $reserva = makeReserva();
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with(['lector_id' => 1, 'estado' => EstadoReserva::PENDIENTE->value])
+        ->andReturn(1);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with(['lector_id' => 1, 'estado' => EstadoReserva::PENDIENTE->value], 10, 0)
+        ->andReturn([$reserva]);
+
+    $result = $this->reservaService->getMisReservas(1, EstadoReserva::PENDIENTE, 1, 10);
+
+    expect($result['items'])->toHaveCount(1)
+        ->and($result['items'][0]->id)->toBe(1);
+});
+
+test('getMisReservas retorna lista vacía cuando el lector no tiene reservas', function () {
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with(['lector_id' => 1])
+        ->andReturn(0);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with(['lector_id' => 1], 10, 0)
+        ->andReturn([]);
+
+    $result = $this->reservaService->getMisReservas(1, null, 1, 10);
+
+    expect($result['items'])->toBeEmpty()
+        ->and($result['pagination']['total'])->toBe(0)
+        ->and($result['pagination']['total_pages'])->toBe(1);
+});
+
+// --- getReservas ---
+
+test('getReservas retorna todas las reservas paginadas sin filtros', function () {
+    $reserva = makeReserva();
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with([])
+        ->andReturn(1);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with([], 10, 0)
+        ->andReturn([$reserva]);
+
+    $result = $this->reservaService->getReservas([], 1, 10);
+
+    expect($result['items'])->toHaveCount(1)
+        ->and($result['pagination']['total'])->toBe(1)
+        ->and($result['pagination']['page'])->toBe(1)
+        ->and($result['pagination']['per_page'])->toBe(10);
+});
+
+test('getReservas retorna lista vacía cuando no hay reservas', function () {
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with([])
+        ->andReturn(0);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with([], 10, 0)
+        ->andReturn([]);
+
+    $result = $this->reservaService->getReservas([], 1, 10);
+
+    expect($result['items'])->toBeEmpty()
+        ->and($result['pagination']['total'])->toBe(0)
+        ->and($result['pagination']['total_pages'])->toBe(1);
+});
+
+test('getReservas aplica filtros cuando se proporcionan', function () {
+    $reserva = makeReserva(['estado' => EstadoReserva::CANCELADA->value]);
+
+    $filters = ['estado' => EstadoReserva::CANCELADA->value, 'lector_id' => 1];
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('countByFilters')
+        ->once()
+        ->with($filters)
+        ->andReturn(1);
+
+    $this->reservaRepositoryMock
+        ->shouldReceive('findByFilters')
+        ->once()
+        ->with($filters, 10, 0)
+        ->andReturn([$reserva]);
+
+    $result = $this->reservaService->getReservas($filters, 1, 10);
+
+    expect($result['items'])->toHaveCount(1);
 });
