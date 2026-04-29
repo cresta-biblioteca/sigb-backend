@@ -183,7 +183,7 @@ readonly class ReservaController
     )]
     public function getMisReservas(): void
     {
-        $lectorId = (int) $_SERVER['USER_ID'];
+        $lectorId = (int) $_SERVER['USER_LECTOR_ID'];
         $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
         $perPage = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 10;
         $estado = $this->parseEstado($_GET['estado'] ?? null);
@@ -243,13 +243,14 @@ readonly class ReservaController
     )]
     public function addReserva(): void
     {
+        $lectorId = (int) $_SERVER['USER_LECTOR_ID'];
         $data = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR) ?? [];
 
         CreateReservaValidator::validate($data);
 
         $reservaRequest = CreateReservaRequest::fromArray($data);
 
-        $response = $this->reservaService->addReserva($reservaRequest);
+        $response = $this->reservaService->addReserva($reservaRequest, $lectorId);
 
         JsonHelper::jsonResponse($response, 201);
     }
